@@ -20,8 +20,8 @@ class MDIntegrator:
         self.oldPos = mol.get_positions()
         self.currentPos = mol.get_positions()
         self.newPos = mol.get_positions()
-        self.vHalfPresent = False
-        self.constrained = False
+        self.constrained = True
+
 
     @abstractmethod
     def constrain(self, del_phi):
@@ -44,9 +44,8 @@ class VelocityVerlet(MDIntegrator):
 
         # Revert positions and forces to time prior to BXD inversion
         self.currentPos = self.oldPos
-
-        # Have to start VV procedure again as we loose the half steps
-        self.vHalfPresent = False
+        self.currentVel = self.oldVel
+        self.forces = self.oldForces
 
         # Temporarily flatten 3 by n matrices into vectors to get dot products.
         a = ((np.tile(self.masses, (3, 1))).transpose()).flatten()
@@ -56,25 +55,23 @@ class VelocityVerlet(MDIntegrator):
         # Get Lagrangian constraint
         lamb =  (-2.0 * np.vdot(b,c)) / np.vdot(b , (b * (1 / a)))
 
-
-        # Update velocities
-        self.HalfVel = self.currentVel + ( lamb * del_phi * (1/self.masses)[:,None])
+        # Modify velocities
+        self.currentVel = self.currentVel + ( lamb * del_phi * (1/self.masses)[:,None])
         self.constrained = True
 
     @abstractmethod
     def constrain2(self, del_phi1, del_phi2):
 
-        # Revert postions and forces to time prior to BXD inversion
+        # Revert positions and forces to time prior to BXD inversion
         self.currentPos = self.oldPos
-
-        # Have to start VV procedure again as we loose the half steps
-        self.vHalfPresent = False
+        self.currentVel = self.oldVel
+        self.forces = self.oldForces
 
         # Temporarily flatten 3 by n matrices into vectors to get dot products.
         a = ((np.tile(self.masses, (3, 1))).transpose()).flatten()
         b = np.flatten(del_phi1)
         c = np.flatten(del_phi2)
-        d = np.flatten(self.oldVel)
+        d = np.flatten(self.currentVel)
 
         # In the two constraint case the simulataneous equations can be solved analytically. This should be gneralised in the future
         # Here we save the various coefficients from the various permuations of dot products containing the two constraints
@@ -90,34 +87,25 @@ class VelocityVerlet(MDIntegrator):
 
 
         # Update velocities
-        self.HalfVel = self.oldVel + ( lamb1 * del_phi1 * ( 1 / self.masses[:,None] ) ) + ( lamb2 * del_phi2 * ( 1 / self.masses[:,None] ) )
-        self.oldVel = self.HalfVel
-
-        # Let MDstep method know a constraint has occured and not to update the forces
+        self.currentVel = self.currentVel + ( lamb1 * del_phi1 * ( 1 / self.masses[:,None] ) ) + ( lamb2 * del_phi2 * ( 1 / self.masses[:,None] ) )
         self.constrained = True
-
 
     #This method returns the new positions after a single md timestep
     @abstractmethod
-    def mdStep(self, forces, timestep, mol):
+    def mdStepPos(self, forces, timestep, mol):
 
-        if self.constrained == False:
-            self.forces = forces
-        else:
+        # If we have been constrined then forces have already been reset
+        # Otherwise store foces provided to function
+        if self.constrained:
             self.constrained = False
+        else:
+            self.forces = forces
 
-        #check the below works. Get Acceleration from masses and forces
+         #Get Acceleration from masses and forces
         accel = self.forces[:] / self.masses[:,None]
 
         # keep track of position prior to update in case we need to revert
         self.oldPos = self.currentPos
-
-        #Then start Velocity Verlet procedure to get the current velocity from previous halfstep
-        if self.vHalfPresent is True:
-            self.currentVel = self.HalfVel + ( accel * timestep * 0.5 )
-        else:
-            self.currentVel = self.HalfVel
-            self.vHalfPresent = True
 
         # Then get the next half step velocity and update the position.
         # NB currentVel is one full MD step behind currentPos
@@ -126,56 +114,46 @@ class VelocityVerlet(MDIntegrator):
 
         # Return positions
         mol.set_positions(self.currentPos)
+
+    def mdStepVel(self, forces, timestep, mol):
+
+        #Store forces from previous step and then update
+        self.oldForces = self.forces
+        self.forces = forces
+
+        # Store old velocities
+        self.oldVel = self.currentVel
+
+         #Get Acceleration from masses and forces
+        accel = self.forces[:] / self.masses[:,None]
+
+        #Use recent half velocity to update the velocities
+        self.currentVel = self.HalfVel + ( accel * timestep * 0.5 )
+
+        # Return positions
         mol.set_velocities(self.currentVel)
+
 
 class Langevin(MDIntegrator):
 
-    def __init__(self, temperature, friction, forces, velocity, mol):
+    def __init__(self, temperature, friction, forces, velocity, mol,timestep):
         self.friction = friction
         self.temp = temperature
+        # Get coefficients
         super(Langevin,self).__init__(forces, velocity, mol)
         self.sigma = np.sqrt(2 * self.temp * self.friction / self.masses)
+        self.c1 = timestep / 2. - timestep * timestep * self.friction / 8.
+        self.c2 = timestep * self.friction / 2 - timestep * timestep * self.friction * self.friction / 8.
+        self.c3 = np.sqrt(timestep) * self.sigma / 2. - timestep**1.5 * self.friction * self.sigma / 8.
+        self.c5 = timestep**1.5 * self.sigma / (2 * np.sqrt(3))
+        self.c4 = self.friction / 2. * self.c5
 
-    @abstractmethod
-    def mdStep(self, forces, timestep, mol):
-
-        if self.constrained == False:
-            self.forces = forces
-        else:
-            self.constrained = False
-
-        # Get coefficients
-        c1 = timestep / 2. - timestep * timestep * self.friction / 8.
-        c2 = timestep * self.friction / 2 - timestep * timestep * self.friction * self.friction / 8.
-        c3 = np.sqrt(timestep) * self.sigma / 2. - timestep**1.5 * self.friction * self.sigma / 8.
-        c5 = timestep**1.5 * self.sigma / (2 * np.sqrt(3))
-        c4 = self.friction / 2. * c5
-
-        # Get two normally distributed variables
-        xi = standard_normal(size=(len(self.masses), 3))
-        eta = standard_normal(size=(len(self.masses), 3))
-
-        # Check the below works. Get Acceleration from masses and forces
-        accel = self.forces[:] / self.masses[:,None]
-
-        # Keep track of position prior to update in case we need to revert
-        self.oldPos = self.currentPos
-
-        # Then start Velocity Verlet procedure to get the current velocity from previous halfstep
-        if self.vHalfPresent is True:
-            self.currentVel = self.HalfVel + (c1 * accel - c2 * self.HalfVel + c3[:,None] * xi - c4[:,None] * eta)
-        else:
-            self.currentVel = self.HalfVel
-            self.vHalfPresent = True
-
-        # Then get the next half step velocity and update the position.
-        # NB currentVel is one full MD step behind currentPos
-        self.HalfVel = self.currentVel + (c1 * accel - c2 * self.HalfVel + c3[:,None] * xi - c4[:,None] * eta)
-        self.currentPos = self.currentPos + timestep * self.HalfVel + c5[:,None] * eta
-
-        # Return positions
-        mol.set_positions(self.currentPos)
-        mol.set_velocities(self.currentVel)
+    def reset(self, timestep):
+        self.c1 = timestep / 2. - timestep * timestep * self.friction / 8.
+        self.c2 = timestep * self.friction / 2 - timestep * timestep * self.friction * self.friction / 8.
+        self.c3 = np.sqrt(timestep) * self.sigma / 2. - timestep**1.5 * self.friction * self.sigma / 8.
+        self.c5 = timestep**1.5 * self.sigma / (2 * np.sqrt(3))
+        self.c4 = self.friction / 2. * self.c5
 
         # Modify the stored velocities to satisfy a single BXD constraint
     @abstractmethod
@@ -183,9 +161,9 @@ class Langevin(MDIntegrator):
 
         # Revert positions and forces to time prior to BXD inversion
         self.currentPos = self.oldPos
+        self.currentVel = self.oldVel
+        self.forces = self.oldForces
 
-        # Have to start VV procedure again as we loose the half steps
-        self.vHalfPresent = False
 
         # Temporarily flatten 3 by n matrices into vectors to get dot products.
         a = ((np.tile(self.masses, (3, 1))).transpose()).flatten()
@@ -197,23 +175,22 @@ class Langevin(MDIntegrator):
 
 
         # Update velocities
-        self.HalfVel = self.currentVel + ( lamb * del_phi * (1/self.masses)[:,None])
+        self.currentVel = self.currentVel + ( lamb * del_phi * (1/self.masses)[:,None])
         self.constrained = True
 
     @abstractmethod
     def constrain2(self, del_phi1, del_phi2):
 
-        # Revert postions and forces to time prior to BXD inversion
+        # Revert positions and forces to time prior to BXD inversion
         self.currentPos = self.oldPos
-
-        # Have to start VV procedure again as we loose the half steps
-        self.vHalfPresent = False
+        self.currentVel = self.oldVel
+        self.forces = self.oldForces
 
         # Temporarily flatten 3 by n matrices into vectors to get dot products.
         a = ((np.tile(self.masses, (3, 1))).transpose()).flatten()
         b = np.flatten(del_phi1)
         c = np.flatten(del_phi2)
-        d = np.flatten(self.oldVel)
+        d = np.flatten(self.currentVel)
 
         # In the two constraint case the simulataneous equations can be solved analytically. This should be gneralised in the future
         # Here we save the various coefficients from the various permuations of dot products containing the two constraints
@@ -229,8 +206,55 @@ class Langevin(MDIntegrator):
 
 
         # Update velocities
-        self.HalfVel = self.oldVel + ( lamb1 * del_phi1 * ( 1 / self.masses[:,None] ) ) + ( lamb2 * del_phi2 * ( 1 / self.masses[:,None] ) )
-        self.oldVel = self.HalfVel
+        self.currentVel = self.currentVel + ( lamb1 * del_phi1 * ( 1 / self.masses[:,None] ) ) + ( lamb2 * del_phi2 * ( 1 / self.masses[:,None] ))
 
         # Let MDstep method know a constraint has occured and not to update the forces
         self.constrained = True
+
+            #This method returns the new positions after a single md timestep
+    @abstractmethod
+    def mdStepPos(self, forces, timestep, mol):
+
+        # If we have been constrined then forces have already been reset
+        # Otherwise store foces provided to function
+        if self.constrained:
+            self.constrained = False
+        else:
+            self.forces = forces
+
+         #Get Acceleration from masses and forces
+        accel = self.forces[:] / self.masses[:,None]
+
+        # keep track of position prior to update in case we need to revert
+        self.oldPos = self.currentPos
+
+        # Get two normally distributed variables
+        self.xi = standard_normal(size=(len(self.masses), 3))
+        self.eta = standard_normal(size=(len(self.masses), 3))
+
+        # Then get the next half step velocity and update the position.
+        # NB currentVel is one full MD step behind currentPos
+        self.HalfVel = self.currentVel + (self.c1 * accel - self.c2 * self.HalfVel + self.c3[:,None] * self.xi - self.c4[:,None] * self.eta)
+        self.currentPos = self.currentPos + timestep * self.HalfVel + self.c5[:,None] * self.eta
+
+        # Return positions
+        mol.set_positions(self.currentPos)
+
+    def mdStepVel(self, forces, timestep, mol):
+
+        #Store forces from previous step and then update
+        self.oldForces = self.forces
+        self.forces = forces
+
+        # Store old velocities
+        self.oldVel = self.currentVel
+
+         #Get Acceleration from masses and forces
+        accel = self.forces[:] / self.masses[:,None]
+
+        #Use recent half velocity to update the velocities
+        self.currentVel = self.HalfVel + (self.c1 * accel - self.c2 * self.HalfVel + self.c3[:,None] * self.xi - self.c4[:,None] * self.eta)
+
+        # Return positions
+        mol.set_velocities(self.currentVel)
+

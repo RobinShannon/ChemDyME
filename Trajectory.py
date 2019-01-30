@@ -1,4 +1,3 @@
-import Potentials
 import BXDconstraint
 import os
 from ase import Atoms
@@ -6,12 +5,10 @@ import MDIntegrator
 import Connectivity
 import numpy as np
 import Tools as tl
-import ConnectTools as ct
 from ase.md.velocitydistribution import (MaxwellBoltzmannDistribution,Stationary, ZeroRotation)
 from ase import units
 from time import time
-from ase.optimize import BFGS
-from ase import io as aio
+
 
 class Trajectory:
 
@@ -24,6 +21,7 @@ class Trajectory:
         self.level = gl.trajLevel
         self.mdSteps = gl.mdSteps
         self.printFreq = gl.printFreq
+        self.mixedTimestep = gl.mixedTimestep
         if self.biMolecular:
             self.initialT = gl.BiTemp
         else:
@@ -44,7 +42,10 @@ class Trajectory:
         self.LangFric = gl.LFric
         self.LangTemp = self.initialT
         self.Mol = Atoms(symbols=mol.get_chemical_symbols(), positions = mol.get_positions())
-        self.Mol = tl.setCalc(self.Mol,'calcMopac' + str(self.procNum) + '/Traj', self.method, self.level)
+        if self.method == "openMM":
+            self.Mol = tl.setCalc(self.Mol,'calcMopac' + str(self.procNum) + '/Traj', self.method, gl)
+        else:
+            self.Mol = tl.setCalc(self.Mol,'calcMopac' + str(self.procNum) + '/Traj', self.method, self.level)
         MaxwellBoltzmannDistribution(self.Mol, self.initialT * units.kB)
         self.velocity = self.Mol.get_velocities()
         self.tempReactGeom = mol.copy()
@@ -70,6 +71,7 @@ class Trajectory:
         self.TSpoint = 0
         self.names=[]
         self.changePoints=[]
+        self.adaptiveSteps = gl.maxAdapSteps
 
 
     def runTrajectory(self):
@@ -77,6 +79,7 @@ class Trajectory:
         workingDir = os.getcwd()
         newpath = workingDir + '/traj' + str(self.procNum)
         namefile = open(("traj.xyz"), "w")
+
         if not os.path.exists(newpath):
             os.makedirs(newpath)
         os.chdir(newpath)
@@ -84,6 +87,10 @@ class Trajectory:
 
         self.numberOfSteps = 0
         consistantChange = 0
+
+        #Multiple stepsizes
+        self.smallStep = self.timeStep
+        timeStep = self.timeStep
 
 
 
@@ -97,11 +104,20 @@ class Trajectory:
             self.Mol.get_forces()
         self.Mol =tl.setCalc(self.Mol,'calcMopac' + str(self.procNum) + '/Traj', self.method, self.level)
 
+        try:
+            self.forces = self.Mol.get_forces()
+        except:
+            try:
+                self.forces = self.Mol.get_forces()
+            except:
+                print("forces error")
+                self.forces = np.zeros(len(self.forces.shape))
+
         #Get MDintegrator type
         if self.MDIntegrator == 'VelocityVerlet':
             mdInt = MDIntegrator.VelocityVerlet(self.forces, self.velocity, self.Mol)
         elif self.MDIntegrator == 'Langevin':
-            mdInt = MDIntegrator.Langevin(units.kB * self.LangTemp, self.LangFric, self.forces, self.velocity, self.Mol)
+            mdInt = MDIntegrator.Langevin(units.kB * self.LangTemp, self.LangFric, self.forces, self.velocity, self.Mol,timeStep)
 
 
 
@@ -112,27 +128,22 @@ class Trajectory:
         # Then set up various BXD procedures
         if self.comBXD or self.biMolecular:
             self.comBXD = True
-            comBxd = BXDconstraint.COM(self.Mol,"fixed", 0, self.minCOM, 10000, 10000, self.fragIdx)
+            if self.mixedTimestep == True:
+                mdInt.reset(self.timeStep * 10)
+            comBxd = BXDconstraint.COM(self.Mol, 0, self.minCOM, hitLimit = 100000, activeS = self.fragIdx, runType="fixed")
         if self.eneBXD:
-            eneBXD = BXDconstraint.Energy(self.Mol,"adaptive", -10000, -0.1, 10000, 1000, 10000)
+            eneBXD = BXDconstraint.Energy(self.Mol, -10000, 10000, hitLimit = 1, adapMax = self.adaptiveSteps, runType="adaptive")
 
 
         # Run MD trajectory for specified number of steps
         for i in range(0,self.mdSteps):
             t = time()
-            # Get forces and energy from designated potential
+
             try:
-                self.forces = self.Mol.get_forces()
+                self.ene = self.Mol.get_potential_energy()
             except:
-                try:
-                    self.forces = self.Mol.get_forces()
-                except:
-                    print("forces error")
+                pass
 
-            self.ene = self.Mol.get_potential_energy()
-
-            if i % 100 == 0:
-                tl.printTraj(namefile,self.Mol)
             #Print Smiles? This intermitently checks whether the current sturcture optimises to a new species as identified by the SMILES string
             if self.printSMILES:
                 if i % self.printFreq == 0:
@@ -149,27 +160,40 @@ class Trajectory:
             if self.comBXD:
                 comBxd.update(self.Mol)
                 comBounded = comBxd.inversion
-                if comBounded is True and self.ReactionCountDown == 0:
-                    com_del_phi = comBxd.del_phi
 
-            if self.comBXD and eneBXDon:
+
+            if self.comBXD and eneBXDon and i % self.printFreq == 0:
                 print("Ene = " + str(eneBXD.s[0]) + ' S = ' + str(comBxd.s[0]) + ' step = ' + str(i) + ' process = ' + str(self.procNum) + ' time = ' + str(time()-t) + ' temperature = ' + str(self.Mol.get_temperature()))
-            elif self.comBXD:
+            elif self.comBXD and i % self.printFreq == 0 :
                 print("Ene = " + "NA" + ' S = ' + str(comBxd.s[0]) + ' step = ' + str(i) + ' process = ' + str(self.procNum) + ' time = ' + str(time()-t) + ' temperature = ' + str(self.Mol.get_temperature()))
-            elif eneBXDon:
-                print("Ene = " + str(eneBXD.s[0]) + 'S = ' + "NA" + ' step = ' + str(i) + ' process = ' + str(self.procNum) + ' time = ' + str(time()-t) + ' temperature = ' + str(self.Mol.get_temperature()))
+            elif eneBXDon and i % self.printFreq == 0:
+                print("Ene = " + str(self.Mol.get_potential_energy()) + ' box = ' + str(eneBXD.box) + ' step = ' + str(i) + ' process = ' + str(self.procNum) + ' time = ' + str(time()-t) + ' temperature = ' + str(self.Mol.get_temperature()) + ' Etot ' + str(self.Mol.get_potential_energy() + self.Mol.get_kinetic_energy()))
 
             #  Now check whether to turn BXDE on
             if self.comBXD:
                 if (self.biMolecular or self.comBXD) and comBxd.s[0] < self.minCOM and eneBXDon == False:
-                    eneBXDon = True
+                    if self.mixedTimestep == True:
+                        mdInt.reset(self.timeStep)
+                    eneBXDon = False
             elif self.eneBXD:
                 eneBXDon = True
 
             if eneBXDon == True:
                 eneBXD.update(self.Mol)
                 eBounded = eneBXD.inversion
-                e_del_phi = eneBXD.del_phi
+
+            if comBounded is True and self.ReactionCountDown == 0:
+                self.Mol.set_positions(mdInt.oldPos)
+                com_del_phi = comBxd.del_constraint(self.Mol)
+                if comBxd.stuck == True  and comBxd.s[0] < self.minCOM:
+                    comBxd.stuckFix()
+
+            if eBounded:
+                self.Mol.set_positions(mdInt.oldPos)
+                try:
+                    e_del_phi = eneBXD.del_constraint(self.Mol)
+                except:
+                    pass
 
             # Perform inversion if required
             if eBounded is True and comBounded is True:
@@ -178,19 +202,29 @@ class Trajectory:
                 mdInt.constrain(com_del_phi)
             elif eBounded is True and comBounded is False:
                 mdInt.constrain(e_del_phi)
+                timeStep = self.smallStep
+            else:
+                self.numberOfSteps += 1
+                timeStep = self.timeStep
 
-            mdInt.mdStep(self.forces, self.timeStep, self.Mol)
-            self.numberOfSteps += 1
+            mdInt.mdStepPos(self.forces, timeStep, self.Mol)
+            try:
+                self.forces = self.Mol.get_forces()
+            except:
+                try:
+                    self.forces = self.Mol.get_forces()
+                except:
+                    print("forces error")
+                    self.forces = np.zeros(len(self.forces.shape))
 
+            mdInt.mdStepVel(self.forces, timeStep, self.Mol)
 
             self.MolList.append(self.Mol.copy())
 
             # Check if we are in a reaction countdown
             if self.ReactionCountDown == 0:
-
-
                 # Update connectivity map to check for reaction
-                if eneBXDon:
+                if eneBXDon or (self.comBXD and comBxd.s[0] < self.minCOM):
                     con.update(self.Mol)
                     if con.criteriaMet is True:
                         if consistantChange == 0:
@@ -214,218 +248,111 @@ class Trajectory:
                             self.productGeom = self.Mol.get_positions()
                             os.chdir(workingDir)
                             break
-
+        namefile.close()
         os.chdir(workingDir)
 
-    def runBXDEconvergence(self, grainsize, startingE, additionalConstraint, Mol, type, boxes, hitLimit, runs):
+    def runBXDEconvergence(self, maxHits,maxAdapSteps,eneAdaptive, decorrelationSteps, histogramLevel, runsThough, numberOfBoxes, grainSize):
+
         # Create specific directory
-        workingDir = os.getcwd()
+        keepGoing = True
 
-        self.iterations = 0
         freeFly = False
-        eneBXDon = True
-        eBounded = False
-        comBounded = False
-        keepGoing = True
-
-        namefile = []
-        for i in range(0,runs):
-            namefile.append(open((str(i) +"_box"), "w"))
-
-        # Get potential type
-        if not freeFly:
-            if (self.method == 'nwchem'):
-                self.Mol =tl.setCalc(self.Mol,'calcMopac' + str(self.procNum) + '/Traj', 'nwchem2', self.level)
-                self.Mol.get_forces()
-            else:
-                self.Mol =tl.setCalc(self.Mol,'calcMopac' + str(self.procNum) + '/Traj', self.method, self.level)
-
-            #Get MDintegrator type
-            if self.MDIntegrator == 'VelocityVerlet':
-                mdInt = MDIntegrator.VelocityVerlet(self.forces, self.velocity, self.Mol)
-            elif self.MDIntegrator == 'Langevin':
-                mdInt = MDIntegrator.Langevin(units.kB * self.LangTemp, self.LangFric, self.forces, self.velocity, self.Mol)
-
-        else:
-            self.forces = 0
-        # Then set up various BXD procedures
-        #if additionalConstraint:
-            #genBxd = BXDconstraint.genBXD(self.Mol,"fixed", Mol, Product, 10000, 10000, 0)
-
-        if (type == "fixed"):
-            eneBXD = BXDconstraint.Energy(self.Mol,type, startingE, startingE + grainsize, hitLimit, boxes, 10)
-            eneBXD.createFixedBoxes(grainsize)
-        else:
-            eneBXD = BXDconstraint.Energy(self.Mol,type, startingE, 10000, hitLimit, 1000, boxes)
-
-        # Run MD trajectory for specified number of steps
-        while keepGoing:
-            t = time()
-            # Get forces and energy from designated potential
-            try:
-                self.forces = self.Mol.get_forces()
-            except:
-                print('forces error')
-
-            self.ene = self.Mol.get_potential_energy()
-
-            # Update the COM seperation and check whether it is bounded
-            #if self.comBXD:
-                #genBxd.update(self.Mol)
-                #comBounded = genBxd.inversion
-                #if comBounded is True and self.ReactionCountDown == 0:
-                    #com_del_phi = genBxd.del_constraint(self.Mol)
-
-            if not freeFly:
-                eneBXD.update(self.Mol)
-                eBounded = eneBXD.inversion
-                e_del_phi = eneBXD.del_phi
-                print('S ' + str(self.ene)  + ' box ' + str(eneBXD.box) + ' time ' + str(time()-t) + ' temperature ' + str(self.Mol.get_temperature()))
-            else:
-                eBounded = False
-
-            # Perform inversion if required
-            if eBounded is True and comBounded is True:
-                mdInt.constrain2(e_del_phi, com_del_phi)
-            elif eBounded is False and comBounded is True:
-                mdInt.constrain(com_del_phi)
-            elif eBounded is True and comBounded is False:
-                mdInt.constrain(e_del_phi)
-
-            mdInt.mdStep(self.forces, self.timeStep, self.Mol)
-            self.numberOfSteps += 1
-
-            if eneBXD.stuckCount >1 :
-                freeFly = True
-
-            if not eneBXD.boxList[eneBXD.box].lower.hit( self.ene, 'down') and not self.ene < eneBXD.boxList[eneBXD.box].upper.hit(self.ene,'up'):
-                freeFly = False
-            if eneBXD.completeRuns == 1:
-                keepGoing = False
-
-        if type == "adaptive":
-            keepGoing = True
-            eneBXD.reset("fixed", 100)
-
-        while keepGoing:
-            t = time()
-            # Get forces and energy from designated potential
-            try:
-                self.forces = self.Mol.get_forces()
-            except:
-                print('forces error')
-
-            self.ene = self.Mol.get_potential_energy()
-
-            # Update the COM seperation and check whether it is bounded
-            #if self.comBXD:
-                #genBxd.update(self.Mol)
-                #comBounded = genBxd.inversion
-                #if comBounded is True and self.ReactionCountDown == 0:
-                    #com_del_phi = genBxd.del_constraint(self.Mol)
-
-            if not freeFly:
-                eneBXD.update(self.Mol)
-                eBounded = eneBXD.inversion
-                e_del_phi = eneBXD.del_phi
-                print('S ' + str(self.ene)  + ' box ' + str(eneBXD.box) + ' time ' + str(time()-t) + ' temperature ' + str(self.Mol.get_temperature()))
-            else:
-                eBounded = False
-
-            # Perform inversion if required
-            if eBounded is True and comBounded is True:
-                mdInt.constrain2(e_del_phi, com_del_phi)
-            elif eBounded is False and comBounded is True:
-                mdInt.constrain(com_del_phi)
-            elif eBounded is True and comBounded is False:
-                mdInt.constrain(e_del_phi)
-
-            mdInt.mdStep(self.forces, self.timeStep, self.Mol)
-            self.numberOfSteps += 1
-
-            if self.iterations % 10 == 0:
-                tl.printTraj(namefile[self.box],self.Mol)
-
-            if eneBXD.stuckCount >1 :
-                freeFly = True
-
-            if not eneBXD.boxList[eneBXD.box].lower.hit( self.ene, 'down') and not self.ene < eneBXD.boxList[eneBXD.box].upper.hit(self.ene,'up'):
-                freeFly = False
-            if eneBXD.completeRuns == runs:
-                keepGoing = False
-
-        eneBXD.gatherData(False,units.kB * self.LangTemp)
-
-    def runGenBXD(self, Reac, Prod, maxHits, adapMax, pathType, path,bonds):
-
-        self.iterations = 0
-
-        eneBXDon = True
-        eBounded = False
-        comBounded = False
-        keepGoing = True
 
         workingDir = os.getcwd()
-        newpath = workingDir + '/gen' + str(self.procNum)
         file = open("geo.xyz","w")
 
         # Get potential type
         if (self.method == 'nwchem'):
             self.Mol =tl.setCalc(self.Mol,'calcMopac' + str(self.procNum) + '/Traj', 'nwchem2', self.level)
             self.Mol.get_forces()
-        self.Mol =tl.setCalc(self.Mol,'calcMopac' + str(self.procNum) + '/Traj', self.method, self.level)
+
 
         #Get MDintegrator type
         if self.MDIntegrator == 'VelocityVerlet':
             mdInt = MDIntegrator.VelocityVerlet(self.forces, self.velocity, self.Mol)
         elif self.MDIntegrator == 'Langevin':
-            mdInt = MDIntegrator.Langevin(units.kB * self.LangTemp, self.LangFric, self.forces, self.velocity, self.Mol)
+            mdInt = MDIntegrator.Langevin(units.kB * self.LangTemp, self.LangFric, self.forces, self.velocity, self.Mol, self.timeStep)
 
-        # Then set up reaction criteria or connectivity map
-        con = Connectivity.NunezMartinez(self.Mol)
+        if (eneAdaptive == False):
+            BXD = BXDconstraint.Energy(self.Mol, -10000, 10000, runType="fixed", numberOfBoxes = numberOfBoxes, hitLimit = maxHits )
+            BXD.createFixedBoxes(grainSize)
+        else:
+            BXD = BXDconstraint.Energy(self.Mol, -10000, 10000, hitLimit = 1, adapMax = maxAdapSteps, runType="adaptive", numberOfBoxes = numberOfBoxes, decorrelationSteps = decorrelationSteps, hist = histogramLevel)
+
+        #Check whether a list of bounds is present? If so read adaptive boundaries from previous run
+        if os.path.isfile("BXDbounds565.txt"):
+            BXD.readExisitingBoundaries("BXDbounds.txt")
+            BXD.runType = 'fixed'
+        else:
+            BXDfile = open("BXDbounds.txt", "w")
+
+        # Get forces from designated potential
+        try:
+            self.forces = self.Mol.get_forces()
+        except:
+            print('forces error')
 
 
+        # Get potential type
+        if (self.method == 'nwchem'):
+            self.Mol =tl.setCalc(self.Mol,'calcMopac' + str(self.procNum) + '/Traj', 'nwchem2', self.level)
+            self.Mol.get_forces()
+        else:
+            self.Mol =tl.setCalc(self.Mol,'calcMopac' + str(self.procNum) + '/Traj', self.method, self.level)
 
-        #set up adaptive bxd
-        BXD = BXDconstraint.genBXD(self.Mol,"adaptive", Reac, Prod, maxHits, adapMax, bonds,path,pathType)
-
+        #Get MDintegrator type
+        if self.MDIntegrator == 'VelocityVerlet':
+            mdInt = MDIntegrator.VelocityVerlet(self.forces, self.velocity, self.Mol)
+        elif self.MDIntegrator == 'Langevin':
+            mdInt = MDIntegrator.Langevin(units.kB * self.LangTemp, self.LangFric, self.forces, self.velocity, self.Mol, self.timeStep)
 
         # Run MD trajectory for specified number of steps
         while keepGoing:
+
+            if not freeFly:
+                BXD.update(self.Mol)
+                eBounded = BXD.inversion
+                if eBounded:
+                    self.Mol.set_positions(mdInt.oldPos)
+                    e_del_phi = BXD.del_constraint(self.Mol)
+                print('S ' + str(BXD.s[0])  + ' box ' + str(BXD.box) + ' temperature ' + str(self.Mol.get_temperature()))
+            else:
+                eBounded = False
+
+            # Perform inversion if required
+            if eBounded is True:
+                mdInt.constrain(e_del_phi)
+
+            mdInt.mdStepPos(self.forces, self.timeStep, self.Mol)
             t = time()
             # Get forces and energy from designated potential
             try:
                 self.forces = self.Mol.get_forces()
             except:
                 print('forces error')
-
-
-            BXD.update(self.Mol)
-            eBounded = BXD.inversion
-            if self.MDIntegrator == 'VelocityVerlet':
-                print('S ' + str(BXD.s[2])  + ' box ' + str(BXD.box) + ' time ' + str(time()-t) + ' Epot ' + str(self.Mol.get_potential_energy() + self.Mol.get_kinetic_energy()))
-            else:
-                print('S ' + str(BXD.s[2])  + ' box ' + str(BXD.box) + ' time ' + str(time()-t) + ' temperature ' + str(self.Mol.get_temperature()))
-
-            # Perform inversion if required
-            if eBounded is True:
-                mdInt.constrain(BXD.del_phi)
-
-            mdInt.mdStep(self.forces, self.timeStep, self.Mol)
             self.numberOfSteps += 1
+            if freeFly:
+                self.forces = np.zeros((self.forces.shape))
+            mdInt.mdStepVel(self.forces, self.timeStep, self.Mol)
 
-            if self.iterations % 100 == 0:
-                tl.printTraj(file,self.Mol)
+            if BXD.stuck:
+                freeFly = True
 
-            self.iterations += 1;
+            try:
+                ene = self.Mol.get_potential_energy()
+            except:
+                pass
 
+            if not BXD.boxList[BXD.box].lower.hit( BXD.s, 'down') and not BXD.boxList[BXD.box].upper.hit(BXD.s,'up'):
+                freeFly = False
             if BXD.completeRuns == 1:
                 keepGoing = False
 
-        keepGoing = True
-        BXD.reset("fixed", 100)
+        if type == "adaptive":
+            keepGoing = True
+            BXD.printBounds(BXDfile)
+            BXD.reset("fixed", maxHits)
 
-        # Rerun BXD with new adaptively set bounds to converge box to box statistics
         while keepGoing:
             t = time()
             # Get forces and energy from designated potential
@@ -434,8 +361,132 @@ class Trajectory:
             except:
                 print('forces error')
 
+            self.ene = self.Mol.get_potential_energy()
+
+            if not freeFly:
+                BXD.update(self.Mol)
+                eBounded = BXD.inversion
+                e_del_phi = BXD.del_phi
+                print('S ' + str(self.ene)  + ' box ' + str(BXD.box) + ' time ' + str(time()-t) + ' temperature ' + str(self.Mol.get_temperature()))
+            else:
+                eBounded = False
+
+            # Perform inversion if required
+
+            if eBounded is True:
+                mdInt.constrain(e_del_phi)
+
+            mdInt.mdStep(self.forces, self.timeStep, self.Mol)
+            self.numberOfSteps += 1
+
+            if BXD.stuckCount > 1 :
+                freeFly = True
+
+            if not BXD.boxList[BXD.box].lower.hit( self.ene, 'down') and not self.ene < BXD.boxList[BXD.box].upper.hit(self.ene,'up'):
+                freeFly = False
+            if BXD.completeRuns == runsThough:
+                keepGoing = False
+
+        BXD.gatherData(False,units.kB * self.LangTemp)
+
+    def runGenBXD(self, Reac, Prod, maxHits, adapMax, pathType, path, bonds, decSteps, histogramSize):
+
+        self.iterations = 0
+
+        keepGoing = True
+
+        workingDir = os.getcwd()
+        file = open("geo.xyz","w")
+
+        # Get potential type
+        if (self.method == 'nwchem'):
+            self.Mol =tl.setCalc(self.Mol,'calcMopac' + str(self.procNum) + '/Traj', 'nwchem2', self.level)
+            self.Mol.get_forces()
+
+
+        #Get MDintegrator type
+        if self.MDIntegrator == 'VelocityVerlet':
+            mdInt = MDIntegrator.VelocityVerlet(self.forces, self.velocity, self.Mol)
+        elif self.MDIntegrator == 'Langevin':
+            mdInt = MDIntegrator.Langevin(units.kB * self.LangTemp, self.LangFric, self.forces, self.velocity, self.Mol, self.timeStep)
+
+        #Check whether a list of bounds is present? If so read adaptive boundaries from previous run
+        BXD = BXDconstraint.genBXD(self.Mol, Reac, Prod, adapMax = adapMax, activeS = bonds, path = path, pathType = pathType, decorrelationSteps = decSteps, runType = 'adaptive', hitLimit = 1, hist = histogramSize )
+        #Check whether a list of bounds is present? If so read adaptive boundaries from previous run
+        if os.path.isfile("BXDbounds.txt"):
+            BXD.readExisitingBoundaries("BXDbounds.txt")
+            BXD.runType = 'fixed'
+        else:
+            BXDfile = open("BXDbounds.txt", "w")
+
+        # Get forces from designated potential
+        try:
+            self.forces = self.Mol.get_forces()
+        except:
+            print('forces error')
+
+        # Run MD trajectory for specified number of steps
+        while keepGoing:
+
+            t = time()
+            BXD.update(self.Mol)
+            eBounded = BXD.inversion
+            if eBounded:
+                self.Mol.set_positions(mdInt.oldPos)
+                bxd_del_phi = BXD.del_constraint(self.Mol)
+
+            if self.MDIntegrator == 'VelocityVerlet' and self.iterations % self.printFreq == 0:
+                print('S ' + str(BXD.s[2])  + ' box ' + str(BXD.box) + ' time ' + str(time()-t) + ' Etot ' + str(self.Mol.get_potential_energy() + self.Mol.get_kinetic_energy()))
+            elif self.iterations % self.printFreq == 0:
+                print('S ' + str(BXD.s[2])  + ' box ' + str(BXD.box) + ' time ' + str(time()-t) + ' temperature ' + str(self.Mol.get_temperature()))
+
+            # Perform inversion if required
+            if eBounded is True:
+                mdInt.constrain(bxd_del_phi)
+
+            mdInt.mdStepPos(self.forces, self.timeStep, self.Mol)
+            # Get forces from designated potential
+            try:
+                self.forces = self.Mol.get_forces()
+            except:
+                print('forces error')
+            mdInt.mdStepVel(self.forces, self.timeStep, self.Mol)
+
+            self.numberOfSteps += 1
+
+            if self.iterations % self.printFreq == 0:
+                tl.printTraj(file,self.Mol)
+            self.iterations += 1
+
+            #check if one full run is complete, if so stop the adaptive search
+            if BXD.completeRuns == 1:
+                keepGoing = False
+
+        #Check whether inital run and adaptive box placement run, save boundaries and rest all bxd boundaries ready for convergence
+        if BXD.runType == "adaptive":
+            # reset all box data other than boundary positions and prepare to run full BXD
+            # print boundaries to file
+            keepGoing = True
+            BXD.printBounds(BXDfile)
+            BXD.reset("fixed", maxHits)
+
+        file.close()
+
+        # Rerun BXD with new adaptively set bounds to converge box to box statistics
+        # Get forces and energy from designated potential
+        try:
+            self.forces = self.Mol.get_forces()
+        except:
+            print('forces error')
+
+        while keepGoing:
+            t = time()
 
             BXD.update(self.Mol)
+            eBounded = BXD.inversion
+            if eBounded:
+                self.Mol.set_positions(mdInt.oldPos)
+                bxd_del_phi = BXD.del_constraint(self.Mol)
             eBounded = BXD.inversion
             if self.MDIntegrator == 'VelocityVerlet':
                 print('S ' + str(BXD.s[2])  + ' box ' + str(BXD.box) + ' time ' + str(time()-t) + ' Epot ' + str(self.Mol.get_potential_energy() + self.Mol.get_kinetic_energy()))
@@ -446,10 +497,24 @@ class Trajectory:
             if eBounded is True:
                 mdInt.constrain(BXD.del_phi)
 
-            mdInt.mdStep(self.forces, self.timeStep, self.Mol)
+            mdInt.mdStepPos(self.forces, self.timeStep, self.Mol)
+            # Get forces from designated potential
+            try:
+                self.forces = self.Mol.get_forces()
+            except:
+                print('forces error')
+            mdInt.mdStepVel(self.forces, self.timeStep, self.Mol)
+
             self.numberOfSteps += 1
 
             if BXD.completeRuns == 1:
                 keepGoing = False
+            print(time()-t)
 
-        BXD.gatherData(False,units.kB * self.LangTemp)
+        #Look for exsisting results files from previous runs and open a new results file numbered sequentially from those that exsist already
+        i = 0
+        while(os.path.isfile("BXDprofile" + str(i) + ".txt")):
+            i += 1
+        BXDprofile = open("BXDprofile" + str(i) + ".txt", "w")
+        BXDrawData = open("BXDrawData" + str(i) + ".txt", "w")
+        BXD.gatherData(BXDprofile, BXDrawData)

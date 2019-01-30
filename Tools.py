@@ -9,16 +9,15 @@ from ase.io import write, read
 import shutil
 from ase.optimize import BFGS
 from pathlib import Path
-from ase.calculators.OpenMMCalc import OpenMMCalculator
 
 # Function takes a molecule in ASE format, converts it into an OBmol and then returns a SMILES string as a name
 def getSMILES(mol, opt):
     if opt:
         min = BFGS(mol)
         try:
-            min.run(fmax=0.1, steps=50)
+            min.run(fmax=0.1, steps=100)
         except:
-            min.run(fmax=0.1, steps=50)
+            min.run(fmax=0.1, steps=100)
 
     # Get list of atomic numbers and cartesian coords from ASEmol
     atoms = mol.get_atomic_numbers()
@@ -462,15 +461,16 @@ def getGausTSOut(workPath, outpath, keyWords, rMol, pMol, mol, biMole, QST3):
     shutil.copyfile("Opt.gjf",str(outpath)+"/TS.gjf")
     os.system("g09 Opt.gjf")
     print("Gaussian ts opt finished. Output copied to " + str(outpath) +"/TS2.log")
-    if (outpath+"/TS.log").exists():
+    oPath = os.path.normpath(str(outpath)+"/TS.log")
+    if os.path.isfile(oPath):
         shutil.copyfile("Opt.log",str(outpath)+"/TS2.log")
     else:
         shutil.copyfile("Opt.log",str(outpath)+"/TS.log")
 
-    mol,vibs,zpe,imaginaryFreq = readGaussTSOutput(("Opt.log"))
+    mol,vibs,zpe,imaginaryFreq = readGaussTSOutput("Opt.log")
     print("Gaussian TS opt read zpe = " + str(zpe))
     os.chdir(workPath)
-    return mol,vibs,zpe,imaginaryFreq,rMol,pMol
+    return mol,imaginaryFreq,vibs,zpe,rMol,pMol
 
 def convertMolToGauss(mol):
     atoms = mol.get_atomic_numbers()
@@ -504,19 +504,22 @@ def readGaussOutput(path):
     for line in inp:
         if re.search("Frequencies", line):
             l = line.split()
-            vibs.append(l[2])
+            vibs.append(float(l[2]))
             zpe += float(l[2])
             try:
                 vibs.append(float(l[3]))
-                zpe += float(l[3])
+                zpe += float(float(l[3]))
             except:
                 pass
             try:
                 vibs.append(float(l[4]))
-                zpe += float(l[4])
+                zpe += float(float(l[4]))
             except:
                 pass
-    mol = read(filename=path,format="gaussian-out")
+    try:
+        mol = read(filename=path,format="gaussian-out")
+    except:
+        print("couldnt read gaussian output")
     zpe *= 0.00012
     zpe /= 2
     return mol,vibs, zpe
@@ -527,16 +530,31 @@ def readGaussTSOutput(path):
     inp = open(path, "r")
     for line in inp:
         if re.search("Frequencies", line):
-            l = line.split()
-            vibs.append(l[2])
-            zpe += float(l[2])
-            vibs.append(l[3])
-            zpe += float(l[3])
-            vibs.append(l[4])
-            zpe += float(l[4])
-    mol = read(filename=path,format="gaussian-out")
+            try:
+                l = line.split()
+                vibs.append(float(l[2]))
+                zpe += float(l[2])
+                vibs.append(float(l[3]))
+                zpe += float(l[3])
+                vibs.append(l[4])
+                zpe += float(float(l[4]))
+            except:
+                pass
+        if re.search("Error termination"):
+            return 0
+    try:
+        mol = read(filename=path,format="gaussian-out")
+    except:
+        print("couldnt read gaussian output")
+    if vibs[0] > -50:
+        print("GaussianTS has no imaginary Frequency")
+        return
+    if vibs[1] < 0:
+        print("GaussianTS has more than 1 imaginary Frequency")
+        return
+
     zpe -= vibs[0]
-    imaginaryFreq = abs(vibs[0])
+    imaginaryFreq = abs((vibs[0]))
     vibs.pop(0)
     zpe *= 0.00012
     zpe /= 2
@@ -573,8 +591,7 @@ def setCalc(mol, lab, method, level):
     if method == 'gaus':
         mol = calc.gaus(mol, lab, level)
     if method =='openMM':
-        mol.set_calculator(OpenMMCalculator(input="nano.pdb"))
-
+        mol.set_calculator(OpenMMCalculator(atomTypes=level.atomTypes, input="test.pdb", ASEmol = mol, fileType = level.MMfile))
     return mol
 
 

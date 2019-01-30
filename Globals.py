@@ -1,6 +1,7 @@
 import re
 import numpy as np
 import Tools as tl
+from io import StringIO
 
 # Class to store global variables from the input file
 class Globals:
@@ -10,6 +11,7 @@ class Globals:
         mpath = path + '/inp.txt'
 
         self.InitialBi = False
+        self.mixedTimestep = False
 
         self.RunType = "MechGen"
 
@@ -22,16 +24,31 @@ class Globals:
         self.printNEB = False
         self.maxAdapSteps  = 0
         self.eneBoxes = 0
+        self.grainSize = 0
+        self.numberOfBoxes = 10
 
         self.ReactIters = 1
         self.NEBrelax = False
+        self.GenBXDrelax = False
         self.NEBsteps = 3
+        self.printFreq = 10
+
+        self.QTS3 = False
+
+        # BXD defaults
+        self.decorrelationSteps = 10
+        self.histogramLevel = 1
 
         # Open Input
         inp = open(mpath, "r")
         geom = open(mpath,"r").readlines()
 
+
         self.printString = ""
+
+        #Generate empty list to hold mm3 types if required
+        self.atomTypes = []
+        self.MMfile = 'test.pdb'
 
         words = geom[1].split()
         # Check if the first word is Atoms, if so the starting molecule is specified in the input file
@@ -66,7 +83,7 @@ class Globals:
         # Loop over lines
         for line in inp:
             #GenBXD input;
-            #Start type is the starting reactant unless specified in already. StartType is a SMILES string or file path with to be read in
+            #Start type is the starting reactant unless specified in already. StartType is a SMILES string or file path to be read in
             if re.search("Start", line):
                 self.StartType = str(line.split()[2])
                 self.Start = str(line.split()[3])
@@ -74,17 +91,22 @@ class Globals:
             if re.search("End", line):
                 self.EndType = str(line.split()[2])
                 self.End = str(line.split()[3])
+            if re.search("MMfile", line):
+                self.MMfile = str(line.split()[2])
             # PathType defines the prgress along Traj. It is either simpleDistance (distance from boundary), distance (cumulative version of simple distance)
             # linear (projection onto linear path between start and end) or curve (projection onto some trajectory or path)
             if re.search("PathType", line):
                 self.PathType = str(line.split()[2])
-                if self.PathType == 'trajectory':
-                    self.pathFile = str(line.split()[3])
+                if self.PathType == 'curve' or self.PathType == 'gates':
+                    self.PathFile = str(line.split()[3])
             # Determines the collective variables for GenBXD
             if re.search("CollectiveVarType", line):
                 self.CollectiveVarType = str(line.split()[2])
                 if self.CollectiveVarType == 'specified':
-                    self.CollectiveVar = str(line.split()[3])
+                    uVar = line.split()[3]
+                    uVar = uVar.replace("n","\n")
+                    c = StringIO(uVar)
+                    self.CollectiveVar = np.loadtxt(c, delimiter=',')
                 elif self.CollectiveVarType != 'changedBonds':
                     self.CollectiveVarTraj = str(line.split()[3])
 
@@ -97,6 +119,10 @@ class Globals:
                 self.printNEB = True
             if re.search("printDynPath", line):
                 self.printDynPath = True
+                self.dynPrintFreq = int(line.split()[1])
+                self.dynPrintStart = int(line.split()[2])
+            if re.search("QTS3", line):
+                self.QTS3 = True
             if re.search("checkAltProd", line):
                 self.checkAltProd = True
             if re.search("NEBsteps", line):
@@ -175,12 +201,20 @@ class Globals:
                     self.eneEvents = int(line.split()[2])
                 if re.search('eneBoxes', line):
                     self.eneBoxes = int(line.split()[2])
+            if re.search('decorrelationSteps', line):
+                self.decorrelationSteps = int(line.split()[2])
+            if re.search('histogramLevel', line):
+                self.histogramLevel = int(line.split()[2])
             if re.search("maxHits",line):
                     self.maxHits  = int(line.split()[2])
             if re.search("runsThrough",line):
                     self.runsThrough  = int(line.split()[2])
             if re.search("adaptiveSteps",line):
                     self.maxAdapSteps  = int(line.split()[2])
+            if re.search("grainSize",line):
+                    self.grainSize  = int(line.split()[2])
+            if re.search("numberOfBoxes",line):
+                    self.numberOfBoxes  = int(line.split()[2])
             if re.search("comBXD", line):
                 if (line.split()[2]) == 'True':
                     self.comBXD = True
@@ -197,15 +231,22 @@ class Globals:
                 self.GeomPot1 = line.split()[2]
 
 
-        # Single point ene
+            # Single point ene
             if re.search("singlePoint", line):
                 self.singlePoint = line.split()[2]
 
-        # Master Equation
+            # Master Equation
             if re.search("maxSimulationTime", line):
                 self.maxSimulationTime = float(line.split()[2])
             if re.search("equilThreshold", line):
                 self.equilThreshold = int(line.split()[2])
+
+            # Look for mm3 types
+            if re.search("AtomTypes", line):
+                self.atomTypes = line.split()[2]
+                self.atomTypes = self.atomTypes.split(",")
+                for i in range (0,len(self.atomTypes)):
+                    self.atomTypes[i] = float(self.atomTypes[i])
 
         self.trajMethod = self.trajMethod1
         self.trajLevel = self.trajLevel1

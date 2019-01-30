@@ -50,7 +50,6 @@ def runNormal(p):
 
                 #if traj.transindex[0] != 0 or traj.transindex[1] != 0:
                 # TS optimisation
-
                 try:
                     p[0].optTSpoint(changedBonds, prodpath,p[1].MolList,p[1].TSpoint,0)
                 except:
@@ -58,7 +57,7 @@ def runNormal(p):
                     p[0].barrierlessReaction = True
 
                 printTS2 = False
-
+                printXML = True
                 if p[0].TScorrect != True:
                     #By default print dynamcial path else print NEB
                     if p[5].printDynPath == True:
@@ -71,6 +70,11 @@ def runNormal(p):
                             p[0].optNEB(changedBonds, prodpath, p[1].changePoints,p[1].MolList)
                         except:
                             print("NEB failed")
+                    if p[0].TS2correct == True:
+                        printTS2 = True
+                    else:
+                        p[0].barrierlessReaction = True
+
 
                 # check whether there is an alternate product
                 #if p[0].checkAltProd == True and p[0].is_IntermediateProd == True:
@@ -83,8 +87,7 @@ def runNormal(p):
                     p[0].barrierlessReaction = False
                     printXML = True
                     printTS2 = True
-                else:
-                    printXML = True
+
                 #Then check barrier isnt ridiculous
                 #if (((p[0].forwardBarrier - p[0].eneBaseline) * 96.45) > 800) and (p[0].barrierlessReaction == False):
                 #   printXML = False
@@ -97,11 +100,13 @@ def runNormal(p):
                         io.writeTSXML(p[0], p[3].replace('.xml','Full.xml'))
                     except:
                         print('Couldnt print TS1')
-                    try:
-                        io.writeTSXML2(p[0], p[3])
-                        io.writeTSXML2(p[0], p[3].replace('.xml','Full.xml'))
-                    except:
-                        print('Couldnt print TS2')
+
+                    if printTS2 == True:
+                        try:
+                            io.writeTSXML2(p[0], p[3])
+                            io.writeTSXML2(p[0], p[3].replace('.xml','Full.xml'))
+                        except:
+                            print('Couldnt print TS2')
                                     
 
                     tmppath = p[3].replace('/MESMER/mestemplate.xml','/')
@@ -276,6 +281,7 @@ def run(glo):
                 for i in range(0,len(glo.BiList)):
                     baseXYZ = reacs['reac_0'].CombReac.get_chemical_symbols()
                     if me.time > (1 / float(glo.BiRates[i])):
+                        print("assessing whether or not to look for bimolecular channel. Rate = " + str(float(glo.BiRates[i])) + "Mesmer reaction time = " + str(me.time))
                         glo.InitialBi = True
                         xyz = CT.get_bi_xyz(reacs['reac_0'].ReacName, glo.BiList[i])
                         spec = np.append(baseXYZ,np.array(glo.BiList[i].get_chemical_symbols()))

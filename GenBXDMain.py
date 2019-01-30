@@ -16,7 +16,7 @@ import os
 from ase.optimize import FIRE
 from ase.neb import NEBtools
 from ase.io import write, read
-from ase.calculators.OpenMMCalc import OpenMMCalculator
+
 
 
 def run(gl):
@@ -32,32 +32,43 @@ def run(gl):
         Prod = tl.getMolFromSmile(gl.End)
 
     #Set calculatiors
-    Reac = tl.setCalc(Reac,"DOS/", gl.trajMethod, gl.trajLevel)
-    Prod = tl.setCalc(Prod,"DOS/", gl.trajMethod, gl.trajLevel)
-
+    #Reac = tl.setCalc(Reac,"DOS/", gl.trajMethod, gl.atomTypes)
+    if gl.trajMethod == "openMM":
+        Reac = tl.setCalc(Reac,"DOS/", gl.trajMethod, gl)
+        Prod = tl.setCalc(Prod,"DOS/", gl.trajMethod, gl)
+    else:
+        Reac = tl.setCalc(Reac,"DOS/", gl.trajMethod, gl.trajLevel)
+        Prod = tl.setCalc(Prod,"DOS/", gl.trajMethod, gl.trajLevel)
     # Partially minimise both reactant and product
-    min = BFGS(Reac)
-    try:
-       min.run(fmax=0.1, steps=20)
-    except:
-        min.run(fmax=0.1, steps=20)
-    min2 = BFGS(Prod)
-    try:
-        min2.run(fmax=0.1, steps=20)
-    except:
-        min2.run(fmax=0.1, steps=20)
+    if gl.GenBXDrelax:
+        min = BFGS(Reac)
+        try:
+            min.run(fmax=0.1, steps=20)
+        except:
+            min.run(fmax=0.1, steps=20)
+        min2 = BFGS(Prod)
+        try:
+            min2.run(fmax=0.1, steps=20)
+        except:
+            min2.run(fmax=0.1, steps=20)
 
-    # Get changed bonds
-    cbs = ct.getChangedBonds2(Reac, Prod)
+    # Get important interatomic distances
+    if gl.CollectiveVarType == "changedBonds":
+        cbs = ct.getChangedBonds2(Reac, Prod)
+    elif gl.CollectiveVarType == "all":
+        cbs = ct.getChangedBonds2(Reac, Prod)
+    elif gl.CollectiveVarType == "specified":
+        cbs = gl.CollectiveVar
 
     #Get path to project along
+    distPath = []
     totalPathLength = 0
-    if gl.PathType == 'curve':
+    if gl.PathType == 'curve' or gl.PathType == 'gates':
         if gl.PathFile == 'none':
             Path = getPath(Reac,Prod,gl)
         else:
             Path = read(gl.PathFile,index='::1')
-        distPath = []
+
         distPath.append((ct.getDistMatrix(Path[0],cbs)[0],0))
         for i in range(1,len(Path)):
             l = np.linalg.norm(ct.getDistMatrix(Path[i],cbs)[0] - ct.getDistMatrix(Path[i-1], cbs)[0])
@@ -69,7 +80,7 @@ def run(gl):
 
     # initialise then run trajectory
     t = Trajectory.Trajectory(Reac,gl,os.getcwd(),0,False)
-    t.runGenBXD(Reac,Prod,gl.maxHits,gl.maxAdapSteps,gl.PathType,distPath, cbs)
+    t.runGenBXD(Reac,Prod,gl.maxHits,gl.maxAdapSteps,gl.PathType,distPath, cbs, gl.decorrelationSteps, gl.histogramLevel)
 
 def getPath(Reac,Prod,gl):
     xyzfile3 = open(("IRC3.xyz"), "w")

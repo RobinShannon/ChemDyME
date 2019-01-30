@@ -27,11 +27,11 @@ def writeTSXML(React, path):
     vibarrays = ET.SubElement(vib,"array", units="cm-1")
     vibarrays.text = freqs
     Imagvib = ET.SubElement(prop, "property", dictRef ="me:imFreq")
-    vibarrays = ET.SubElement(Imagvib,"scalar", units="cm-1")
-    vibarrays.text = imaginaryFreq
+    Imag = ET.SubElement(Imagvib,"scalar", units="cm-1")
+    Imag.text = imaginaryFreq
     Mult = ET.SubElement(prop, "property", dictRef ="me:spinMultiplicity")
-    vibarrays = ET.SubElement(Mult,"scalar", units="cm-1")
-    vibarrays.text = str(spinMult)
+    Multi = ET.SubElement(Mult,"scalar", units="cm-1")
+    Multi.text = str(spinMult)
     ene = ET.SubElement(prop, "property", dictRef ="me:ZPE")
     enedata = ET.SubElement(ene,"scalar", units="kJ/mol")
     symb  = "".join(React.CombReac.get_chemical_symbols())
@@ -74,11 +74,11 @@ def writeTSXML2(React, path):
     vibarrays = ET.SubElement(vib,"array", units="cm-1")
     vibarrays.text = freqs
     Imagvib = ET.SubElement(prop, "property", dictRef ="me:imFreq")
-    vibarrays = ET.SubElement(Imagvib,"scalar", units="cm-1")
-    vibarrays.text = imaginaryFreq
+    Imag = ET.SubElement(Imagvib,"scalar", units="cm-1")
+    Imag.text = imaginaryFreq
     Mult = ET.SubElement(prop, "property", dictRef ="me:spinMultiplicity")
-    vibarrays = ET.SubElement(Mult,"scalar", units="cm-1")
-    vibarrays.text = str(spinMult)
+    Multi = ET.SubElement(Mult,"scalar", units="cm-1")
+    Multi.text = str(spinMult)
     ene = ET.SubElement(prop, "property", dictRef ="me:ZPE")
     enedata = ET.SubElement(ene,"scalar", units="kJ/mol")
     symb  = "".join(React.CombReac.get_chemical_symbols())

@@ -100,14 +100,17 @@ def getCOMdel(Mol, frag):
 # Set up a reference matrix for ideal bond length between any two atoms in the system
 # Maps species types onto a grid of stored ideal bond distances stored in the global variables module
 def refBonds(mol):
-    dict = {'CC' : 1.4, 'CH' : 1.1, 'HC' : 1.1, 'CO' : 1.4, 'OC' : 1.4, 'OH' : 1.2, 'HO' : 1.2, 'OO' : 1.6, 'HH' : 1.1, 'CF' : 1.4, 'FC' : 1.4, 'OF' : 1.4, 'FO' : 1.4, 'HF' : 1.1, 'FH' : 1.1, 'FF' : 1.4 }
+    dict = {'CC' : 1.4, 'CH' : 1.1, 'HC' : 1.1, 'CO' : 1.4, 'OC' : 1.4, 'OH' : 1.2, 'HO' : 1.2, 'OO' : 1.6, 'HH' : 0.7, 'CF' : 1.4, 'FC' : 1.4, 'OF' : 1.4, 'FO' : 1.4, 'HF' : 1.1, 'FH' : 1.1, 'FF' : 1.4, 'NC' : 1.4, 'CN' : 1.4, 'HN' : 1.1, 'NH' : 1.1, 'NN' : 1.4 }
     size =len(mol.get_positions())
     symbols = mol.get_chemical_symbols()
     dRef = np.zeros((size,size))
     for i in range(0 ,size) :
         for j in range(0, size) :
             sp = symbols[i] + symbols[j]
-            dRef[i][j] = dict[sp]
+            try:
+                dRef[i][j] = dict[sp]
+            except:
+                dRef[i][j] = 1.4
     return dRef
 
 def bondMatrix(dRef,mol):
@@ -216,14 +219,25 @@ def getDistMatrix(mol,active):
             Dind.append([active[i][0],active[i][1]])
     return D,Dind
 
-def projectPointOnPath(S,path,type,n,D,reac):
+def projectPointOnPath2(S,path,type,n,D,reac, pathNode):
     baseline = S - reac
     Sdist = np.vdot(S,n) + D
     if type == 'curve':
         min = 10000
         minPoint = 0
         distArray =[]
-        for i in range(0,len(path)):
+        #Only consider nodes either side of current node
+        #Use current node to define start and end point
+        if pathNode == 0:
+            start = 0
+            end = 3
+        elif pathNode == 1:
+            start = 0
+            end =  4
+        else:
+            start = pathNode - 1
+            end = max(pathNode + 2, len(path))
+        for i in range(start,end):
             dist = np.linalg.norm(S - path[i][0])
             distArray.append(dist)
             if dist < min:
@@ -244,7 +258,59 @@ def projectPointOnPath(S,path,type,n,D,reac):
         project = np.linalg.norm(baseline)
     if type =='simple distance':
         project = Sdist
-    return Sdist,project
+    return Sdist,project,minPoint
+
+def projectPointOnPath(S,path,type,n,D,reac, pathNode):
+    baseline = S - reac
+    Sdist = np.vdot(S,n) + D
+    minPoint = 0
+    if type == 'gates':
+        gBase = S - path[pathNode][0]
+        #check if gate has been hit
+        RMSD = np.linalg.norm(S-path[pathNode+1][0])
+        if RMSD < 0.1:
+            print ("hit")
+            pathNode += 1
+        project = np.vdot(gBase,path[pathNode+1][0]) / np.linalg.norm(path[pathNode+1][0])
+        project += path[minPoint][1]
+    if type == 'curve':
+        min = 10000
+        minPoint = 0
+        distArray =[]
+        #Only consider nodes either side of current node
+        #Use current node to define start and end point
+        if pathNode == 0:
+            start = 0
+            end = 2
+        elif pathNode == 1:
+            start = 0
+            end =  3
+        else:
+            start = pathNode - 1
+            end = max(pathNode + 1, len(path))
+        for i in range(start,end):
+            dist = np.linalg.norm(S - path[i][0])
+            distArray.append(dist)
+            if dist < min:
+                minPoint = i
+                min = dist
+                distArray.append(dist)
+        if minPoint != (len(path)-1) :
+            pathSeg = path[minPoint+1][0] - path[minPoint][0]
+            project = np.vdot((S - path[minPoint][0]),pathSeg) / np.linalg.norm(pathSeg)
+            project += path[minPoint][1]
+        else:
+            pathSeg = path[minPoint][0] - path[minPoint-1][0]
+            project = np.vdot((S - path[minPoint-1][0]),pathSeg) / np.linalg.norm(pathSeg)
+            project += path[minPoint-1][1]
+    if type == 'linear':
+        project = np.vdot(baseline,path) / np.linalg.norm(path)
+    if type == 'distance':
+        project = np.linalg.norm(baseline)
+    if type =='simple distance':
+        project = Sdist
+    return Sdist,project,minPoint
+
 
 # Get del_phi for bxd for arbitrary number of interatomic distances
 # S is the vector of collective variables and Sind gives the index of the bonding atoms in the full catesian coords

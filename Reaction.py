@@ -63,13 +63,16 @@ class Reaction:
         self.reactantEnergy = 0.0
         self.productEnergy = 0.0
         self.have_reactant = False
-        self.inc = glo.printFreq
+        self.inc = glo.dynPrintFreq
+        self.dynPrintStart = glo.dynPrintStart
         self.printNEB = glo.printNEB
+        self.QTS3 = glo.QTS3
         self.MidPoint = Atoms(symbols=species, positions = cartesians)
         self.checkAltProd = glo.checkAltProd
         self.AltProd = Atoms(symbols=species, positions = cartesians)
         self.is_IntermediateProd = False
         self.TScorrect = False
+        self.TS2correct = True
 
     def compareRandP(self, rmol, pmol):
         #Check if TS links reac and prod
@@ -106,9 +109,9 @@ class Reaction:
         mol  = tl.setCalc(mol, self.lowString, self.lowMeth, self.lowLev)
         min = BFGS(mol)
         try:
-            min.run(fmax=0.1, steps=50)
+            min.run(fmax=0.1, steps=100)
         except:
-            min.run(fmax=0.1, steps=50)
+            min.run(fmax=0.1, steps=100)
         if high:
             if self.highMeth == "gauss":
                 mol, freqs, zpe = tl.getGausOut(self.workingDir + '/calcHigh' + self.procNum, self.highLev, mol)
@@ -159,7 +162,7 @@ class Reaction:
         energy = mol.get_potential_energy() + zpe
         return freqs, energy, mol
 
-    def characteriseTSExt(self, mol, low, path):
+    def characteriseTSExt(self, mol, low, path, QTS3):
 
         os.chdir((self.workingDir))
         # Higher level optimisation via some external program
@@ -175,7 +178,7 @@ class Reaction:
             pass
 
         if not low and self.highMeth == "gauss":
-            mol, imaginaryFreq, TSFreqs, zpe, rmol, pmol = tl.getGausTSOut(self.workingDir + '/calcHigh' + self.procNum, path, self.highLev, self.CombReac, self.CombProd, mol,self.is_bimol_reac,True)
+            mol, imaginaryFreq, TSFreqs, zpe, rmol, pmol = tl.getGausTSOut(self.workingDir + '/calcHigh' + self.procNum, path, self.highLev, self.CombReac, self.CombProd, mol,self.is_bimol_reac,QTS3)
             os.chdir((self.workingDir))
         else:
             print("getting TS geom")
@@ -287,34 +290,38 @@ class Reaction:
             try:
                 self.biProdFreqs,Ene,self.biProd = self.characteriseMinExt(self.biProd,True)
             except:
-                self.biProdFreqs,Ene,self.biProd = self.characteriseMinExt(self.biProd,True)
+                self.biProdFreqs,Ene,self.biProd = self.characteriseMinExt(self.biProd,False)
             self.productEnergy += Ene
 
     def optTSpoint(self, trans, path, MolList, TrajStart, idx):
 
         self.TS = MolList[TrajStart].copy()
-        write(path + '/TSGuess.xyz', self.TS)
         self.TS = tl.setCalc(self.TS,self.lowString, self.lowMeth, self.lowLev)
         c = FixAtoms(trans)
         self.TS.set_constraint(c)
         min = BFGS(self.TS)
         min.run(fmax=0.05, steps=50)
+        write(path + '/TSGuess.xyz', self.TS)
         del self.TS.constraints
+        if self.biReac or self.biProd:
+            QTS3 = False
+        else:
+            QTS3 = True
 
         if (self.twoStageTS):
             try:
-                self.TSFreqs, self.imaginaryFreq, zpe, energy, self.TS, rmol, pmol = self.characteriseTSExt(self.TS, True, path)
+                self.TSFreqs, self.imaginaryFreq, zpe, energy, self.TS, rmol, pmol = self.characteriseTSExt(self.TS, True, path, QTS3)
             except:
                 pass
         try:
-            self.TSFreqs, self.imaginaryFreq, zpe, energy, self.TS, rmol, pmol = self.characteriseTSExt(self.TS, False, path)
+            self.TSFreqs, self.imaginaryFreq, zpe, energy, self.TS, rmol, pmol = self.characteriseTSExt(self.TS, False, path, QTS3)
         except:
-            self.TSFreqs, self.imaginaryFreq, zpe, energy, self.TS, rmol, pmol = self.characteriseTSExt(self.TS, True, path)
+            self.TSFreqs, self.imaginaryFreq, zpe, energy, self.TS, rmol, pmol = self.characteriseTSExt(self.TS, True, path, QTS3)
 
         try:
             self.TScorrect = self.compareRandP(rmol,pmol)
         except:
-            pass
+            self.TScorrect = False
 
         write(path + '/TS1.xyz', self.TS)
 
@@ -354,8 +361,8 @@ class Reaction:
         dyn = open((path +"/traj.xyz"), "w")
 
         dynList = []
-        for i in range( int((changePoints - 1000)/ self.inc),int(len(MolList) / self.inc)):
-            iMol = MolList[i * self.inc].copy()
+        for i in range( int(changePoints - 500),int(len(MolList)), self.inc):
+            iMol = MolList[i].copy()
             tl.printTraj(dyn, iMol)
             iMol = tl.setCalc(iMol,self.lowString, self.lowMeth, self.lowLev)
             c = FixAtoms(trans)
@@ -381,17 +388,17 @@ class Reaction:
         self.TS2 = dynList[point]
         write(path + '/TS2guess.xyz', self.TS2)
         try:
-            self.TS2Freqs, self.imaginaryFreq2, zpe, energy, self.TS2, rmol, pmol = self.characteriseTSExt(self.TS2, True, path)
+            self.TS2Freqs, self.imaginaryFreq2, zpe, energy, self.TS2, rmol, pmol = self.characteriseTSExt(self.TS2, True, path, self.QTS3)
         except:
             try:
-                self.TS2Freqs, self.imaginaryFreq2, zpe, energy, self.TS2, rmol, pmol = self.characteriseTSExt(self.TS2, False, path)
+                self.TS2Freqs, self.imaginaryFreq2, zpe, energy, self.TS2, rmol, pmol = self.characteriseTSExt(self.TS2, False, path, self.QTS3)
             except:
                 pass
         try:
-            self.TScorrect = self.compareRandP(rmol,pmol)
+            self.TS2correct = self.compareRandP(rmol,pmol)
         except:
             print("TS2 does not connect products")
-            self.TScorrect = False
+            self.TS2correct = False
             self.TS2Freqs, self.imaginaryFreq2, zpe, energy = self.characteriseTSinternal(self.TS2)
 
         self.forwardBarrier2 = energy
@@ -473,9 +480,9 @@ class Reaction:
         print("TS Climb part")
         write(path + '/TSClimbGuess.xyz', self.TS2)
         try:
-            self.TS2Freqs, self.imaginaryFreq2, zpe, energy, self.TS2, rmol, pmol = self.characteriseTSExt(self.TS2, False, path)
+            self.TS2Freqs, self.imaginaryFreq2, zpe, energy, self.TS2, rmol, pmol = self.characteriseTSExt(self.TS2, False, path, self.QTS3)
         except:
-            self.TS2Freqs, self.imaginaryFreq2, zpe, energy, self.TS2, rmol, pmol = self.characteriseTSExt(self.TS2, True, path)
+            self.TS2Freqs, self.imaginaryFreq2, zpe, energy, self.TS2, rmol, pmol = self.characteriseTSExt(self.TS2, True, path, self.QTS3)
 
         self.TScorrect = self.compareRandP(rmol,pmol)
         self.forwardBarrier2 = energy + zpe

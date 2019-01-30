@@ -13,7 +13,7 @@ class MasterEq:
         self.equilCount = 0
 
     def runTillReac(self, args2):
-        args1 = '/Users/robinshannon/mesmerStoch/bin/mesmer'
+        args1 = '/panfs/panasas01/chem/rs15164/mesmerStoch/bin/mesmer'
         p = Popen([args1,args2], stdout=PIPE, stderr=PIPE )
         stdout, stderr = p.communicate()
         out = stderr.decode("utf-8")
