@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="utf-8"?>
+<?xml-stylesheet type='text/xsl' href='../../mesmer2.xsl' media='other'?>
+<?xml-stylesheet type='text/xsl' href='../../mesmer1.xsl' media='screen'?>
+<me:mesmer xmlns="http://www.xml-cml.org/schema"
+    xmlns:me="http://www.chem.leeds.ac.uk/mesmer"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+<title> Glyoxal</title>
+<moleculeList>
+    <molecule id="N2" description="Nitrogen">
+            <atom elementType="N2"/>
+                <propertyList>
+                    <property dictRef="me:epsilon">
+                        <scalar>82.0</scalar>
+                    </property>
+                    <property dictRef="me:sigma">
+                        <scalar>3.74</scalar>
+                    </property>
+                    <property dictRef="me:MW">
+                        <scalar units="amu">28.0</scalar>
+                    </property>
+                </propertyList>
+        </molecule>
+    </moleculeList>
+<reactionList>
+</reactionList>
+    <me:conditions>
+        <me:bathGas>N2</me:bathGas>
+        <me:PTs>
+            
+            <me:PTpair me:units="Torr" me:P="5000" me:T="2000" refReactionExcess="R2"  me:precision="d" >
+            </me:PTpair>
+
+        </me:PTs>
+
+    
+    <me:modelParameters>
+        <me:grainSize units="cm-1">100</me:grainSize>
+        <me:energyAboveTheTopHill>10.0</me:energyAboveTheTopHill>
+    </me:modelParameters>
+
+  </me:conditions>
+  <me:modelParameters>
+    <me:numberStochasticTrials>1</me:numberStochasticTrials>
+    <me:stochasticStartTime>1E-11</me:stochasticStartTime>
+    <me:stochasticEndTime>1E-0</me:stochasticEndTime>
+    <me:StochasticThermalThreshold>100</me:StochasticThermalThreshold>
+    <me:StochasticEqilThreshold>100000000</me:StochasticEqilThreshold>
+    <me:StochasticAxdLimit>-100</me:StochasticAxdLimit>
+    <!--Specify grain size directly...-->
+    <me:grainSize units="cm-1">100</me:grainSize>
+    <!--...or by the total number of grains
+        <me:numberOfGrains> 500 </me:numberOfGrains>-->
+    <!--Specify increased energy range
+        <me:maxTemperature>6000</me:maxTemperature>-->
+    <me:energyAboveTheTopHill>10.0</me:energyAboveTheTopHill>
+  </me:modelParameters>
+  <me:control>
+    <me:printSpeciesProfile/>
+    <me:stochasticOnePass/>
+    <me:stochasticSimulation/>
+  </me:control>
+</me:mesmer>
+
+
+
+
