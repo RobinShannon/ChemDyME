@@ -69,10 +69,16 @@ class MM3(ForceField):
         inp = open("mm3.prm", "r")
         K = 0
         r_eq = 0
+        if types[i] <= types[j]:
+            type1 = types[i]
+            type2 = types[j]
+        else:
+            type1 = types[j]
+            type2 = types[i]
         for line in inp:
             words = line.split()
             try:
-                if words[0] == "bond" and float(words[1]) == types[i] and float(words[2]) == types[j]:
+                if words[0] == "bond" and float(words[1]) == type1 and float(words[2]) == type2:
                     K,r_eq = float(words[3]),float(words[4])
             except:
                 pass

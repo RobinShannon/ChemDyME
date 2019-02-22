@@ -35,9 +35,11 @@ class Globals:
 
         self.QTS3 = False
 
+
         # BXD defaults
         self.decorrelationSteps = 10
         self.histogramLevel = 1
+        self.principalCoordinates = []
 
         # Open Input
         inp = open(mpath, "r")
@@ -107,8 +109,15 @@ class Globals:
                     uVar = uVar.replace("n","\n")
                     c = StringIO(uVar)
                     self.CollectiveVar = np.loadtxt(c, delimiter=',')
+                elif self.CollectiveVarType == 'file':
+                    i = 4
+                    while i < len(line.split()):
+                        array = self.readPrincipalComponents(line.split()[i], line.split()[3])
+                        self.principalCoordinates.append(array)
+                        i+=1
                 elif self.CollectiveVarType != 'changedBonds':
                     self.CollectiveVarTraj = str(line.split()[3])
+
 
 
             if re.search("RunType", line):
@@ -250,4 +259,19 @@ class Globals:
 
         self.trajMethod = self.trajMethod1
         self.trajLevel = self.trajLevel1
+
+    def readPrincipalComponents(self, inp, terms):
+        #Get number of lines in file
+        num_lines = sum(1 for line in open(inp))
+        # size of array is min of specified lines to be read and the actual size
+        size = min(num_lines,int(terms))
+        array = np.zeros((size,3))
+        i = 0
+        with open(inp) as f:
+            lines = f.read().splitlines()
+        for i in range(1,size+1):
+            array[i-1][0] = int(lines[i].split('\t')[1])
+            array[i-1][1] = int(lines[i].split('\t')[2])
+            array[i-1][2] = float(lines[i].split('\t')[0])
+        return array
 

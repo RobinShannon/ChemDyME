@@ -1,5 +1,7 @@
 import numpy as np
 import Tools as tl
+from time import process_time
+import util
 import math as mth
 
 # Method to get the center of mass seperation for two fragments.
@@ -100,17 +102,14 @@ def getCOMdel(Mol, frag):
 # Set up a reference matrix for ideal bond length between any two atoms in the system
 # Maps species types onto a grid of stored ideal bond distances stored in the global variables module
 def refBonds(mol):
-    dict = {'CC' : 1.4, 'CH' : 1.1, 'HC' : 1.1, 'CO' : 1.4, 'OC' : 1.4, 'OH' : 1.2, 'HO' : 1.2, 'OO' : 1.6, 'HH' : 0.7, 'CF' : 1.4, 'FC' : 1.4, 'OF' : 1.4, 'FO' : 1.4, 'HF' : 1.1, 'FH' : 1.1, 'FF' : 1.4, 'NC' : 1.4, 'CN' : 1.4, 'HN' : 1.1, 'NH' : 1.1, 'NN' : 1.4 }
+    dict = {'CC' : 1.4, 'CH' : 1.1, 'HC' : 1.1, 'CO' : 1.4, 'OC' : 1.4, 'OH' : 1.2, 'HO' : 1.2, 'OO' : 1.6, 'HH' : 0.7, 'CF' : 1.4, 'FC' : 1.4, 'OF' : 1.4, 'FO' : 1.4, 'HF' : 1.1, 'FH' : 1.1, 'FF' : 1.4 }
     size =len(mol.get_positions())
     symbols = mol.get_chemical_symbols()
     dRef = np.zeros((size,size))
     for i in range(0 ,size) :
         for j in range(0, size) :
             sp = symbols[i] + symbols[j]
-            try:
-                dRef[i][j] = dict[sp]
-            except:
-                dRef[i][j] = 1.4
+            dRef[i][j] = dict[sp]
     return dRef
 
 def bondMatrix(dRef,mol):
@@ -193,11 +192,21 @@ def get_bi_xyz(smile1, mol):
 
     return xyz1
 
+# Vectorised function to quickly get array of euclidean distances between atoms
+def getDistVect(mol):
+    xyz = mol.get_positions()
+    size =len(mol.get_positions())
+    D = np.zeros((size,size))
+    D = np.sqrt(np.sum(np.square(xyz[:,np.newaxis,:] - xyz), axis=2))
+    return D
 
 def getSPRINT(xyz):
     pass
 
 def getDistMatrix(mol,active):
+    t = process_time()
+    #do some stuff
+
     if active == "all":
         s1 = len(mol.get_positions())
         s2 = s1*(s1+1)/2
@@ -213,10 +222,17 @@ def getDistMatrix(mol,active):
                 D[n] = Dist
                 Dind.append((i,j))
                 n += 1
+    #Hack to to read principle component in form of linear combination of atomic distances
+    elif active[0].shape[0] > 1:
+        dist = getDistVect(mol)
+        Dind = active
+        D,Dind = util.getPC(active,dist)
     else:
         for i in range(0,s2):
             D[i] = mol.get_distance(active[i][0],active[i][1])
             Dind.append([active[i][0],active[i][1]])
+    elapsed_time = process_time() - t
+    #print("time to get S = " + str(elapsed_time))
     return D,Dind
 
 def projectPointOnPath2(S,path,type,n,D,reac, pathNode):
@@ -274,7 +290,7 @@ def projectPointOnPath(S,path,type,n,D,reac, pathNode):
         project = np.vdot(gBase,path[pathNode+1][0]) / np.linalg.norm(path[pathNode+1][0])
         project += path[minPoint][1]
     if type == 'curve':
-        min = 10000
+        min = 100000
         minPoint = 0
         distArray =[]
         #Only consider nodes either side of current node
@@ -286,16 +302,15 @@ def projectPointOnPath(S,path,type,n,D,reac, pathNode):
             start = 0
             end =  3
         else:
-            start = pathNode - 1
-            end = max(pathNode + 1, len(path))
-        for i in range(start,end):
+            start = pathNode -2
+            end = max(pathNode + 2, len(path))
+        for i in range(0,len(path)):
             dist = np.linalg.norm(S - path[i][0])
             distArray.append(dist)
             if dist < min:
                 minPoint = i
                 min = dist
-                distArray.append(dist)
-        if minPoint != (len(path)-1) :
+        if minPoint != (len(path)-1) and distArray[minPoint + 1] < distArray[minPoint-1] :
             pathSeg = path[minPoint+1][0] - path[minPoint][0]
             project = np.vdot((S - path[minPoint][0]),pathSeg) / np.linalg.norm(pathSeg)
             project += path[minPoint][1]
@@ -311,11 +326,19 @@ def projectPointOnPath(S,path,type,n,D,reac, pathNode):
         project = Sdist
     return Sdist,project,minPoint
 
+def genBXDDel(mol,S,Sind,n):
+    l = Sind[0].shape[1]
+    if l == 3:
+        constraint = genLinCombBXDDel(mol,S,Sind,n)
+    else:
+        constraint = genDistBXDDel(mol,S,Sind,n)
+    return constraint
+
 
 # Get del_phi for bxd for arbitrary number of interatomic distances
 # S is the vector of collective variables and Sind gives the index of the bonding atoms in the full catesian coords
 # mol stores the full moleculular structure and n gives the coordinates of the boundary that has been hit
-def genBXDDel(mol,S,Sind,n):
+def genDistBXDDel(mol,S,Sind,n):
     constraint = np.zeros(mol.get_positions().shape)
     pos = mol.get_positions()
     #First loop over all atoms
@@ -338,3 +361,32 @@ def genBXDDel(mol,S,Sind,n):
                 constraint[i][1] += firstTerm*2*(pos[Sind[j][0]][1]-pos[i][1])*-1*n[j]
                 constraint[i][2] += firstTerm*2*(pos[Sind[j][0]][2]-pos[i][2])*-1*n[j]
     return constraint
+
+# Get del_phi for bxd for linear combination of interatomic distances
+# S is the vector of collective variables
+# mol stores the full moleculular structure and n gives the coordinates of the boundary that has been hit
+def genLinCombBXDDel(mol,S,PC,n):
+    t = process_time()
+    constraintFinal = np.zeros(mol.get_positions().shape)
+    pos = mol.get_positions()
+    #First loop over all atoms
+    for j in range(0,len(PC)):
+        constraint = np.zeros(mol.get_positions().shape)
+        for k in range(0,PC[j].shape[0]):
+            # need a check here in case the collective variable is zero since nan would be returned
+            index1 = int(PC[j][k][0])
+            index2 = int(PC[j][k][1])
+            distance = np.sqrt((pos[index1][0]-pos[index2][0])**2 + (pos[index1][1]-pos[index2][1])**2 + (pos[index1][2]-pos[index2][2])**2)
+            firstTerm = (1/(2*distance))
+            constraint[index1][0] += firstTerm*2*(pos[index1][0]-pos[index2][0])*PC[j][k][2]
+            constraint[index1][1] += firstTerm*2*(pos[index1][1]-pos[index2][1])*PC[j][k][2]
+            constraint[index1][2] += firstTerm*2*(pos[index1][2]-pos[index2][2])*PC[j][k][2]
+            # alternate formula for case where i is the seccond atom
+            constraint[index2][0] += firstTerm*2*(pos[index1][0]-pos[index2][0])*-1*PC[j][k][2]
+            constraint[index2][1] += firstTerm*2*(pos[index1][1]-pos[index2][1])*-1*PC[j][k][2]
+            constraint[index2][2] += firstTerm*2*(pos[index1][2]-pos[index2][2])*-1*PC[j][k][2]
+        constraint *= n[j]
+        constraintFinal += constraint
+    elapsed_time = process_time() - t
+    #print("time to get constraint = " + str(elapsed_time))
+    return constraintFinal

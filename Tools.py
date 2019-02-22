@@ -9,6 +9,7 @@ from ase.io import write, read
 import shutil
 from ase.optimize import BFGS
 from pathlib import Path
+from ase.calculators.OpenMMCalc import OpenMMCalculator
 
 # Function takes a molecule in ASE format, converts it into an OBmol and then returns a SMILES string as a name
 def getSMILES(mol, opt):
@@ -460,14 +461,13 @@ def getGausTSOut(workPath, outpath, keyWords, rMol, pMol, mol, biMole, QST3):
     f.close()
     shutil.copyfile("Opt.gjf",str(outpath)+"/TS.gjf")
     os.system("g09 Opt.gjf")
+    mol,vibs,zpe,imaginaryFreq = readGaussTSOutput("Opt.log")
     print("Gaussian ts opt finished. Output copied to " + str(outpath) +"/TS2.log")
     oPath = os.path.normpath(str(outpath)+"/TS.log")
     if os.path.isfile(oPath):
-        shutil.copyfile("Opt.log",str(outpath)+"/TS2.log")
+        shutil.copyfile("Opt.log",str(outpath)+"/TS_2.log")
     else:
         shutil.copyfile("Opt.log",str(outpath)+"/TS.log")
-
-    mol,vibs,zpe,imaginaryFreq = readGaussTSOutput("Opt.log")
     print("Gaussian TS opt read zpe = " + str(zpe))
     os.chdir(workPath)
     return mol,imaginaryFreq,vibs,zpe,rMol,pMol
@@ -546,7 +546,7 @@ def readGaussTSOutput(path):
         mol = read(filename=path,format="gaussian-out")
     except:
         print("couldnt read gaussian output")
-    if vibs[0] > -50:
+    if vibs[0] > -250:
         print("GaussianTS has no imaginary Frequency")
         return
     if vibs[1] < 0:

@@ -16,7 +16,7 @@ import os
 from ase.optimize import FIRE
 from ase.neb import NEBtools
 from ase.io import write, read
-
+from ase.calculators.OpenMMCalc import OpenMMCalculator
 
 
 def run(gl):
@@ -59,6 +59,8 @@ def run(gl):
         cbs = ct.getChangedBonds2(Reac, Prod)
     elif gl.CollectiveVarType == "specified":
         cbs = gl.CollectiveVar
+    elif gl.CollectiveVarType == "file":
+        cbs = gl.principalCoordinates
 
     #Get path to project along
     distPath = []
@@ -68,6 +70,7 @@ def run(gl):
             Path = getPath(Reac,Prod,gl)
         else:
             Path = read(gl.PathFile,index='::1')
+
 
         distPath.append((ct.getDistMatrix(Path[0],cbs)[0],0))
         for i in range(1,len(Path)):
@@ -80,7 +83,7 @@ def run(gl):
 
     # initialise then run trajectory
     t = Trajectory.Trajectory(Reac,gl,os.getcwd(),0,False)
-    t.runGenBXD(Reac,Prod,gl.maxHits,gl.maxAdapSteps,gl.PathType,distPath, cbs, gl.decorrelationSteps, gl.histogramLevel)
+    t.runGenBXD(Reac,Prod,gl.maxHits,gl.maxAdapSteps,gl.PathType,distPath, cbs, gl.decorrelationSteps, gl.histogramLevel,totalPathLength)
 
 def getPath(Reac,Prod,gl):
     xyzfile3 = open(("IRC3.xyz"), "w")

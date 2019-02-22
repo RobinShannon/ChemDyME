@@ -4,15 +4,28 @@ from ase.optimize import BFGS
 import Tools as tl
 import os
 from ase.io import write, read
-
+from ase.calculators.OpenMMCalc import OpenMMCalculator
 
 def run(gl):
-    mol = read("test.pdb")
-    min = BFGS(mol)
-    try:
-        min.run(fmax=0.1, steps=150)
-    except:
-        min.run(fmax=0.1, steps=50)
-    t = Trajectory.Trajectory(mol,gl,os.getcwd(),0,False)
-    energy = mol.get_potential_energy()
-    t.runBXDEconvergence(1,energy-0.001,False,mol,"fixed",20, 20, 5)
+    #Read reactant definition
+    if gl.StartType == 'file':
+        Reac = read(gl.Start)
+    elif gl.StartType == 'Smile':
+        Reac = tl.getMolFromSmile(gl.Start)
+
+
+    # Set up calculator
+    if gl.trajMethod == "openMM":
+        Reac = tl.setCalc(Reac,"DOS/", gl.trajMethod, gl)
+    else:
+        Reac = tl.setCalc(Reac,"DOS/", gl.trajMethod, gl.trajLevel)
+
+    # Do we want to minimise the reactant
+    if gl.GenBXDrelax:
+        min = BFGS(Reac)
+        try:
+            min.run(fmax=0.1, steps=150)
+        except:
+            min.run(fmax=0.1, steps=50)
+    t = Trajectory.Trajectory(Reac,gl,os.getcwd(),0,False)
+    t.runBXDEconvergence(gl.maxHits,gl.maxAdapSteps,gl.eneAdaptive, gl.decorrelationSteps, gl.histogramLevel, gl.runsThrough, gl.numberOfBoxes,gl.grainSize)

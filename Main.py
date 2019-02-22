@@ -62,7 +62,7 @@ def runNormal(p):
                     #By default print dynamcial path else print NEB
                     if p[5].printDynPath == True:
                         try:
-                            p[0].optDynPath( changedBonds, prodpath,p[1].MolList, p[1].TSpoint)
+                                                        p[0].optDynPath( changedBonds, prodpath,p[1].MolList, p[1].TSpoint)
                         except:
                             print("DynPath failed")
                     elif p[5].printNEB ==True:

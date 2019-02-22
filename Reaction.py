@@ -212,7 +212,7 @@ class Reaction:
 
         # Finally get single point energy
         mol = tl.setCalc(mol,self.singleString, self.singleMeth, self.singleLev)
-        print("Getting single point energy for TS = " + str(mol.get_potential_energy()) + "zpe = " + str(zpe) + "reactant energy = " + str(self.reactantEnergy) )
+        print("Getting single point energy for reaction" + str(self.ReacName) +"_" + str(self.ProdName) + " TS = " + str(mol.get_potential_energy()) + "zpe = " + str(zpe) + "reactant energy = " + str(self.reactantEnergy) )
         energy = mol.get_potential_energy() + zpe
         return TSFreqs, imaginaryFreq, zpe, energy, mol, rmol, pmol
 
@@ -227,8 +227,8 @@ class Reaction:
         vib.clean()
         vib.run()
         viblist = vib.get_frequencies()
-        TSFreqs = tl.getVibString(viblist, False, True)
-        imaginaryFreq,zpe = tl.getImageFreq(viblist)
+        self.TSFreqs = tl.getVibString(viblist, False, True)
+        self.imaginaryFreq,zpe = tl.getImageFreq(viblist)
         vib.clean()
         os.chdir((self.workingDir))
 
@@ -401,6 +401,7 @@ class Reaction:
             self.TS2correct = False
             self.TS2Freqs, self.imaginaryFreq2, zpe, energy = self.characteriseTSinternal(self.TS2)
 
+        write(path + '/TS2.xyz', self.TS2)
         self.forwardBarrier2 = energy
 
     def optNEB(self, trans, path, changePoints, mols):
