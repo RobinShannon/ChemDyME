@@ -1,6 +1,10 @@
-from simtk.openmm.app import *
-from simtk.openmm import *
-from simtk.unit import *
+try:
+    from simtk.openmm.app import *
+    from simtk.openmm import *
+    from simtk.unit import *
+except:
+    print("no openMM version found")
+
 import numpy as np
 import ForceField as ff
 from ase.calculators.calculator import Calculator, all_changes

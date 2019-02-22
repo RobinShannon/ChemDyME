@@ -9,7 +9,7 @@ from ase.io import write, read
 import shutil
 from ase.optimize import BFGS
 from pathlib import Path
-from ase.calculators.OpenMMCalc import OpenMMCalculator
+from OpenMMCalc import OpenMMCalculator
 
 # Function takes a molecule in ASE format, converts it into an OBmol and then returns a SMILES string as a name
 def getSMILES(mol, opt):

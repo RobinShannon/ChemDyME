@@ -16,7 +16,7 @@ import os
 from ase.optimize import FIRE
 from ase.neb import NEBtools
 from ase.io import write, read
-from ase.calculators.OpenMMCalc import OpenMMCalculator
+from OpenMMCalc import OpenMMCalculator
 
 
 def run(gl):
