@@ -112,7 +112,7 @@ class Constraint:
         for box in self.boxList:
             rawPath.write( "box " + str(i) + " Steps in box = " + str(len(box.data)) + " Hits at lower boundary = " + str(box.lower.hits) + " Hits at upper boundary = " + str(box.upper.hits) + "\n")
             rawPath.write("box " + str(i) + " Histogram " + "\n")
-            s,dens = self.boxList[self.box].getFullHistogram()
+            s,dens = self.boxList[box].getFullHistogram()
             for j in range(0,len(dens)):
                 rawPath.write( "\t" + "S =" + str(s[j+1]) + " density " +  str(dens[j]) + "\n")
             i += 1
@@ -139,15 +139,15 @@ class Constraint:
 
         lastS = 0
         for i in range(0,len(self.boxList)):
-            s,dens = self.boxList[self.box].getFullHistogram()
+            s,dens = self.boxList[i].getFullHistogram()
             width = s[1] - s[0]
-            width2 = s[2] - s[1]
             for j in range(0,len(dens)):
                 d= float(dens[j]) / float(len(self.boxList[i].data))
                 p = d * self.boxList[i].eqPopulation
                 p = -1.0 * np.log(p/width)
-                profile.append((s,p))
-                path.write( "S = " + str(s[j] + lastS) + " G = " + str(p) + "\n")
+                altp = -1.0 * np.log(p)
+                profile.append((s[j],p))
+                path.write( "S = " + str(s[j] + lastS) + " G = " + str(p) + " altG = " + str(altp) + "\n")
             lastS += s[len(s)-1]
 
     @abstractmethod

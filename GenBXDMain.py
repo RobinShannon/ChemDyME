@@ -1,16 +1,8 @@
-import Tools as tl
-import matplotlib.pyplot as plt
-from ase.io import read
 import Trajectory
 import ConnectTools as ct
-from ase.optimize import BFGS
-from ase.io import write, read
-import os
 import numpy as np
 import Tools as tl
-from ase import Atoms
 from ase.optimize import BFGS
-from ase.constraints import FixAtoms
 from ase.neb import NEB, NEBtools
 import os
 from ase.optimize import FIRE

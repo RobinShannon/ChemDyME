@@ -1,14 +1,11 @@
 import os
 import Reaction as rxn
-import Globals as gl
 import Trajectory
-import BiTrajectory
 import inout as io
 import MasterEq
 import ConnectTools as CT
 from shutil import copyfile
 import multiprocessing
-import Tools as tl
 import numpy as np
 from ase import Atoms
 
@@ -22,6 +19,7 @@ def minReac(name):
 def runNormal(p):
     try:
         #If additional atoms have been added then update baseline dictionary
+        #This only occurs when an extra bimolecular channel is added
         if len(p) > 6:
             sym = "".join(p[6].get_chemical_symbols())
             TotSym = "".join(p[0].CombReac.get_chemical_symbols())
@@ -31,38 +29,42 @@ def runNormal(p):
         # Run Trajectory
         p[1].runTrajectory()
 
-        #Geom opt part
+        # Geom opt part
         # Optimise Product
         p[0].optProd(p[1].productGeom, False)
 
         #Get prod Name and create directory
         prodpath = p[2] + '/' + str(p[0].ProdName)
 
+        #Get the indicies of the bonds which have either formed or broken over the course of the reaction
         changedBonds = CT.getChangedBonds(p[0].CombReac, p[0].CombProd)
 
+        # Check the reaction product is not the orriginal reactant
         if p[0].ProdName != p[0].ReacName:
 
             # Make Directory for product
             if not os.path.exists(prodpath):
                 os.makedirs(prodpath)
-
                 p[0].printProd(prodpath)
 
-                #if traj.transindex[0] != 0 or traj.transindex[1] != 0:
+
                 # TS optimisation
                 try:
                     p[0].optTSpoint(changedBonds, prodpath,p[1].MolList,p[1].TSpoint,0)
                 except:
+                    # If TS opt fails for some reason, assume barrierless
                     print('Couldnt opt TS at trans point')
                     p[0].barrierlessReaction = True
 
                 printTS2 = False
                 printXML = True
+
+
                 if p[0].TScorrect != True:
-                    #By default print dynamcial path else print NEB
+                    # See whether a dynamical path calculation or an NEB calculation has been specified to refine TS
                     if p[5].printDynPath == True:
                         try:
-                                                        p[0].optDynPath( changedBonds, prodpath,p[1].MolList, p[1].TSpoint)
+                            p[0].optDynPath( changedBonds, prodpath,p[1].MolList, p[1].TSpoint)
                         except:
                             print("DynPath failed")
                     elif p[5].printNEB ==True:
@@ -72,9 +74,6 @@ def runNormal(p):
                             print("NEB failed")
                     if p[0].TS2correct == True:
                         printTS2 = True
-                    else:
-                        p[0].barrierlessReaction = True
-
 
                 # check whether there is an alternate product
                 #if p[0].checkAltProd == True and p[0].is_IntermediateProd == True:
@@ -82,19 +81,19 @@ def runNormal(p):
 
                 # Check some criteria before printing to xml
                 # if Isomerisation check there is a TS
-
                 if p[0].is_bimol_prod == False and p[0].is_bimol_reac == False and p[0].barrierlessReaction == True:
                     p[0].barrierlessReaction = False
                     printXML = True
-                    printTS2 = True
+
 
                 #Then check barrier isnt ridiculous
-                #if (((p[0].forwardBarrier - p[0].eneBaseline) * 96.45) > 800) and (p[0].barrierlessReaction == False):
-                #   printXML = False
-                #   print('channel barrier too large')
+                if (((p[0].forwardBarrier - p[0].eneBaseline) * 96.45) > 800) and (p[0].barrierlessReaction == False):
+                   printXML = False
+                   print('channel barrier too large')
+
+
 
                 if printXML == True:
-
                     try:
                         io.writeTSXML(p[0], p[3])
                         io.writeTSXML(p[0], p[3].replace('.xml','Full.xml'))
@@ -121,7 +120,7 @@ def runNormal(p):
                     if not os.path.exists(tmppath + "/" + p[0].ReacName):
                         io.writeReactionXML(p[0], p[3], printTS2)
                         io.writeReactionXML(p[0], p[3].replace('.xml','Full.xml'), printTS2)
-                        # append info to summary file for given reaction
+
         if (p[5].InitialBi == True):
             p[0].re_init_bi(p[5].cartesians, p[5].species)
         else:

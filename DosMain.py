@@ -1,10 +1,9 @@
-from ase import Atoms
 import Trajectory
 from ase.optimize import BFGS
 import Tools as tl
 import os
 from ase.io import write, read
-from ase.calculators.OpenMMCalc import OpenMMCalculator
+from OpenMMCalc import OpenMMCalculator
 
 def run(gl):
     #Read reactant definition
