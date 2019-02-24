@@ -6,10 +6,11 @@ import numpy as np
 # Class to track constraints and calculate required derivatives for BXD constraints
 # Inversion procedure occurs in MDintegrator class
 class Constraint:
-    @abstractmethod
-    def __init__(self, mol, start,  end, hitLimit = 100, adapMax = 100, activeS = [], topBox = 500, hist = 1, decorrelationSteps = 10, path = 0, pathType = 'linear',runType = 'adaptive', stuckLimit = 5, numberOfBoxes = 10, endType = 'RMSD' ):
+    def __init__(self, mol, start,  end, hitLimit = 100, adapMax = 100, activeS = [], topBox = 500, hist = 1, decorrelationSteps = 10, path = 0, pathType = 'linear',runType = 'adaptive', stuckLimit = 20, numberOfBoxes = 10000, endType = 'RMSD', endDistance = '' ):
         self.decorrelationSteps = decorrelationSteps
+        self.adaptiveEnd = False
         self.endType = endType
+        self.endDistance = endDistance
         self.runType = runType
         self.stuckLimit = stuckLimit
         if (self.runType == "adaptive"):
@@ -63,6 +64,7 @@ class Constraint:
         self.completeRuns = 0
         self.totalGibbs = 0
         self.reverse = False
+        self.numberOfBoxes = len(self.boxList)
         for box in self.boxList:
             box.type = 'fixed'
             box.data = []
@@ -70,10 +72,12 @@ class Constraint:
             box.upper.stepsSinceLastHit = 0
             box.upper.transparent = False
             box.upper.stuckCount = 0
+            box.upper.invisible = False
             box.lower.rates = []
             box.lower.transparent = False
             box.lower.stepsSinceLastHit = 0
             box.lower.stuckCount = 0
+            box.lower.invisible = False
 
     def printBounds(self, file):
         file.write("BXD boundary list \n\n")
@@ -91,19 +95,21 @@ class Constraint:
             words = lines[i].split("\t")
             dLower = (float(words[4]))
             nL = (words[7]).strip("[]\n")
-            normLower = (nL.split(","))
+            normLower = (nL.split())
             for l in range(0,len(normLower)):
                 normLower[l] = float(normLower[l])
             lowerBound = bxdBound(normLower,dLower)
             words = lines[i+1].split("\t")
             dUpper = (float(words[4]))
             nU = (words[7]).strip("[]\n")
-            normUpper = (nU.split(","))
+            normUpper = (nU.split())
             for l2 in range(0,len(normUpper)):
                 normUpper[l2] = float(normUpper[l2])
             upperBound = bxdBound(normUpper,dUpper)
             box = bxdBox(lowerBound,upperBound, "fixed", True)
+            box.type = "fixed"
             self.boxList.append(box)
+        self.boxList.pop(0)
 
     def gatherData(self, path, rawPath):
         profile = []
@@ -112,7 +118,7 @@ class Constraint:
         for box in self.boxList:
             rawPath.write( "box " + str(i) + " Steps in box = " + str(len(box.data)) + " Hits at lower boundary = " + str(box.lower.hits) + " Hits at upper boundary = " + str(box.upper.hits) + "\n")
             rawPath.write("box " + str(i) + " Histogram " + "\n")
-            s,dens = self.boxList[box].getFullHistogram()
+            s,dens = box.getFullHistogram()
             for j in range(0,len(dens)):
                 rawPath.write( "\t" + "S =" + str(s[j+1]) + " density " +  str(dens[j]) + "\n")
             i += 1
@@ -167,7 +173,11 @@ class Constraint:
         # Check whether we are in an adaptive sampling regime.
         # If so updateBoxAdap checks current number of samples and controls new box placement if neccessary
         if self.boxList[self.box].type == "adap":
-            self.updateBoxAdap()
+            if self.box == self.numberOfBoxes:
+                self.reverse = True
+                self.boxList[self.box].type = "fixed"
+            else:
+                self.updateBoxAdap()
 
         # Check if box is shrinking in order to pull two fragments together
         if self.boxList[self.box].type == "shrinking":
@@ -204,7 +214,7 @@ class Constraint:
             self.stuck = True
             self.stuckCount = 0
 
-    @abstractmethod
+
     def updateBoxAdap(self):
         # if the box is adap mode there is no upper bound, check whether adap mode should end
         if len(self.boxList[self.box].data) > self.adapMax:
@@ -221,12 +231,13 @@ class Constraint:
                         bottom = self.start
                 top = self.boxList[self.box].top
                 if self.__class__.__name__ == 'genBXD':
-                    b1 = self.convertSToBound(bottom,top)
-                    b2 = self.convertSToBound(bottom,top)
+                    b1 = self.convertStoBound(bottom,top)
+                    b2 = self.convertStoBound(bottom,top)
                 else:
-                    b2,b1 = self.convertSToBound(bottom,top)
+                    b2,b1 = self.convertStoBound(bottom,top)
                     b2 = b1
                 b3 = bxdBound(self.boxList[self.box].upper.norm,self.boxList[self.box].upper.D)
+                b3.invisible = True
                 self.boxList[self.box].upper = b1
                 self.boxList[self.box].upper.transparent = True
                 newBox = self.getDefaultBox(b2,b3)
@@ -239,8 +250,8 @@ class Constraint:
                     top = self.boxList[self.box].top
                 except:
                     top = self.boxList[self.box].top
-                b1 = self.convertSToBound(bottom,top)
-                b2 = self.convertSToBound(bottom,top)
+                b1 = self.convertStoBound(bottom,top)
+                b2 = self.convertStoBound(bottom,top)
                 b3 = bxdBound(self.boxList[self.box].lower.norm,self.boxList[self.box].lower.D)
                 self.boxList[self.box].lower = b1
                 newBox = self.getDefaultBox(b3,b2)
@@ -251,11 +262,11 @@ class Constraint:
                 self.boxList[self.box].lower.transparent = True
             else:
                 self.completeRuns += 1
+
     @abstractmethod
     def stuckFix(self):
         pass
 
-    @abstractmethod
     def boundaryCheck(self,mol):
         #Check for hit against upper boundary
         if self.boxList[self.box].upper.hit(self.s, "up"):
@@ -309,7 +320,6 @@ class Constraint:
         else:
             return False
 
-    @abstractmethod
     #Determine whether boundary should be transparent or reflective
     def updateBounds(self):
         if ((self.reverse) and (self.criteriaMet(self.boxList[self.box].lower))):
@@ -318,8 +328,8 @@ class Constraint:
             self.boxList[self.box].upper.transparent = True
 
 
-    @abstractmethod
     # Check whether the criteria for box convergence has been met
+    @abstractmethod
     def criteriaMet(self, boundary):
         return boundary.hits >= self.hitLimit
 
@@ -340,26 +350,22 @@ class Constraint:
     def reachedTop(self):
         return False
 
-    @abstractmethod
-    def convertStoBound(self, lower, upper):
-        b1 = bxdBound(1,-lower)
-        b2 = bxdBound(1,-upper)
-        return b1, b2
+
 
 
 class Energy(Constraint):
 
     
-    @abstractmethod
+
     def del_constraint(self, mol):
         self.del_phi = mol.get_forces()
         return self.del_phi
 
-    @abstractmethod
+
     def getS(self, mol):
         return [mol.get_potential_energy(),mol.get_potential_energy(),mol.get_potential_energy()]
 
-    @abstractmethod
+
     def getDefaultBox(self,lower, upper):
         if self.runType == "adaptive":
             b = bxdBox(lower,upper,"adap",True)
@@ -367,55 +373,62 @@ class Energy(Constraint):
             b = bxdBox(lower, upper,"fixed",True)
         return b
 
-    @abstractmethod
     def reachedTop(self):
         if self.box >= self.numberOfBoxes:
             return True
         else:
             return False
 
-    @abstractmethod
+
     def stuckFix(self):
         self.boxList[self.box].lower.D += 0.1
 
-    @abstractmethod
-    def convertSToBound(self, lower, upper):
+
+    def convertStoBound(self, lower, upper):
         b1 = bxdBound(-1,-lower)
         b2 = bxdBound(1,-upper)
         return b1, b2
 
 class COM(Constraint):
 
-    @abstractmethod
+
     def getS(self, mol):
         self.COM = ct.getCOMdist(mol, self.activeS)
         return (self.COM,self.COM,self.COM)
     
     
-    @abstractmethod
+
     def del_constraint(self, mol):
         self.del_phi = ct.getCOMdel(mol, self.activeS)
         return self.del_phi
 
-    @abstractmethod
+
     def getDefaultBox(self,lower, upper):
         b = bxdBox(lower,upper,"shrinking",False)
         return b
 
-    @abstractmethod
+
     def stuckFix(self):
         self.boxList[self.box].upper.D -= 0.2
         self.boxList[self.box].type = "shrinking"
 
 class genBXD(Constraint):
 
-    @abstractmethod
+    def convertStoBound(self , s1, s2):
+        n2 = (s2 - s1) / np.linalg.norm(s1-s2)
+        if self.reverse:
+            D2 = -1*np.vdot(n2,s1)
+        else:
+            D2 = -1*np.vdot(n2,s2)
+        b2 = bxdBound(n2,D2)
+        return b2
+
     def getS(self, mol):
         S,Sdist,project,node = self.convertToS(mol,self.activeS)
         self.pathNode = node
         return S,Sdist,project
 
-    @abstractmethod
+
     def del_constraint(self, mol):
         if self.boundHit == "lower":
             n = self.boxList[self.box].lower.norm
@@ -425,10 +438,16 @@ class genBXD(Constraint):
         return self.del_phi
 
 
-    @abstractmethod
     def getDefaultBox(self,lower,upper):
         b = bxdBox(lower,upper,"adap",True)
         return b
+
+    def reachedTop(self):
+        if self.adaptive == False and self.box == (len(self.boxList)-1):
+            return True
+        else:
+            return False
+
 
     def convertToS(self, mol, activeS):
         # First get S
@@ -448,7 +467,6 @@ class genBXD(Constraint):
         self.path = path
         self.pathType = type
 
-    @abstractmethod
     #Function to get two boundary based upon some starting and ending configurations.
     # If you allready have the lower bound this can be adapted to return just the upper
     def convertCartToBound(self, lower, upper):
@@ -464,24 +482,10 @@ class genBXD(Constraint):
         # Return bounds
         b1 = bxdBound(n1,D1)
         b2 = bxdBound(n2,D2)
+        #Make bound 2 invisible from being hit
+        b2.invisible = True
         return b1, b2
 
-    @abstractmethod
-    def convertSToBound(self, s1, s2,):
-        n2 = (s2 - s1) / np.linalg.norm(s1-s2)
-        if self.reverse:
-            D2 = -1*np.vdot(n2,s1)
-        else:
-            D2 = -1*np.vdot(n2,s2)
-        b2 = bxdBound(n2,D2)
-        return b2
-
-    @abstractmethod
-    def reachedTop(self):
-        if self.adaptive == False and self.box == (len(self.boxList)-1):
-            return True
-        else:
-            return False
 
 class bxdBox:
 
@@ -517,7 +521,7 @@ class bxdBox:
     def getFullHistogram(self):
         data = [d[1] for d in self.data]
         data.append(0)
-        hist, edges = np.histogram(data, bins=10, density=False)
+        hist, edges = np.histogram(data, bins=10, density=True)
         return edges, hist
 
 class bxdBound:
@@ -532,8 +536,11 @@ class bxdBound:
         self.rates = []
         self.averageRate = 0
         self.rateError = 0
+        self.invisible = False
 
     def hit(self, s, bound):
+        if self.invisible:
+            return False
         try:
             s = s[0]
         except:
