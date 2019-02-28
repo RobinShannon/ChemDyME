@@ -121,23 +121,22 @@ class Constraint:
             s,dens = box.getFullHistogram()
             for j in range(0,len(dens)):
                 rawPath.write( "\t" + "S =" + str(s[j+1]) + " density " +  str(dens[j]) + "\n")
-            i += 1
         rawPath.close()
         for box in self.boxList:
-            box.upper.averageRate = len(box.data) / box.upper.hits
+            box.upper.averageRate = box.upper.hits / len(box.data)
             try:
-                box.lower.averageRate = len(box.data) / box.lower.hits
+                box.lower.averageRate =  box.lower.hits / len(box.data)
             except:
                 box.lower.averageRate = 0
         for i in range(0,len(self.boxList)-1):
             if i == 0:
                 self.boxList[i].Gibbs = 0
-            deltaG = self.boxList[i].upper.averageRate / self.boxList[i+1].lower.averageRate
-            deltaG = -1 * np.log(deltaG)
+            Keq = self.boxList[i].upper.averageRate / self.boxList[i+1].lower.averageRate
+            deltaG = -1.0 * np.log(Keq)
             self.boxList[i+1].Gibbs = deltaG + self.boxList[i].Gibbs
 
         for i in range(0,len(self.boxList)):
-            self.boxList[i].eqPopulation =  np.exp(-(self.boxList[i].Gibbs))
+            self.boxList[i].eqPopulation =  np.exp(-1.0 * (self.boxList[i].Gibbs))
             totalProb += self.boxList[i].eqPopulation
 
         for i in range(0,len(self.boxList)):
@@ -423,6 +422,15 @@ class genBXD(Constraint):
         b2 = bxdBound(n2,D2)
         return b2
 
+    def convertStoBoundOnPath(self , s1, s2):
+        n2 = (self.path[self.pathNode] - self.path[self.pathNode + 1]) / np.linalg.norm(self.path[self.pathNode] - self.path[self.pathNode + 1])
+        if self.reverse:
+            D2 = -1*np.vdot(n2,s1)
+        else:
+            D2 = -1*np.vdot(n2,s2)
+        b2 = bxdBound(n2,D2)
+        return b2
+
     def getS(self, mol):
         S,Sdist,project,node = self.convertToS(mol,self.activeS)
         self.pathNode = node
@@ -520,8 +528,16 @@ class bxdBox:
 
     def getFullHistogram(self):
         data = [d[1] for d in self.data]
-        data.append(0)
-        hist, edges = np.histogram(data, bins=10, density=True)
+        top = max(data)
+        edges = []
+        edges.append(0)
+        for i in range(0,10):
+            edges.append(i*(top/10))
+        hist = np.zeros(10)
+        for d in data:
+            for j in range(0,9):
+                if d > edges[j] and d <= edges[j+1]:
+                    hist[j] += 1
         return edges, hist
 
 class bxdBound:

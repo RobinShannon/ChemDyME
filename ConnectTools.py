@@ -102,7 +102,7 @@ def getCOMdel(Mol, frag):
 # Set up a reference matrix for ideal bond length between any two atoms in the system
 # Maps species types onto a grid of stored ideal bond distances stored in the global variables module
 def refBonds(mol):
-    dict = {'CC' : 1.4, 'CH' : 1.1, 'HC' : 1.1, 'CO' : 1.4, 'OC' : 1.4, 'OH' : 1.2, 'HO' : 1.2, 'OO' : 1.6, 'HH' : 0.7, 'CF' : 1.4, 'FC' : 1.4, 'OF' : 1.4, 'FO' : 1.4, 'HF' : 1.1, 'FH' : 1.1, 'FF' : 1.4 }
+    dict = {'CC' : 1.4, 'CH' : 1.1, 'HC' : 1.1, 'CO' : 1.4, 'OC' : 1.4, 'OH' : 1.2, 'HO' : 1.2, 'OO' : 1.6, 'HH' : 0.9, 'CF' : 1.4, 'FC' : 1.4, 'OF' : 1.4, 'FO' : 1.4, 'HF' : 1.1, 'FH' : 1.1, 'FF' : 1.4 }
     size =len(mol.get_positions())
     symbols = mol.get_chemical_symbols()
     dRef = np.zeros((size,size))
@@ -280,6 +280,7 @@ def projectPointOnPath(S,path,type,n,D,reac, pathNode):
     baseline = S - reac
     Sdist = np.vdot(S,n) + D
     minPoint = 0
+    distanceFromCurve = 0
     if type == 'gates':
         gBase = S - path[pathNode][0]
         #check if gate has been hit
@@ -302,7 +303,7 @@ def projectPointOnPath(S,path,type,n,D,reac, pathNode):
             start = 0
             end =  3
         else:
-            start = pathNode -2
+            start = pathNode - 2
             end = max(pathNode + 2, len(path))
         for i in range(0,len(path)):
             dist = np.linalg.norm(S - path[i][0])
