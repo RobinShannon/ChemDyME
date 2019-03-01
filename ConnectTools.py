@@ -238,6 +238,7 @@ def getDistMatrix(mol,active):
 def projectPointOnPath2(S,path,type,n,D,reac, pathNode):
     baseline = S - reac
     Sdist = np.vdot(S,n) + D
+    distFromPath = 0
     if type == 'curve':
         min = 10000
         minPoint = 0
@@ -264,17 +265,29 @@ def projectPointOnPath2(S,path,type,n,D,reac, pathNode):
             pathSeg = path[minPoint][0] - path[minPoint-1][0]
             project = np.vdot((S - path[minPoint-1][0]),pathSeg) / np.linalg.norm(pathSeg)
             project += path[minPoint-1][1]
+            # Also get vector projection
+            vProject = (np.vdot((S - path[minPoint-1][0]),pathSeg)/np.vdot(pathSeg,pathSeg)) * pathSeg
+            # Length of this vector projection gives distance from line
+            distFromPath = np.linalg.norm(vProject)
         else:
             pathSeg = path[minPoint+1][0] - path[minPoint][0]
             project = np.vdot((S - path[minPoint][0]),pathSeg) / np.linalg.norm(pathSeg)
             project += path[minPoint][1]
+            # Also get vector projection
+            vProject = (np.vdot((S - path[minPoint-1][0]),pathSeg)/np.vdot(pathSeg,pathSeg)) * pathSeg
+            # Length of this vector projection gives distance from line
+            distFromPath = np.linalg.norm(vProject)
     if type == 'linear':
         project = np.vdot(baseline,path) / np.linalg.norm(path)
+        # Also get vector projection
+        vProject = (np.vdot(baseline,path) / np.vdot(path, path)) * path
+        # Length of this vector projection gives distance from line
+        distFromPath = np.linalg.norm(vProject)
     if type == 'distance':
         project = np.linalg.norm(baseline)
     if type =='simple distance':
         project = Sdist
-    return Sdist,project,minPoint
+    return Sdist,project,minPoint,distFromPath
 
 def projectPointOnPath(S,path,type,n,D,reac, pathNode):
     baseline = S - reac

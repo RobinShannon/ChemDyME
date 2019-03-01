@@ -7,6 +7,8 @@ from io import StringIO
 class Globals:
 
     def __init__(self, path):
+        self.fixToPath = False
+        self.pathDistCutOff = 10000
         self.BiList = []
         mpath = path + '/inp.txt'
 
@@ -214,6 +216,10 @@ class Globals:
                 self.decorrelationSteps = int(line.split()[2])
             if re.search('histogramLevel', line):
                 self.histogramLevel = int(line.split()[2])
+            if re.search('fixToPath', line):
+                self.fixToPath = True
+            if re.search('pathDistCutOff', line):
+                self.pathDistCutOff = float(line.split()[2])
             if re.search("maxHits",line):
                     self.maxHits  = int(line.split()[2])
             if re.search("runsThrough",line):

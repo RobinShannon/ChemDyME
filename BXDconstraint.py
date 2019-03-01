@@ -6,9 +6,12 @@ import numpy as np
 # Class to track constraints and calculate required derivatives for BXD constraints
 # Inversion procedure occurs in MDintegrator class
 class Constraint:
-    def __init__(self, mol, start,  end, hitLimit = 100, adapMax = 100, activeS = [], topBox = 500, hist = 1, decorrelationSteps = 10, path = 0, pathType = 'linear',runType = 'adaptive', stuckLimit = 20, numberOfBoxes = 10000, endType = 'RMSD', endDistance = '' ):
+    def __init__(self, mol, start,  end, hitLimit = 100, adapMax = 100, activeS = [], topBox = 500, hist = 1, decorrelationSteps = 10, path = 0, pathType = 'linear',runType = 'adaptive', stuckLimit = 20, numberOfBoxes = 10000, endType = 'RMSD', endDistance = '', fixToPath = False, pathDistCutOff = 100 ):
         self.decorrelationSteps = decorrelationSteps
         self.adaptiveEnd = False
+        self.fixToPath = fixToPath
+        self.distanceToPath = 0
+        self.pathDistCutOff = pathDistCutOff
         self.endType = endType
         self.endDistance = endDistance
         self.runType = runType
@@ -151,9 +154,10 @@ class Constraint:
                 p = d * self.boxList[i].eqPopulation
                 p = -1.0 * np.log(p/width)
                 altp = -1.0 * np.log(p)
-                profile.append((s[j],p))
-                path.write( "S = " + str(s[j] + lastS) + " G = " + str(p) + " altG = " + str(altp) + "\n")
-            lastS += s[len(s)-1]
+                s_path = s[j] + lastS - (width / 2.0)
+                profile.append((s_path,p))
+                path.write( "S = " + str(s_path) + " G = " + str(p) + " altG = " + str(altp) + "\n")
+            lastS += s[len(s)-1] - width / 2.0
 
     @abstractmethod
     def update(self, mol):
@@ -269,7 +273,7 @@ class Constraint:
     def boundaryCheck(self,mol):
         #Check for hit against upper boundary
         if self.boxList[self.box].upper.hit(self.s, "up"):
-            if self.boxList[self.box].upper.transparent:
+            if self.boxList[self.box].upper.transparent and self.distanceToPath <= self.pathDistCutOff:
                 self.boxList[self.box].upper.transparent = False
                 if self.adaptive:
                     self.boxList[self.box].upper.hits = 0
@@ -293,7 +297,7 @@ class Constraint:
                 self.boundHit = "upper"
                 return True
         elif self.boxList[self.box].lower.hit(self.s, "down"):
-            if self.boxList[self.box].lower.transparent:
+            if self.boxList[self.box].lower.transparent and self.distanceToPath <= self.pathDistCutOff:
                 self.boxList[self.box].lower.transparent = False
                 if self.adaptive:
                     self.boxList[self.box].upper.hits = 0
@@ -413,7 +417,19 @@ class COM(Constraint):
 
 class genBXD(Constraint):
 
-    def convertStoBound(self , s1, s2):
+    def convertStoBound(self, s1, s2):
+        if self.fixToPath == False:
+            b = self.convertStoBoundGeneral(s1,s2)
+        else:
+            s1vec = ct.projectPointOnPath(s1, self.path, self.pathType,self.boxList[self.box].lower.norm,self.boxList[self.box].lower.D, self.reac, self.pathNode)
+            s2vec = ct.projectPointOnPath(s2, self.path, self.pathType,self.boxList[self.box].lower.norm,self.boxList[self.box].lower.D, self.reac, self.pathNode)
+            if self.reverse:
+                b = self.convertStoBoundOnPath(s1vec[1],s1vec[2])
+            else:
+                b = self.convertStoBoundOnPath(s2vec[1],s2vec[2])
+        return b
+
+    def convertStoBoundGeneral(self , s1, s2):
         n2 = (s2 - s1) / np.linalg.norm(s1-s2)
         if self.reverse:
             D2 = -1*np.vdot(n2,s1)
@@ -422,18 +438,27 @@ class genBXD(Constraint):
         b2 = bxdBound(n2,D2)
         return b2
 
-    def convertStoBoundOnPath(self , s1, s2):
-        n2 = (self.path[self.pathNode] - self.path[self.pathNode + 1]) / np.linalg.norm(self.path[self.pathNode] - self.path[self.pathNode + 1])
-        if self.reverse:
-            D2 = -1*np.vdot(n2,s1)
-        else:
-            D2 = -1*np.vdot(n2,s2)
-        b2 = bxdBound(n2,D2)
-        return b2
+    def convertStoBoundOnPath(self, s, pathNode):
+        segmentStart = self.path[pathNode][0]
+        segmentEnd = self.path[pathNode + 1][0]
+        #Total path distance up to current segment
+        TotalDistance = self.path[pathNode][1]
+        # Projection along linear segment only
+        SegDistance = s - TotalDistance
+        # Get vector for and length of linear segment
+        vec = segmentEnd - segmentStart
+        length = np.linalg.norm(vec)
+        #finally get distance of projected point along vec
+        plength = (SegDistance / length) * vec
+        n = (segmentEnd - segmentStart) / np.linalg.norm(segmentEnd - segmentStart)
+        D = -1*np.vdot(n,plength)
+        b = bxdBound(n,D)
+        return b
 
     def getS(self, mol):
-        S,Sdist,project,node = self.convertToS(mol,self.activeS)
+        S,Sdist,project,node,dist = self.convertToS(mol,self.activeS)
         self.pathNode = node
+        self.distanceToPath = dist
         return S,Sdist,project
 
 
@@ -464,12 +489,13 @@ class genBXD(Constraint):
             self.sInd = S[1]
             self.reac = S[0]
         try:
-            Snorm, project, node = ct.projectPointOnPath(S[0],self.path, self.pathType,self.boxList[self.box].lower.norm,self.boxList[self.box].lower.D,self.reac, self.pathNode )
+            Snorm, project, node, dist = ct.projectPointOnPath(S[0],self.path, self.pathType,self.boxList[self.box].lower.norm,self.boxList[self.box].lower.D,self.reac, self.pathNode )
         except:
             Snorm = 0
             project = 0
             node = 0
-        return S[0],Snorm, project, node
+            dist = 0
+        return S[0],Snorm, project, node, dist
 
     def definePath(self, path, type):
         self.path = path

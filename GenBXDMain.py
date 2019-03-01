@@ -75,7 +75,7 @@ def run(gl):
 
     # initialise then run trajectory
     t = Trajectory.Trajectory(Reac,gl,os.getcwd(),0,False)
-    t.runGenBXD(Reac,Prod,gl.maxHits,gl.maxAdapSteps,gl.PathType,distPath, cbs, gl.decorrelationSteps, gl.histogramLevel,totalPathLength)
+    t.runGenBXD(Reac,Prod,gl.maxHits,gl.maxAdapSteps,gl.PathType,distPath, cbs, gl.decorrelationSteps, gl.histogramLevel,totalPathLength, gl.fixToPath, gl.pathDistCutOff)
 
 def getPath(Reac,Prod,gl):
     xyzfile3 = open(("IRC3.xyz"), "w")
@@ -104,24 +104,6 @@ def getPath(Reac,Prod,gl):
         tl.printTraj(xyzfile3, Path[i])
     xyzfile3.close()
 
-    nebtools = NEBtools(Path)
 
-    # Get the calculated barrier and the energy change of the reaction.
-    Ef, dE = nebtools.get_barrier()
 
-    # Get the barrier without any interpolation between highest images.
-    Ef, dE = nebtools.get_barrier(fit=False)
-
-    # Get the actual maximum force at this point in the simulation.
-    max_force = nebtools.get_fmax()
-
-    # Create a figure like that coming from ASE-GUI.
-    fig = nebtools.plot_band()
-    fig.savefig('diffusion-barrier.png')
-
-    # Create a figure with custom parameters.
-    fig = plt.figure(figsize=(5.5, 4.0))
-    ax = fig.add_axes((0.15, 0.15, 0.8, 0.75))
-    nebtools.plot_band(ax)
-    fig.savefig('diffusion-barrier.png')
     return Path

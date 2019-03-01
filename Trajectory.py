@@ -389,7 +389,7 @@ class Trajectory:
 
         BXD.gatherData(False,units.kB * self.LangTemp)
 
-    def runGenBXD(self, Reac, Prod, maxHits, adapMax, pathType, path, bonds, decSteps, histogramSize, pathLength):
+    def runGenBXD(self, Reac, Prod, maxHits, adapMax, pathType, path, bonds, decSteps, histogramSize, pathLength, fixToPath, pathDistCutOff):
 
         self.iterations = 0
 
@@ -411,7 +411,7 @@ class Trajectory:
             mdInt = MDIntegrator.Langevin(units.kB * self.LangTemp, self.LangFric, self.forces, self.velocity, self.Mol, self.timeStep)
 
         #Check whether a list of bounds is present? If so read adaptive boundaries from previous run
-        BXD = BXDconstraint.genBXD(self.Mol, Reac, Prod, adapMax = adapMax, activeS = bonds, path = path, pathType = pathType, decorrelationSteps = decSteps, runType = 'adaptive', hitLimit = 1, hist = histogramSize, endDistance=pathLength )
+        BXD = BXDconstraint.genBXD(self.Mol, Reac, Prod, adapMax = adapMax, activeS = bonds, path = path, pathType = pathType, decorrelationSteps = decSteps, runType = 'adaptive', hitLimit = 1, hist = histogramSize, endDistance=pathLength, fixToPath=fixToPath, pathDistCutOff=pathDistCutOff )
         #Check whether a list of bounds is present? If so read adaptive boundaries from previous run
         if os.path.isfile("BXDbounds.txt"):
             BXD.readExisitingBoundaries("BXDbounds.txt")
