@@ -86,7 +86,7 @@ class Constraint:
         file.write("BXD boundary list \n\n")
         file.write("Boundary\t" + str(0) + "\tD\t=\t" + str(self.boxList[0].lower.D) + "\tn\t=\t" + str(self.boxList[0].lower.norm) + "\n" )
         for i in range(0, len(self.boxList)):
-            file.write("Boundary\t" + str(i+1) + "\tD\t=\t" + str(self.boxList[i].upper.D) + "\tn\t=\t" + str(self.boxList[i].upper.norm) + "\n" )
+            file.write("Boundary\t" + str(i+1) + "\tD\t=\t" + str(self.boxList[i].upper.D) + "\tn\t=\t" + str(self.boxList[i].upper.norm) + "\tS\t=\t" + str(self.boxList[i].upper.Spoint) + "\n" )
         file.close()
 
 
@@ -166,8 +166,6 @@ class Constraint:
         self.inversion = False
         self.boundHit = "none"
 
-
-
         # If you are doing and energy convergence run and you get stuck in a well this code allows escape
         if self.__class__.__name__ == 'Energy' and self.reverse and len(self.boxList[self.box].data) > ((self.completeRuns+1) * 5000):
             self.reverse = False
@@ -210,7 +208,7 @@ class Constraint:
             self.oldS = self.s
             self.boxList[self.box].upper.stepSinceHit += 1
             self.boxList[self.box].lower.stepSinceHit += 1
-            if self.s[1] >= 0 or not self.__class__.__name__ == 'genBXD':
+            if (self.s[1] >= 0 or not self.__class__.__name__ == 'genBXD')and self.distanceToPath<=self.pathDistCutOff:
                 self.boxList[self.box].data.append(self.s)
 
         if self.stuckCount > self.stuckLimit:
@@ -284,7 +282,7 @@ class Constraint:
                 if self.reachedTop() and self.reverse == False:
                     self.reverse = True
                 return False
-            else:
+            elif self.distanceToPath <= self.pathDistCutOff:
                 if self.boxList[self.box].upper.stepSinceHit > self.decorrelationSteps:
                     self.boxList[self.box].upper.hits += 1
                     self.boxList[self.box].upper.rates.append(self.boxList[self.box].upper.stepSinceHit)
@@ -294,6 +292,9 @@ class Constraint:
                     self.boxList[self.box].type = "adap"
                     self.boxList[self.box].data = []
                     self.boxList[self.box].lower.transparent = True
+                self.boundHit = "upper"
+                return True
+            else:
                 self.boundHit = "upper"
                 return True
         elif self.boxList[self.box].lower.hit(self.s, "down"):
@@ -313,11 +314,14 @@ class Constraint:
                     self.boxList[self.box].data = []
                     self.boxList[self.box].lower.transparent = True
                 return False
-            else:
+            elif self.distanceToPath <= self.pathDistCutOff:
                 if self.boxList[self.box].lower.stepSinceHit > self.decorrelationSteps:
                     self.boxList[self.box].lower.hits += 1
                     self.boxList[self.box].lower.rates.append(self.boxList[self.box].lower.stepSinceHit)
                 self.boxList[self.box].lower.stepSinceHit = 0
+                self.boundHit = "lower"
+                return True
+            else:
                 self.boundHit = "lower"
                 return True
         else:
@@ -352,9 +356,6 @@ class Constraint:
     @abstractmethod
     def reachedTop(self):
         return False
-
-
-
 
 class Energy(Constraint):
 
@@ -439,6 +440,9 @@ class genBXD(Constraint):
         return b2
 
     def convertStoBoundOnPath(self, s, pathNode):
+        #If at last node in path then consider the line in last segment
+        if pathNode == len(self.path):
+            pathNode -= 1
         segmentStart = self.path[pathNode][0]
         segmentEnd = self.path[pathNode + 1][0]
         #Total path distance up to current segment
@@ -449,10 +453,11 @@ class genBXD(Constraint):
         vec = segmentEnd - segmentStart
         length = np.linalg.norm(vec)
         #finally get distance of projected point along vec
-        plength = (SegDistance / length) * vec
+        plength = segmentStart + ((SegDistance / length) * vec)
         n = (segmentEnd - segmentStart) / np.linalg.norm(segmentEnd - segmentStart)
         D = -1*np.vdot(n,plength)
         b = bxdBound(n,D)
+        b.Spoint = plength
         return b
 
     def getS(self, mol):
@@ -579,6 +584,7 @@ class bxdBound:
         self.averageRate = 0
         self.rateError = 0
         self.invisible = False
+        self.Spoint = 0
 
     def hit(self, s, bound):
         if self.invisible:
