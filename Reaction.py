@@ -227,8 +227,8 @@ class Reaction:
         vib.clean()
         vib.run()
         viblist = vib.get_frequencies()
-        self.TSFreqs = tl.getVibString(viblist, False, True)
-        self.imaginaryFreq,zpe = tl.getImageFreq(viblist)
+        TSFreqs = tl.getVibString(viblist, False, True)
+        imaginaryFreq,zpe = tl.getImageFreq(viblist)
         vib.clean()
         os.chdir((self.workingDir))
 
@@ -316,12 +316,17 @@ class Reaction:
         try:
             self.TSFreqs, self.imaginaryFreq, zpe, energy, self.TS, rmol, pmol = self.characteriseTSExt(self.TS, False, path, QTS3)
         except:
-            self.TSFreqs, self.imaginaryFreq, zpe, energy, self.TS, rmol, pmol = self.characteriseTSExt(self.TS, True, path, QTS3)
+            try:
+                "High Level TS opt for TS1 failed looking at lower level"
+                self.TSFreqs, self.imaginaryFreq, zpe, energy, self.TS, rmol, pmol = self.characteriseTSExt(self.TS, True, path, QTS3)
+            except:
+                pass
 
         try:
             self.TScorrect = self.compareRandP(rmol,pmol)
         except:
             self.TScorrect = False
+            self.TSFreqs, self.imaginaryFreq, zpe, energy = self.characteriseTSinternal(self.TS)
 
         write(path + '/TS1.xyz', self.TS)
 
@@ -381,7 +386,7 @@ class Reaction:
         for i in range(0,len(dynList)):
             dynList[i] = tl.setCalc(dynList[i],self.lowString, self.lowMeth, self.lowLev)
             MEP.write(str(i) + ' ' + str(dynList[i].get_potential_energy()) + '\n')
-            if dynList[i].get_potential_energy() > maxEne and i > 7:
+            if dynList[i].get_potential_energy() > maxEne:
                 point = i
                 maxEne = dynList[i].get_potential_energy()
 

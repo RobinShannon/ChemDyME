@@ -87,10 +87,13 @@ def runNormal(p):
 
 
                 #Then check barrier isnt ridiculous
-                if (((p[0].forwardBarrier - p[0].eneBaseline) * 96.45) > 800) and (p[0].barrierlessReaction == False):
+                if (((p[0].forwardBarrier - p[0].eneBaseline) * 96.45) > 800):
                    printXML = False
                    print('channel barrier too large')
 
+                # Finally check that the product isnt higher in energy than the reactant in case of ILT
+                if  p[0].is_bimol_reac == True and p[0].barrierlessReaction == True and p[0].reactantEnergy < p[0].productEnergy:
+                    printXML = False
 
 
                 if printXML == True:
@@ -247,7 +250,7 @@ def run(glo):
                 if glo.InitialBi ==True:
                     trajs = dict(("traj_" + str(i), Trajectory.Trajectory(reacs[('reac_' + str(i))].CombReac, glo, tempPaths[('tempPath_' + str(i))], str(i),True)) for i in range(glo.cores))
                 else:
-                    trajs = dict(("traj_" + str(i), Trajectory.Trajectory(reacs[('reac_' + str(i))].Reac, glo, tempPaths[('tempPath_' + str(i))], str(i),False)) for i in range(glo.cores))
+                    trajs = dict(("traj_" + str(i), Trajectory.Trajectory(reacs[('reac_' + str(i))].CombReac, glo, tempPaths[('tempPath_' + str(i))], str(i),False)) for i in range(glo.cores))
 
                 results2=[]
                 outputs2=[]
