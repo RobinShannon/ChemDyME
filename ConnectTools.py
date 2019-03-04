@@ -293,7 +293,7 @@ def projectPointOnPath(S,path,type,n,D,reac, pathNode):
     baseline = S - reac
     Sdist = np.vdot(S,n) + D
     minPoint = 0
-    distanceFromCurve = 0
+    distFromPath = 0
     if type == 'gates':
         gBase = S - path[pathNode][0]
         #check if gate has been hit
@@ -327,10 +327,24 @@ def projectPointOnPath(S,path,type,n,D,reac, pathNode):
         if minPoint != (len(path)-1) and distArray[minPoint + 1] < distArray[minPoint-1] :
             pathSeg = path[minPoint+1][0] - path[minPoint][0]
             project = np.vdot((S - path[minPoint][0]),pathSeg) / np.linalg.norm(pathSeg)
+            # Also get vector projection
+            # Get vector for and length of linear segment
+            length = np.linalg.norm(pathSeg)
+            # finally get distance of projected point along vec
+            plength = path[minPoint][0] + ((project / length) * pathSeg)
+            # Length of this vector projection gives distance from line
+            distFromPath = np.linalg.norm(S - plength)
             project += path[minPoint][1]
         else:
             pathSeg = path[minPoint][0] - path[minPoint-1][0]
             project = np.vdot((S - path[minPoint-1][0]),pathSeg) / np.linalg.norm(pathSeg)
+            # Also get vector projection
+            # Get vector for and length of linear segment
+            length = np.linalg.norm(pathSeg)
+            # finally get distance of projected point along vec
+            plength = path[minPoint-1][0] + ((project / length) * pathSeg)
+            # Length of this vector projection gives distance from line
+            distFromPath = np.linalg.norm(S - plength)
             project += path[minPoint-1][1]
     if type == 'linear':
         project = np.vdot(baseline,path) / np.linalg.norm(path)
@@ -338,7 +352,7 @@ def projectPointOnPath(S,path,type,n,D,reac, pathNode):
         project = np.linalg.norm(baseline)
     if type =='simple distance':
         project = Sdist
-    return Sdist,project,minPoint
+    return Sdist,project,minPoint,distFromPath
 
 def genBXDDel(mol,S,Sind,n):
     l = Sind[0].shape[1]
