@@ -363,6 +363,11 @@ class Constraint:
     def reachedTop(self):
         return False
 
+    def convertStoBound(self, lower, upper):
+        b1 = bxdBound(-1,-lower)
+        b2 = bxdBound(1,-upper)
+        return b1, b2
+
 class Energy(Constraint):
 
     

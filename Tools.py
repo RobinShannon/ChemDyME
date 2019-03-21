@@ -15,13 +15,19 @@ except:
     pass
 
 # Function takes a molecule in ASE format, converts it into an OBmol and then returns a SMILES string as a name
-def getSMILES(mol, opt):
+def getSMILES(mol, opt, partialOpt = False):
     if opt:
         min = BFGS(mol)
-        try:
-            min.run(fmax=0.1, steps=100)
-        except:
-            min.run(fmax=0.1, steps=100)
+        if partialOpt:
+            try:
+                min.run(fmax=0.1, steps=20)
+            except:
+                min.run(fmax=0.1, steps=1)
+        else:
+            try:
+                min.run(fmax=0.1, steps=100)
+            except:
+                min.run(fmax=0.1, steps=1)
 
     # Get list of atomic numbers and cartesian coords from ASEmol
     atoms = mol.get_atomic_numbers()
@@ -167,8 +173,12 @@ def getVibString(viblist, bi, TS):
 
     for i in range(0, len(viblist)):
         if i > max:
-            vibs.append(viblist[i].real)
-            zpe += float(viblist[i].real)
+            if viblist[i].real != 0:
+                vibs.append(viblist[i].real)
+                zpe += viblist[i].real
+            else:
+                vibs.append(100.0)
+                zpe += 100.0
     zpe *= 0.00012
     zpe /= 2
     return vibs,zpe
@@ -251,6 +261,8 @@ def getFreqs(path,method):
     elif method == 'mopac':
         freqs,zpe = getMopFreqs(path)
         return freqs,zpe
+        if len(freqs) == 0:
+            raise Exception('freq returned empty list')
     else:
         print('unknown opt method')
         return freqs,zpe
@@ -368,11 +380,9 @@ def getMopFreqs(path):
     zpe = 0
     pPath = os.getcwd()
     os.chdir(path)
-    End = False
-    lineNum = 100000
     inFile = open("calc.out")
-    for num, line in enumerate(inFile, 1):
-        if('FREQ.' in line):
+    for line in inFile:
+        if('FREQUENCY' in line):
             line = line.split()
             freqs.append(float(line[1].strip('-')))
             zpe += float(line[1].strip('-'))

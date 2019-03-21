@@ -28,7 +28,8 @@ class Globals:
         self.eneBoxes = 0
         self.grainSize = 0
         self.numberOfBoxes = 10
-
+        self.dynPrintFreq = 5
+        self.dynPrintStart = 100
         self.ReactIters = 1
         self.NEBrelax = False
         self.GenBXDrelax = False

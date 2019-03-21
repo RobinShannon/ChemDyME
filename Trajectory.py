@@ -23,7 +23,11 @@ class Trajectory:
         self.printFreq = gl.printFreq
         self.mixedTimestep = gl.mixedTimestep
         if self.biMolecular:
-            self.initialT = gl.BiTemp
+            try:
+                self.initialT = gl.BiTemp
+            except:
+                print("No specific bimolecular temperature set, using the Langevin temperature instead")
+                self.initialT = gl.LTemp
         else:
             self.initialT = gl.LTemp
         self.MDIntegrator =gl.MDIntegrator
@@ -54,9 +58,9 @@ class Trajectory:
         self.TSgeom = mol.copy()
         self.productGeom = self.Mol.get_positions()
         try:
-            self.window = gl.reactionWindow * 0.9
+            self.window = 2
             self.endOnReac = gl.endOnReaction
-            self.consistantWindow = gl.reactionWindow * 0.1
+            self.consistantWindow = gl.reactionWindow
         except:
             pass
         self.savePath = path
@@ -102,7 +106,7 @@ class Trajectory:
             self.Mol =tl.setCalc(self.Mol,'calcMopac' + str(self.procNum) + '/Traj', 'nwchem2', self.level)
             self.Mol.get_forces()
         self.Mol =tl.setCalc(self.Mol,'calcMopac' + str(self.procNum) + '/Traj', self.method, self.level)
-
+        print("getting first forces")
         try:
             self.forces = self.Mol.get_forces()
         except:
@@ -225,6 +229,7 @@ class Trajectory:
             if not self.biMolecular or (self.comBXD and comBxd.s[0] < self.minCOM):
                 con.update(self.Mol)
                 if con.criteriaMet is True:
+                    eneBXDon = False
                     if consistantChange == 0:
                         self.TSpoint = i
                         self.TSgeom = self.Mol.copy()
@@ -232,13 +237,13 @@ class Trajectory:
                     elif consistantChange > 0:
                         if consistantChange == 1:
                             self.ReactionCountDown = self.window
-                            eneBXDon = False
                             consistantChange -= 2
                         else:
                             consistantChange -= 1
                 else:
                     consistantChange = 0
                     con.criteriaMet = False
+                    eneBXDon = True
 
                 if not self.ReactionCountDown == 0:
                     self.ReactionCountDown -= 1

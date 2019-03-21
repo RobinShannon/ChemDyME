@@ -33,6 +33,7 @@ class NunezMartinez(StructureMap):
 
     @abstractmethod
     def update(self, mol):
+        self.criteriaMet = False
         size = len(mol.get_positions())
         # Loop over all atoms
         for i in range(0,size):
@@ -56,6 +57,7 @@ class NunezMartinez(StructureMap):
             if bond > nonbond:
                 self.criteriaMet = True
                 self.transitionIndices = [a_1, i, a_2]
+                print(self.transitionIndices)
 
     @abstractmethod
     def reinitialise(self, mol):

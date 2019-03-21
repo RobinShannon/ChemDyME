@@ -15,7 +15,10 @@ def writeTSXML(React, path):
     imaginaryFreq = str(React.imaginaryFreq)
     freqs = str(React.TSFreqs)
     freqs = freqs[1:-1]
+    freqs = freqs.replace('[', '')
+    freqs = freqs.replace(']', '')
     freqs = freqs.replace(',','')
+
 
     with open(path, 'r') as myfile:
         data=myfile.read().replace('\n', '')
