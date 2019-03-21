@@ -281,6 +281,12 @@ class Constraint:
                 self.boxList[self.box].upper.stepSinceHit = 0
                 if self.reachedTop() and self.reverse == False:
                     self.reverse = True
+                    if self.adaptive:
+                        self.box -= 1
+                        del self.boxList[-1]
+                        self.boxList[self.box].type = "adap"
+                        self.boundHit = "upper"
+                        return True
                 return False
             elif self.distanceToPath <= self.pathDistCutOff:
                 if self.boxList[self.box].upper.stepSinceHit > self.decorrelationSteps:
@@ -441,7 +447,7 @@ class genBXD(Constraint):
 
     def convertStoBoundOnPath(self, s, pathNode):
         #If at last node in path then consider the line in last segment
-        if pathNode == len(self.path):
+        if pathNode == len(self.path)-1:
             pathNode -= 1
         segmentStart = self.path[pathNode][0]
         segmentEnd = self.path[pathNode + 1][0]
@@ -482,6 +488,8 @@ class genBXD(Constraint):
 
     def reachedTop(self):
         if self.adaptive == False and self.box == (len(self.boxList)-1):
+            return True
+        elif self.adaptive == True and self.s[2] > self.endDistance:
             return True
         else:
             return False
