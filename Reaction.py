@@ -1,4 +1,5 @@
 import Tools as tl
+import numpy as np
 from ase import Atoms
 from ase.optimize import BFGS
 from ase.constraints import FixAtoms
@@ -72,7 +73,7 @@ class Reaction:
         self.AltProd = Atoms(symbols=species, positions = cartesians)
         self.is_IntermediateProd = False
         self.TScorrect = False
-        self.TS2correct = True
+        self.TS2correct = False
 
     def compareRandP(self, rmol, pmol):
         #Check if TS links reac and prod
@@ -133,7 +134,7 @@ class Reaction:
                     mol.get_forces()
                 except:
                     pass
-                freqs, zpe = tl.getFreqs(self.workingDir  + '/calcHigh' + self.procNum, self.highMeth)
+                freqs, zpe = tl.getFreqs(self.workingDir + '/' + self.procNum + '/calcHigh' + self.procNum, self.highMeth)
                 os.chdir((self.workingDir))
         else:
             if self.lowMeth == "gauss":
@@ -150,12 +151,13 @@ class Reaction:
 
 
                 # Then calculate frequencies
+                os.chdir((self.workingDir + '/' + self.procNum))
                 mol  = tl.setCalc(mol,self.lowString, self.lowMeth + 'Freq', self.lowLev)
                 try:
                     mol.get_forces()
                 except:
                     pass
-                freqs, zpe = tl.getFreqs(self.workingDir + '/calcLow' + self.procNum, self.lowMeth)
+                freqs, zpe = tl.getFreqs(self.workingDir + '/' + self.procNum +'/calcLow' + self.procNum, self.lowMeth)
                 os.chdir((self.workingDir))
         # Finally get single point energy
         mol = tl.setCalc(mol,self.singleString, self.singleMeth, self.singleLev)
@@ -188,6 +190,7 @@ class Reaction:
                 mol = tl.getOptGeom(self.workingDir + '/' + 'calcLow' + self.procNum +'/', 'none',  self.Reac, self.lowMeth )
 
             # Then calculate frequencies
+            os.chdir((self.workingDir + '/' + self.procNum))
             print("getting TS freqs")
             if low:
                 mol  = tl.setCalc(mol,self.lowString, self.lowMeth + 'Freq', self.lowLev)
@@ -200,12 +203,12 @@ class Reaction:
             print("reading TS freqs")
             if low:
                 try:
-                    imaginaryFreq, TSFreqs, zpe, rmol, pmol = tl.getTSFreqs(self.workingDir  + '/calcLow' + self.procNum, path + '/TSPreDirectImag', self.lowMeth, self.TS )
+                    imaginaryFreq, TSFreqs, zpe, rmol, pmol = tl.getTSFreqs(self.workingDir + '/' + self.procNum + '/calcLow' + self.procNum, path + '/TSPreDirectImag', self.lowMeth, self.TS )
                 except:
                     os.chdir((self.workingDir))
             else:
                 try:
-                    imaginaryFreq, TSFreqs, zpe, rmol, pmol = tl.getTSFreqs(self.workingDir  + '/calcHigh' + self.procNum, path + '/TSDirectImag', self.highMeth, self.TS )
+                    imaginaryFreq, TSFreqs, zpe, rmol, pmol = tl.getTSFreqs(self.workingDir + '/' + self.procNum+'/calcHigh' + self.procNum, path + '/TSDirectImag', self.highMeth, self.TS )
                 except:
                     os.chdir((self.workingDir))
             os.chdir((self.workingDir))
@@ -227,16 +230,39 @@ class Reaction:
         vib.clean()
         vib.run()
         viblist = vib.get_frequencies()
-        TSFreqs = tl.getVibString(viblist, False, True)
-        imaginaryFreq,zpe = tl.getImageFreq(viblist)
+        print("getting vibs")
+        TSFreqs,zpe = tl.getVibString(viblist, False, True)
+        print("vibs done " + str(zpe))
+        imaginaryFreq = tl.getImageFreq(viblist)
         vib.clean()
         os.chdir((self.workingDir))
-
         # Finally get single point energy
         mol = tl.setCalc(mol,self.singleString, self.singleMeth, self.singleLev)
         print("Getting single point energy for TS = " + str(mol.get_potential_energy()) + "zpe = " + str(zpe) + "reactant energy = " + str(self.reactantEnergy) )
         energy = mol.get_potential_energy() + zpe
         return TSFreqs, imaginaryFreq, zpe, energy
+
+    def characteriseMinInternal(self, mol):
+        os.chdir((self.workingDir + '/' + self.procNum))
+        if (self.lowMeth == 'nwchem'):
+            mol  = tl.setCalc(mol,self.lowString, 'nwchem2', self.lowLev)
+            self.Reac.get_forces()
+        else:
+            mol = tl.setCalc(mol,self.lowString, self.lowMeth, self.lowLev)
+        min = BFGS(mol)
+        min.run(fmax=0.05, steps=50)
+        vib = Vibrations(mol)
+        vib.clean()
+        vib.run()
+        viblist = vib.get_frequencies()
+        Freqs,zpe = tl.getVibString(viblist, False, False)
+        vib.clean()
+        os.chdir((self.workingDir))
+        # Finally get single point energy
+        mol = tl.setCalc(mol,self.singleString, self.singleMeth, self.singleLev)
+        print("Getting single point energy for TS = " + str(mol.get_potential_energy()) + "zpe = " + str(zpe) + "reactant energy = " + str(self.reactantEnergy) )
+        energy = mol.get_potential_energy() + zpe
+        return Freqs, energy, mol
 
     def optReac(self):
         self.is_bimol_reac = False
@@ -254,12 +280,12 @@ class Reaction:
         try:
             self.ReacFreqs,self.reactantEnergy,self.Reac = self.characteriseMinExt(self.Reac,True)
         except:
-            self.ReacFreqs,self.reactantEnergy,self.Reac = self.characteriseMinExt(self.Reac,False)
+            self.ReacFreqs,self.reactantEnergy,self.Reac = self.characteriseMinInternal(self.Reac)
         if self.is_bimol_reac == True:
             try:
                 self.biReacFreqs,Ene,self.biReac = self.characteriseMinExt(self.biReac, True)
             except:
-                self.biReacFreqs,Ene,self.biReac = self.characteriseMinExt(self.biReac, False)
+                self.biReacFreqs,Ene,self.biReac = self.characteriseMinInternal(self.biReac)
             self.reactantEnergy += Ene
 
     def optProd(self, cart, alt):
@@ -270,7 +296,7 @@ class Reaction:
             self.CombProd.set_positions(cart)
         self.CombProd = tl.setCalc(self.CombProd,self.lowString, self.lowMeth, self.lowLev)
         min = BFGS(self.CombProd)
-        self.ProdName = tl.getSMILES(self.CombProd,True)
+        self.ProdName = tl.getSMILES(self.CombProd,True,partialOpt=True)
         if self.is_bimol_reac == True:
             self.ProdName = self.ProdName.replace('____', 'comp')
         FullName = self.ProdName.split('____',1)
@@ -301,7 +327,9 @@ class Reaction:
         self.TS.set_constraint(c)
         min = BFGS(self.TS)
         min.run(fmax=0.05, steps=50)
-        write(path + '/TSGuess.xyz', self.TS)
+        os.mkdir(path + '/Data/')
+        write(path + '/Data/TSGuess.xyz', self.TS)
+        TSGuess = self.TS.copy()
         del self.TS.constraints
         if self.biReac or self.biProd:
             QTS3 = False
@@ -317,7 +345,7 @@ class Reaction:
             self.TSFreqs, self.imaginaryFreq, zpe, energy, self.TS, rmol, pmol = self.characteriseTSExt(self.TS, False, path, QTS3)
         except:
             try:
-                "High Level TS opt for TS1 failed looking at lower level"
+                print("High Level TS opt for TS1 failed looking at lower level")
                 self.TSFreqs, self.imaginaryFreq, zpe, energy, self.TS, rmol, pmol = self.characteriseTSExt(self.TS, True, path, QTS3)
             except:
                 pass
@@ -326,6 +354,7 @@ class Reaction:
             self.TScorrect = self.compareRandP(rmol,pmol)
         except:
             self.TScorrect = False
+            self.TS = TSGuess
             self.TSFreqs, self.imaginaryFreq, zpe, energy = self.characteriseTSinternal(self.TS)
 
         write(path + '/TS1.xyz', self.TS)
@@ -366,7 +395,8 @@ class Reaction:
         dyn = open((path +"/traj.xyz"), "w")
 
         dynList = []
-        for i in range( int(changePoints - 500),int(len(MolList)), self.inc):
+        endFrame =min(changePoints + self.dynPrintStart , len(MolList))
+        for i in range( int(changePoints - self.dynPrintStart), int(endFrame), self.inc):
             iMol = MolList[i].copy()
             tl.printTraj(dyn, iMol)
             iMol = tl.setCalc(iMol,self.lowString, self.lowMeth, self.lowLev)
@@ -391,7 +421,8 @@ class Reaction:
                 maxEne = dynList[i].get_potential_energy()
 
         self.TS2 = dynList[point]
-        write(path + '/TS2guess.xyz', self.TS2)
+        TS2Guess = self.TS2.copy()
+        write(path + '/Data/TS2guess.xyz', self.TS2)
         try:
             self.TS2Freqs, self.imaginaryFreq2, zpe, energy, self.TS2, rmol, pmol = self.characteriseTSExt(self.TS2, True, path, self.QTS3)
         except:
@@ -404,6 +435,7 @@ class Reaction:
         except:
             print("TS2 does not connect products")
             self.TS2correct = False
+            self.TS2 = TS2Guess
             self.TS2Freqs, self.imaginaryFreq2, zpe, energy = self.characteriseTSinternal(self.TS2)
 
         write(path + '/TS2.xyz', self.TS2)
@@ -495,17 +527,14 @@ class Reaction:
 
     def printTS(self, path):
         write(path + '/TS.xyz', self.TS)
-        write(path + '/TS.html', self.TS)
 
     def printProd(self, path):
         write(path + '/Prod.xyz', self.Prod)
-        write(path + '/Prod.html', self.CombProd)
         if self.is_bimol_prod:
             write(path + '/biProd.xyz', self.biProd)
 
     def printReac(self, path):
         write(path + '/Reac.xyz', self.Reac)
-        write(path + '/Reac.html', self.CombReac)
         if self.is_bimol_reac:
             write(path + '/biReac.xyz', self.biReac)
 
