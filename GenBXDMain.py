@@ -25,11 +25,11 @@ def run(gl):
     #Set calculatiors
     #Reac = tl.setCalc(Reac,"DOS/", gl.trajMethod, gl.atomTypes)
     if gl.trajMethod == "openMM":
-        Reac = tl.setCalc(Reac,"DOS/", gl.trajMethod, gl)
-        Prod = tl.setCalc(Prod,"DOS/", gl.trajMethod, gl)
+        Reac = tl.setCalc(Reac,"GenBXD/", gl.trajMethod, gl)
+        Prod = tl.setCalc(Prod,"GenBXD/", gl.trajMethod, gl)
     else:
-        Reac = tl.setCalc(Reac,"DOS/", gl.trajMethod, gl.trajLevel)
-        Prod = tl.setCalc(Prod,"DOS/", gl.trajMethod, gl.trajLevel)
+        Reac = tl.setCalc(Reac,"GenBXD/", gl.trajMethod, gl.trajLevel)
+        Prod = tl.setCalc(Prod,"GenBXD/", gl.trajMethod, gl.trajLevel)
     # Partially minimise both reactant and product
     if gl.GenBXDrelax:
         min = BFGS(Reac)

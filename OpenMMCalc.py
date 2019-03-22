@@ -4,7 +4,6 @@ try:
     from simtk.unit import *
 except:
     print("no openMM version found")
-
 import numpy as np
 import ForceField as ff
 from ase.calculators.calculator import Calculator, all_changes
@@ -44,6 +43,11 @@ class OpenMMCalculator(Calculator):
             self.system = self.setUpMM3(self.parameters.ASEmol, self.parameters.atomTypes)
             positions = [x for x in self.parameters.ASEmol.get_positions()]
 
+        if fileType == "prmTop":
+            # Instantiate the parm and create the system
+            parm = pmd.load_file(input[0], input[1])
+            self.system = parm.createSystem( parm.topology, nonbondedMethod=self.parameters.nonbondedMethod, nonbondedCutoff=self.parameters.nonbondedCutoff)
+            positions = parm.positions
 
         # Create a dummy integrator, this doesn't really matter.
         self.integrator = VerletIntegrator(0.001 * picosecond)
