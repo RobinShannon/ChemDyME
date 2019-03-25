@@ -451,7 +451,7 @@ class Trajectory:
                 print('pathNode = ' +str(BXD.pathNode) + ' distFromPath = ' + str(BXD.distanceToPath) + ' project = ' +str(BXD.s[2]) + ' S ' + str(BXD.s[0]) + " hits " + str(BXD.boxList[BXD.box].upper.hits) + ' ' + str(BXD.boxList[BXD.box].lower.hits) + " points in box " + str(len(BXD.boxList[BXD.box].data))  + ' box ' + str(BXD.box) + ' time ' + str(process_time()-t) + ' temperature ' + str(self.Mol.get_temperature()))
 
             if self.iterations % 100 == 0:
-                sfile.write(' S  = ' + str(BXD.s[0]))
+                sfile.write('S \t=\t' + str(BXD.s[0]) + '\tbox\t=\t' + str(BXD.box) + "\n")
                 sfile.flush()
 
             # Perform inversion if required

@@ -458,6 +458,8 @@ class genBXD(Constraint):
             plength = s2
         b2 = bxdBound(n2,D2)
         b2.Spoint = plength
+        self.boundFile.write("Box\t=\t" + str(self.box) + "\tReverse\t=\t" + str(self.reverse) + "\tn\t=\t" + str(n2) + "\tD\t=\t" + str(D2) + "\tsPoint\t=\t" + str(plength) +  "\taltSPoint\t=\t" + str(s2) + "\n")
+        self.boundFile.flush()
         return b2
 
     def convertStoBoundOnPath(self, proj, pathNode, s):
@@ -483,7 +485,7 @@ class genBXD(Constraint):
         D = -1 * np.vdot(n, s)
         b = bxdBound(n,D)
         b.Spoint = plength
-        self.boundFile.write("pathNode = " + str(pathNode) + " currentNode = " +str(self.pathNode) + "Box = " + str(self.box) + " Reverse = " + str(self.reverse) + " n = " + str(n) + " D = " + str(D) + " sPoint = " + str(plength) +  " altSPoint = " + str(s) + "\n")
+        self.boundFile.write("pathNode\t=\t" + str(pathNode) + "\tcurrentNode\t=\t" +str(self.pathNode) + "Box\t=\t" + str(self.box) + "\tReverse\t=\t" + str(self.reverse) + "\tn\t=\t" + str(n) + "\tD\t=\t" + str(D) + "\tsPoint\t=\t" + str(plength) +  "\taltSPoint\t=\t" + str(s) + "\n")
         self.boundFile.flush()
         return b
 
