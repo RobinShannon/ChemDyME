@@ -213,7 +213,7 @@ class Constraint:
             self.stuckCount += 1
             self.stepsSinceAnyBoundaryHit = 0
         else:
-            self.stepsSinceAnyBoundaryHit += 0
+            self.stepsSinceAnyBoundaryHit += 1
             self.stuckCount = 0
             self.stuck  = False
             self.oldS = self.s
@@ -280,7 +280,7 @@ class Constraint:
         pass
 
     def boundaryCheck(self,mol):
-        if self.distanceToPath >= 1.5 * self.pathDistCutOff:
+        if self.distanceToPath >= self.pathDistCutOff:
             self.boundHit = "path"
             return True
         #Check for hit against upper boundary
@@ -498,10 +498,25 @@ class genBXD(Constraint):
         elif self.boundHit == "upper":
             n = self.boxList[self.box].upper.norm
         elif self.boundHit == "path":
-            segmentStart = self.path[self.pathNode][0]
-            segmentEnd = self.path[self.pathNode + 1][0]
+            if self.pathNode == (len(self.path) - 1) or self.pathNode == len(self.path):
+                segmentStart = self.path[self.pathNode - 1][0]
+                segmentEnd = self.path[self.pathNode][0]
+                # Total path distance up to current segment
+                TotalDistance = self.path[self.pathNode][1]
+            else:
+                segmentStart = self.path[self.pathNode][0]
+                segmentEnd = self.path[self.pathNode + 1][0]
+                # Total path distance up to current segment
+                TotalDistance = self.path[self.pathNode][1]
+            # Projection along linear segment only
+            SegDistance = self.s[2]- TotalDistance
+            # Get vector for and length of linear segment
             vec = segmentEnd - segmentStart
-            n = vec / np.linalg.norm(vec)
+            length = np.linalg.norm(vec)
+            # finally get distance of projected point along vec
+            plength = segmentStart + ((SegDistance / length) * vec)
+            perpendicularPath = (self.s[0] - plength)
+            n = perpendicularPath / np.linalg.norm(perpendicularPath)
         self.del_phi = ct.genBXDDel(mol,self.s[0],self.sInd,n)
         return self.del_phi
 
