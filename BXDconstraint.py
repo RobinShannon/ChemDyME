@@ -8,6 +8,7 @@ import numpy as np
 class Constraint:
     def __init__(self, mol, start,  end, hitLimit = 100, adapMax = 100, activeS = [], topBox = 500, hist = 1, decorrelationSteps = 10, path = 0, pathType = 'linear',runType = 'adaptive', stuckLimit = 20, numberOfBoxes = 10000, endType = 'RMSD', endDistance = '', fixToPath = False, pathDistCutOff = 100 ):
         self.decorrelationSteps = decorrelationSteps
+        self.boundFile = open("bounds.txt","w")
         self.adaptiveEnd = False
         self.fixToPath = fixToPath
         self.distanceToPath = 0
@@ -482,7 +483,8 @@ class genBXD(Constraint):
         D = -1 * np.vdot(n, s)
         b = bxdBound(n,D)
         b.Spoint = plength
-        print("pathNode = " + str(pathNode) + " currentNode = " +str(self.pathNode) + "Box = " + str(self.box) + " Reverse = " + str(self.reverse) + " n = " + str(n) + " D = " + str(D) + " sPoint = " + str(plength) + "\n")
+        self.boundFile.write("pathNode = " + str(pathNode) + " currentNode = " +str(self.pathNode) + "Box = " + str(self.box) + " Reverse = " + str(self.reverse) + " n = " + str(n) + " D = " + str(D) + " sPoint = " + str(plength) +  " altSPoint = " + str(s) + "\n")
+        self.boundFile.flush()
         return b
 
     def getS(self, mol):

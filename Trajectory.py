@@ -402,6 +402,8 @@ class Trajectory:
 
         workingDir = os.getcwd()
         file = open("geo.xyz","w")
+        sfile = open("plotData.txt", "w")
+
 
         # Get potential type
         if (self.method == 'nwchem'):
@@ -448,6 +450,9 @@ class Trajectory:
             elif self.iterations % self.printFreq == 0:
                 print('pathNode = ' +str(BXD.pathNode) + ' distFromPath = ' + str(BXD.distanceToPath) + ' project = ' +str(BXD.s[2]) + ' S ' + str(BXD.s[0]) + " hits " + str(BXD.boxList[BXD.box].upper.hits) + ' ' + str(BXD.boxList[BXD.box].lower.hits) + " points in box " + str(len(BXD.boxList[BXD.box].data))  + ' box ' + str(BXD.box) + ' time ' + str(process_time()-t) + ' temperature ' + str(self.Mol.get_temperature()))
 
+            if self.iterations % 100 == 0:
+                sfile.write(' S  = ' + str(BXD.s[0]))
+                sfile.flush()
 
             # Perform inversion if required
             if eBounded is True:
