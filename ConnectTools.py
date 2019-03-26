@@ -207,6 +207,11 @@ def getDistMatrix(mol,active):
     t = process_time()
     #do some stuff
 
+    #Hack
+    try:
+        l = active[0].shape[0]
+    except:
+        l = 0
     if active == "all":
         s1 = len(mol.get_positions())
         s2 = s1*(s1+1)/2
@@ -223,14 +228,18 @@ def getDistMatrix(mol,active):
                 Dind.append((i,j))
                 n += 1
     #Hack to to read principle component in form of linear combination of atomic distances
-    elif active[0].shape[0] > 1:
+    elif l > 2:
         dist = getDistVect(mol)
         Dind = active
         D,Dind = util.getPC(active,dist)
-    else:
+    elif l >1:
         for i in range(0,s2):
-            D[i] = mol.get_distance(active[i][0],active[i][1])
+            D[i] = mol.get_distance(int(active[i][0]),int(active[i][1]))
             Dind.append([active[i][0],active[i][1]])
+    else:
+        D = np.zeros[1]
+        D[0] = mol.get_distance(int(active[0]),int(active[1]))
+        Dind.append([active[0], active[1]])
     elapsed_time = process_time() - t
     #print("time to get S = " + str(elapsed_time))
     return D,Dind

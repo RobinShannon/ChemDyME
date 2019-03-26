@@ -2,6 +2,8 @@ try:
     from simtk.openmm.app import *
     from simtk.openmm import *
     from simtk.unit import *
+    import simtk.openmm.app as app
+    from parmed import load_file
 except:
     print("no openMM version found")
 import numpy as np
@@ -36,18 +38,18 @@ class OpenMMCalculator(Calculator):
             topology = pdb.topology
             positions = pdb.positions
             print("Generating OpenMM system")
-            self.system = forcefield.createSystem(topology, nonbondedMethod=self.parameters.nonbondedMethod,
-                                              nonbondedCutoff=self.parameters.nonbondedCutoff)
+            self.system = forcefield.createSystem(topology, nonbondedMethod=self.parameters.nonbondedMethod, nonbondedCutoff=self.parameters.nonbondedCutoff)
         if fileType == "xyz":
             print("Generating OpenMM system")
             self.system = self.setUpMM3(self.parameters.ASEmol, self.parameters.atomTypes)
             positions = [x for x in self.parameters.ASEmol.get_positions()]
 
-        if fileType == "prmTop":
+        if fileType == "amber":
             # Instantiate the parm and create the system
-            parm = pmd.load_file(input[0], input[1])
-            self.system = parm.createSystem( parm.topology, nonbondedMethod=self.parameters.nonbondedMethod, nonbondedCutoff=self.parameters.nonbondedCutoff)
+            parm = load_file("amb.prmtop", "amb.inpcrd")
+            topology = parm.topology
             positions = parm.positions
+            self.system = parm.createSystem( nonbondedMethod=app.CutoffPeriodic, nonbondedCutoff=self.parameters.nonbondedCutoff)
 
         # Create a dummy integrator, this doesn't really matter.
         self.integrator = VerletIntegrator(0.001 * picosecond)
