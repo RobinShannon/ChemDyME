@@ -8,6 +8,7 @@ import numpy as np
 class Constraint:
     def __init__(self, mol, start,  end, hitLimit = 100, adapMax = 100, activeS = [], topBox = 500, hist = 1, decorrelationSteps = 10, path = 0, pathType = 'linear',runType = 'adaptive', stuckLimit = 20, numberOfBoxes = 10000, endType = 'RMSD', endDistance = '', fixToPath = False, pathDistCutOff = 100 ):
         self.decorrelationSteps = decorrelationSteps
+        self.pathStuckCountdown = 0
         self.boundFile = open("bounds.txt","w")
         self.adaptiveEnd = False
         self.fixToPath = fixToPath
@@ -169,6 +170,10 @@ class Constraint:
         self.inversion = False
         self.boundHit = "none"
 
+        #Countdown to stop getting stuck at a boundary
+        if self.pathStuckCountdown > 0:
+            self.pathStuckCountdown -= 1
+
         # If you are doing and energy convergence run and you get stuck in a well this code allows escape
         if self.__class__.__name__ == 'Energy' and self.reverse and len(self.boxList[self.box].data) > ((self.completeRuns+1) * 5000):
             self.reverse = False
@@ -281,8 +286,9 @@ class Constraint:
         pass
 
     def boundaryCheck(self,mol):
-        if self.distanceToPath >= self.pathDistCutOff:
+        if self.distanceToPath >= self.pathDistCutOff and self.pathStuckCountdown == 0:
             self.boundHit = "path"
+            self.pathStuckCountdown = 10
             return True
         #Check for hit against upper boundary
         if self.boxList[self.box].upper.hit(self.s, "up"):
@@ -294,6 +300,8 @@ class Constraint:
                 self.box += 1
                 self.boxList[self.box].lower.stepSinceHit = 0
                 self.boxList[self.box].upper.stepSinceHit = 0
+                if self.adaptive == False and self.box == (len(self.boxList) - 1) and self.reverse == False:
+                    self.reverse = True
                 return False
             elif self.distanceToPath <= self.pathDistCutOff:
                 if self.stepsSinceAnyBoundaryHit > self.decorrelationSteps:
@@ -609,14 +617,16 @@ class bxdBox:
         self.bot = np.mean(self.botData,axis=0)
 
     def getFullHistogram(self):
-        data = [d[1] for d in self.data]
+        data = [d[2] for d in self.data]
         top = max(data)
+        bot = min(data)
+        top -= min
         edges = []
-        edges.append(0)
         for i in range(0,10):
             edges.append(i*(top/10))
         hist = np.zeros(10)
         for d in data:
+            d -= min
             for j in range(0,9):
                 if d > edges[j] and d <= edges[j+1]:
                     hist[j] += 1
