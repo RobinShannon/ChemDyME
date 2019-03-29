@@ -128,6 +128,12 @@ class Constraint:
             s,dens = box.getFullHistogram()
             for j in range(0,len(dens)):
                 rawPath.write( "\t" + "S =" + str(s[j+1]) + " density " +  str(dens[j]) + "\n")
+            boxfile = open("box" + str(i), "w")
+            data = [d[1] for d in box.data]
+            for d in data:
+                boxfile.write(str(d)+"\n")
+
+
         rawPath.close()
         for box in self.boxList:
             box.upper.averageRate = box.upper.hits / len(box.data)
@@ -147,7 +153,7 @@ class Constraint:
             totalProb += self.boxList[i].eqPopulation
 
         for i in range(0,len(self.boxList)):
-            self.boxList[i].eqPopulation /=  totalProb
+            self.boxList[i].eqPopulation /= totalProb
 
         lastS = 0
         for i in range(0,len(self.boxList)):
@@ -620,11 +626,11 @@ class bxdBox:
         data = [d[1] for d in self.data]
         top = max(data)
         edges = []
-        for i in range(0,2):
-            edges.append(i*(top/2))
-        hist = np.zeros(2)
+        for i in range(0,10):
+            edges.append(i*(top/10))
+        hist = np.zeros(10)
         for d in data:
-            for j in range(0,2):
+            for j in range(0,9):
                 if d > edges[j] and d <= edges[j+1]:
                     hist[j] += 1
         return edges, hist
