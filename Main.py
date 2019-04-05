@@ -94,7 +94,7 @@ def runNormal(p):
                    print('channel barrier too large')
 
                 # Finally check that the product isnt higher in energy than the reactant in case of ILT
-                if  p[0].is_bimol_reac == True and p[0].barrierlessReaction == True and p[0].reactantEnergy < p[0].productEnergy:
+                if p[0].is_bimol_reac == True and p[0].barrierlessReaction == True and p[0].reactantEnergy < p[0].productEnergy:
                     printXML = False
 
 
@@ -117,10 +117,8 @@ def runNormal(p):
                     tmppath = tmppath + p[0].ProdName
 
                     if not os.path.exists(tmppath):
-                        io.writeMinXML(p[0], p[3].replace('.xml','Full.xml'), False, False)
                         io.writeMinXML(p[0], p[3], False, False)
                         if p[0].is_bimol_prod == True:
-                            io.writeMinXML(p[0], p[3].replace('.xml','Full.xml'), False, True)
                             io.writeMinXML(p[0], p[3], False, True)
                     if not os.path.exists(tmppath + "/" + p[0].ReacName):
                         io.writeReactionXML(p[0], p[3], printTS2)
