@@ -89,7 +89,7 @@ def getCML(ASEmol, name):
 
     return cml
 
-def getSpinMult(mol, name):
+def getSpinMult(mol, name, trip = False):
     #Babel incorrectly guessing spin multiplicity from trajectory snapshots
     #If molecule is O2 or O assume triplet rather than singlet
     if name == '[O][O]' or name == '[O]':
@@ -98,7 +98,9 @@ def getSpinMult(mol, name):
     # else count electrons to determine whether singlet or doublet
         atom_num = mol.get_atomic_numbers()
         s = sum(atom_num)
-        if s % 2 == 0:
+        if s % 2 == 0 and trip:
+            spinMult = 3
+        elif s % 2 == 0:
             spinMult = 1
         else:
             spinMult = 2
@@ -436,8 +438,12 @@ def getGausOut(workPath, keyWords, mol):
         os.makedirs(workPath)
     os.chdir(workPath)
 
+    level = keyWords.split('_')
+    if len(level) == 2:
+        triplet = True
+
     commands = "# opt=(calcall, tight) " + keyWords + "\n\nOpt\n\n"
-    spinLine = " 0 " + str(getSpinMult(mol,"none")) + "\n"
+    spinLine = " 0 " + str(getSpinMult(mol,"none",trip = triplet)) + "\n"
     inp = str(commands) + spinLine + str(convertMolToGauss(mol))
 
 
@@ -455,14 +461,16 @@ def getGausOut(workPath, keyWords, mol):
 def getGausTSOut(workPath, outpath, keyWords, rMol, pMol, mol, biMole, QST3):
     path = os.getcwd()
     os.chdir(workPath)
-
+    level = keyWords.split('_')
+    if len(level) == 2:
+        triplet = True
     if (QST3):
         commands = "# opt=(QST3,calcall,tight) Guess=Always " + keyWords + "\n\nReac\n\n"
-        spinLine = " 0 " + str(getSpinMult(rMol,"none")) + "\n"
+        spinLine = " 0 " + str(getSpinMult(rMol,"none",trip = triplet)) + "\n"
         inp = str(commands) + spinLine + str(convertMolToGauss(mol))
-        spinLine2 = "Prod\n\n 0 " + str(getSpinMult(pMol,"none")) + "\n"
+        spinLine2 = "Prod\n\n 0 " + str(getSpinMult(rMol,"none",trip = triplet)) + "\n"
         inp = inp + spinLine2 + str(convertMolToGauss(pMol))
-        spinLine3 = "TS\n\n 0 " + str(getSpinMult(mol,"none")) + "\n"
+        spinLine3 = "TS\n\n 0 " + str(getSpinMult(rMol,"none",trip = triplet)) + "\n"
         inp = inp + spinLine3 + str(convertMolToGauss(mol))
     else:
         commands = "# opt=(ts,calcall,tight, noeigentest)" + keyWords + "\n\nTS\n\n"
