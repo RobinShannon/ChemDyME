@@ -189,6 +189,7 @@ class Constraint:
         if self.adaptive and self.s[2] > self.endDistance and self.boxList[self.box].type != "adap" and self.reverse == False:
             self.reverse = True
             self.boxList[self.box].type = "adap"
+            del self.boxList[-1]
             self.boxList[self.box].data = []
             self.boxList[self.box].upper.transparent = False
 
@@ -231,7 +232,7 @@ class Constraint:
             self.oldS = self.s
             self.boxList[self.box].upper.stepSinceHit += 1
             self.boxList[self.box].lower.stepSinceHit += 1
-            if (self.s[1] >= 0 or not self.__class__.__name__ == 'genBXD')and self.distanceToPath<=self.pathDistCutOff:
+            if (self.s[1] >= 0 or not self.__class__.__name__ == 'genBXD')and self.distanceToPath<=self.pathDistCutOff[self.pathNode]:
                 self.boxList[self.box].data.append(self.s)
 
         if self.stuckCount > self.stuckLimit:
@@ -292,13 +293,13 @@ class Constraint:
         pass
 
     def boundaryCheck(self,mol):
-        if self.distanceToPath >= self.pathDistCutOff and self.pathStuckCountdown == 0:
+        if self.distanceToPath >= self.pathDistCutOff[self.pathNode] and self.pathStuckCountdown == 0:
             self.boundHit = "path"
-            self.pathStuckCountdown = 10
+            self.pathStuckCountdown = 5
             return True
         #Check for hit against upper boundary
         if self.boxList[self.box].upper.hit(self.s, "up"):
-            if self.boxList[self.box].upper.transparent and self.distanceToPath <= self.pathDistCutOff:
+            if self.boxList[self.box].upper.transparent and self.distanceToPath <= self.pathDistCutOff[self.pathNode]:
                 self.boxList[self.box].upper.transparent = False
                 if self.adaptive:
                     self.boxList[self.box].upper.hits = 0
@@ -309,7 +310,7 @@ class Constraint:
                 if self.adaptive == False and self.box == (len(self.boxList) - 1) and self.reverse == False:
                     self.reverse = True
                 return False
-            elif self.distanceToPath <= self.pathDistCutOff:
+            elif self.distanceToPath <= self.pathDistCutOff[self.pathNode]:
                 if self.stepsSinceAnyBoundaryHit > self.decorrelationSteps:
                     self.boxList[self.box].upper.hits += 1
                     self.boxList[self.box].upper.rates.append(self.boxList[self.box].upper.stepSinceHit)
@@ -325,7 +326,7 @@ class Constraint:
                 self.boundHit = "upper"
                 return True
         elif self.boxList[self.box].lower.hit(self.s, "down"):
-            if self.boxList[self.box].lower.transparent and self.distanceToPath <= self.pathDistCutOff:
+            if self.boxList[self.box].lower.transparent and self.distanceToPath <= self.pathDistCutOff[self.pathNode]:
                 self.boxList[self.box].lower.transparent = False
                 if self.adaptive:
                     self.boxList[self.box].upper.hits = 0
@@ -341,7 +342,7 @@ class Constraint:
                     self.boxList[self.box].data = []
                     self.boxList[self.box].lower.transparent = True
                 return False
-            elif self.distanceToPath <= self.pathDistCutOff:
+            elif self.distanceToPath <= self.pathDistCutOff[self.pathNode]:
                 if self.stepsSinceAnyBoundaryHit > self.decorrelationSteps:
                     self.boxList[self.box].lower.hits += 1
                     self.boxList[self.box].lower.rates.append(self.boxList[self.box].lower.stepSinceHit)
