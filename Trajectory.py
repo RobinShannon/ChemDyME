@@ -538,4 +538,4 @@ class Trajectory:
             i += 1
         BXDprofile = open("BXDprofile" + str(i) + ".txt", "w")
         BXDrawData = open("BXDrawData" + str(i) + ".txt", "w")
-        BXD.gatherData(BXDprofile, BXDrawData)
+        BXD.gatherData(BXDprofile, BXDrawData, self.LangTemp)
