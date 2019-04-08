@@ -624,14 +624,15 @@ class bxdBox:
         self.bot = np.mean(self.botData,axis=0)
 
     def getFullHistogram(self):
+        del self.data[0]
         data = [d[1] for d in self.data]
         top = max(data)
         edges = []
-        for i in range(0,10):
+        for i in range(0,11):
             edges.append(i*(top/10))
         hist = np.zeros(10)
         for d in data:
-            for j in range(0,9):
+            for j in range(0,10):
                 if d > edges[j] and d <= edges[j+1]:
                     hist[j] += 1
         return edges, hist
