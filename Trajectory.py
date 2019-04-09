@@ -446,12 +446,12 @@ class Trajectory:
                 self.Mol.set_positions(mdInt.oldPos)
                 bxd_del_phi = BXD.del_constraint(self.Mol)
 
-            if self.MDIntegrator == 'VelocityVerlet' and self.iterations % self.printFreq == 0:
+            if self.MDIntegrator == 'VelocityVerlet' and not eBounded:
                 print('S ' + str(BXD.s[2])  + ' box ' + str(BXD.box) + ' time ' + str(process_time()-t) + ' Etot ' + str(self.Mol.get_potential_energy() + self.Mol.get_kinetic_energy()))
-            elif self.iterations % self.printFreq == 0:
+            elif self.iterations % self.printFreq == 0 and not eBounded:
                 print('pathNode = ' +str(BXD.pathNode) + ' distFromPath = ' + str(BXD.distanceToPath) + ' project = ' +str(BXD.s[2]) + ' S ' + str(BXD.s[0]) + " hits " + str(BXD.boxList[BXD.box].upper.hits) + ' ' + str(BXD.boxList[BXD.box].lower.hits) + " points in box " + str(len(BXD.boxList[BXD.box].data))  + ' box ' + str(BXD.box) + ' time ' + str(process_time()-t) + ' temperature ' + str(self.Mol.get_temperature()))
 
-            if self.iterations % 100 == 0:
+            if self.iterations % 1 == 0:
                 sfile.write('S \t=\t' + str(BXD.s[0]) + '\tbox\t=\t' + str(BXD.box) + "\n")
                 sfile.flush()
 
@@ -539,4 +539,4 @@ class Trajectory:
             i += 1
         BXDprofile = open("BXDprofile" + str(i) + ".txt", "w")
         BXDrawData = open("BXDrawData" + str(i) + ".txt", "w")
-        BXD.gatherData(BXDprofile, BXDrawData)
+        BXD.gatherData(BXDprofile, BXDrawData, self.LangTemp)

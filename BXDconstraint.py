@@ -6,7 +6,7 @@ import numpy as np
 # Class to track constraints and calculate required derivatives for BXD constraints
 # Inversion procedure occurs in MDintegrator class
 class Constraint:
-    def __init__(self, mol, start,  end, hitLimit = 100, adapMax = 100, activeS = [], topBox = 500, hist = 1, decorrelationSteps = 10, path = 0, pathType = 'linear',runType = 'adaptive', stuckLimit = 20, numberOfBoxes = 10000, endType = 'RMSD', endDistance = 1000000000, fixToPath = False, pathDistCutOff = 100 ):
+    def __init__(self, mol, start,  end, hitLimit = 100, adapMax = 100, activeS = [], topBox = 500, hist = 1, decorrelationSteps = 10, path = 0, pathType = 'linear',runType = 'adaptive', stuckLimit = 20, numberOfBoxes = 10000, endType = 'RMSD', endDistance = '', fixToPath = False, pathDistCutOff = 100 ):
         self.decorrelationSteps = decorrelationSteps
         self.pathStuckCountdown = 0
         self.boundFile = open("bounds.txt","w")
@@ -118,58 +118,59 @@ class Constraint:
             self.boxList.append(box)
         self.boxList.pop(0)
 
-    def gatherData(self, path, rawPath,T):
-        #Multiply T by the gas constant in kJ/mol
-        T *= (8.314/1000)
+    def gatherData(self, path, rawPath, T):
+        # Multiply T by the gas constant in kJ/mol
+        T *= (8.314 / 1000)
         profile = []
         totalProb = 0
         i = 0
         for box in self.boxList:
-            rawPath.write( "box " + str(i) + " Steps in box = " + str(len(box.data)) + " Hits at lower boundary = " + str(box.lower.hits) + " Hits at upper boundary = " + str(box.upper.hits) + "\n")
+            rawPath.write(
+                "box " + str(i) + " Steps in box = " + str(len(box.data)) + " Hits at lower boundary = " + str(
+                    box.lower.hits) + " Hits at upper boundary = " + str(box.upper.hits) + "\n")
             rawPath.write("box " + str(i) + " Histogram " + "\n")
-            s,dens = box.getFullHistogram()
-            for j in range(0,len(dens)):
-                rawPath.write( "\t" + "S =" + str(s[j+1]) + " density " +  str(dens[j]) + "\n")
+            s, dens = box.getFullHistogram()
+            for j in range(0, len(dens)):
+                rawPath.write("\t" + "S =" + str(s[j + 1]) + " density " + str(dens[j]) + "\n")
             boxfile = open("box" + str(i), "w")
             data = [d[1] for d in box.data]
             for d in data:
-                boxfile.write(str(d)+"\n")
-
+                boxfile.write(str(d) + "\n")
 
         rawPath.close()
         for box in self.boxList:
             box.upper.averageRate = box.upper.hits / len(box.data)
             try:
-                box.lower.averageRate =  box.lower.hits / len(box.data)
+                box.lower.averageRate = box.lower.hits / len(box.data)
             except:
                 box.lower.averageRate = 0
-        for i in range(0,len(self.boxList)-1):
+        for i in range(0, len(self.boxList) - 1):
             if i == 0:
                 self.boxList[i].Gibbs = 0
-            Keq = self.boxList[i].upper.averageRate / self.boxList[i+1].lower.averageRate
+            Keq = self.boxList[i].upper.averageRate / self.boxList[i + 1].lower.averageRate
             deltaG = -1.0 * np.log(Keq) * T
-            self.boxList[i+1].Gibbs = deltaG + self.boxList[i].Gibbs
+            self.boxList[i + 1].Gibbs = deltaG + self.boxList[i].Gibbs
 
-        for i in range(0,len(self.boxList)):
+        for i in range(0, len(self.boxList)):
             self.boxList[i].eqPopulation = np.exp(-1.0 * (self.boxList[i].Gibbs / T))
             totalProb += self.boxList[i].eqPopulation
 
-        for i in range(0,len(self.boxList)):
+        for i in range(0, len(self.boxList)):
             self.boxList[i].eqPopulation /= totalProb
 
         lastS = 0
-        for i in range(0,len(self.boxList)):
-            s,dens = self.boxList[i].getFullHistogram()
+        for i in range(0, len(self.boxList)):
+            s, dens = self.boxList[i].getFullHistogram()
             width = s[1] - s[0]
-            for j in range(0,len(dens)):
-                d= float(dens[j]) / float(len(self.boxList[i].data))
+            for j in range(0, len(dens)):
+                d = float(dens[j]) / float(len(self.boxList[i].data))
                 p = d * self.boxList[i].eqPopulation
-                mainp = -1.0 * np.log(p/width) * T
+                mainp = -1.0 * np.log(p / width) * T
                 altp = -1.0 * np.log(p) * T
                 s_path = s[j] + lastS - (width / 2.0)
-                profile.append((s_path,p))
-                path.write( "S = " + str(s_path) + " G = " + str(mainp) + " altG = " + str(altp) + "\n")
-            lastS += s[len(s)-1] - width / 2.0
+                profile.append((s_path, p))
+                path.write("S = " + str(s_path) + " G = " + str(mainp) + " altG = " + str(altp) + "\n")
+            lastS += s[len(s) - 1] - width / 2.0
 
     @abstractmethod
     def update(self, mol):
@@ -191,6 +192,7 @@ class Constraint:
         if self.adaptive and self.s[2] > self.endDistance and self.boxList[self.box].type != "adap" and self.reverse == False:
             self.reverse = True
             self.boxList[self.box].type = "adap"
+            del self.boxList[-1]
             self.boxList[self.box].data = []
             self.boxList[self.box].upper.transparent = False
 
@@ -233,7 +235,7 @@ class Constraint:
             self.oldS = self.s
             self.boxList[self.box].upper.stepSinceHit += 1
             self.boxList[self.box].lower.stepSinceHit += 1
-            if (self.s[1] >= 0 or not self.__class__.__name__ == 'genBXD')and self.distanceToPath<=self.pathDistCutOff:
+            if (self.s[1] >= 0 or not self.__class__.__name__ == 'genBXD')and self.distanceToPath<=self.pathDistCutOff[self.pathNode]:
                 self.boxList[self.box].data.append(self.s)
 
         if self.stuckCount > self.stuckLimit:
@@ -294,13 +296,13 @@ class Constraint:
         pass
 
     def boundaryCheck(self,mol):
-        if self.distanceToPath >= self.pathDistCutOff and self.pathStuckCountdown == 0:
+        if self.distanceToPath >= self.pathDistCutOff[self.pathNode] and self.pathStuckCountdown == 0:
             self.boundHit = "path"
-            self.pathStuckCountdown = 10
+            self.pathStuckCountdown = 5
             return True
         #Check for hit against upper boundary
         if self.boxList[self.box].upper.hit(self.s, "up"):
-            if self.boxList[self.box].upper.transparent and self.distanceToPath <= self.pathDistCutOff:
+            if self.boxList[self.box].upper.transparent and self.distanceToPath <= self.pathDistCutOff[self.pathNode]:
                 self.boxList[self.box].upper.transparent = False
                 if self.adaptive:
                     self.boxList[self.box].upper.hits = 0
@@ -311,7 +313,7 @@ class Constraint:
                 if self.adaptive == False and self.box == (len(self.boxList) - 1) and self.reverse == False:
                     self.reverse = True
                 return False
-            elif self.distanceToPath <= self.pathDistCutOff:
+            elif self.distanceToPath <= self.pathDistCutOff[self.pathNode]:
                 if self.stepsSinceAnyBoundaryHit > self.decorrelationSteps:
                     self.boxList[self.box].upper.hits += 1
                     self.boxList[self.box].upper.rates.append(self.boxList[self.box].upper.stepSinceHit)
@@ -327,7 +329,7 @@ class Constraint:
                 self.boundHit = "upper"
                 return True
         elif self.boxList[self.box].lower.hit(self.s, "down"):
-            if self.boxList[self.box].lower.transparent and self.distanceToPath <= self.pathDistCutOff:
+            if self.boxList[self.box].lower.transparent and self.distanceToPath <= self.pathDistCutOff[self.pathNode]:
                 self.boxList[self.box].lower.transparent = False
                 if self.adaptive:
                     self.boxList[self.box].upper.hits = 0
@@ -343,7 +345,7 @@ class Constraint:
                     self.boxList[self.box].data = []
                     self.boxList[self.box].lower.transparent = True
                 return False
-            elif self.distanceToPath <= self.pathDistCutOff:
+            elif self.distanceToPath <= self.pathDistCutOff[self.pathNode]:
                 if self.stepsSinceAnyBoundaryHit > self.decorrelationSteps:
                     self.boxList[self.box].lower.hits += 1
                     self.boxList[self.box].lower.rates.append(self.boxList[self.box].lower.stepSinceHit)
@@ -625,14 +627,15 @@ class bxdBox:
         self.bot = np.mean(self.botData,axis=0)
 
     def getFullHistogram(self):
+        del self.data[0]
         data = [d[1] for d in self.data]
         top = max(data)
         edges = []
-        for i in range(0,10):
+        for i in range(0,11):
             edges.append(i*(top/10))
         hist = np.zeros(10)
         for d in data:
-            for j in range(0,9):
+            for j in range(0,10):
                 if d > edges[j] and d <= edges[j+1]:
                     hist[j] += 1
         return edges, hist

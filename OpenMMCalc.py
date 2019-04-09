@@ -3,7 +3,6 @@ try:
     from simtk.openmm import *
     from simtk.unit import *
     import simtk.openmm.app as app
-    from parmed import load_file
 except:
     print("no openMM version found")
 import numpy as np
@@ -46,10 +45,11 @@ class OpenMMCalculator(Calculator):
 
         if fileType == "amber":
             # Instantiate the parm and create the system
-            parm = load_file("amb.prmtop", "amb.inpcrd")
-            topology = parm.topology
-            positions = parm.positions
-            self.system = parm.createSystem( nonbondedMethod=app.CutoffPeriodic, nonbondedCutoff=self.parameters.nonbondedCutoff)
+            prmtop = AmberPrmtopFile('amb.prmtop')
+            inpcrd = AmberInpcrdFile('amb.inpcrd')
+            positions = inpcrd.positions
+            topology = prmtop.topology
+            self.system = prmtop.createSystem(nonbondedMethod=PME, nonbondedCutoff=self.parameters.nonbondedCutoff)
 
         # Create a dummy integrator, this doesn't really matter.
         self.integrator = VerletIntegrator(0.001 * picosecond)

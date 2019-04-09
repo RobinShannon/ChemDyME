@@ -220,7 +220,9 @@ class Globals:
             if re.search('fixToPath', line):
                 self.fixToPath = True
             if re.search('pathDistCutOff', line):
-                self.pathDistCutOff = float(line.split()[2])
+                uVar = line.split()[2]
+                c = StringIO(uVar)
+                self.pathDistCutOff = np.loadtxt(c, delimiter=',')
             if re.search("maxHits",line):
                     self.maxHits  = int(line.split()[2])
             if re.search("runsThrough",line):
