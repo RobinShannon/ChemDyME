@@ -6,7 +6,7 @@ import numpy as np
 # Class to track constraints and calculate required derivatives for BXD constraints
 # Inversion procedure occurs in MDintegrator class
 class Constraint:
-    def __init__(self, mol, start,  end, hitLimit = 100, adapMax = 100, activeS = [], topBox = 500, hist = 1, decorrelationSteps = 10, path = 0, pathType = 'linear',runType = 'adaptive', stuckLimit = 20, numberOfBoxes = 10000, endType = 'RMSD', endDistance = '', fixToPath = False, pathDistCutOff = 100 ):
+    def __init__(self, mol, start,  end, hitLimit = 100, adapMax = 100, activeS = [], topBox = 500, hist = 1, decorrelationSteps = 10, path = 0, pathType = 'linear',runType = 'adaptive', stuckLimit = 20, numberOfBoxes = 10000, endType = 'RMSD', endDistance = 100000000, fixToPath = False, pathDistCutOff = 100 ):
         self.decorrelationSteps = decorrelationSteps
         self.pathStuckCountdown = 0
         self.boundFile = open("bounds.txt","w")
@@ -235,7 +235,7 @@ class Constraint:
             self.oldS = self.s
             self.boxList[self.box].upper.stepSinceHit += 1
             self.boxList[self.box].lower.stepSinceHit += 1
-            if (self.s[1] >= 0 or not self.__class__.__name__ == 'genBXD')and self.distanceToPath<=self.pathDistCutOff[self.pathNode]:
+            if (self.s[1] >= 0 or not self.__class__.__name__ == 'genBXD') and self.pathNode != False and self.distanceToPath<=self.pathDistCutOff[self.pathNode]:
                 self.boxList[self.box].data.append(self.s)
 
         if self.stuckCount > self.stuckLimit:
@@ -296,13 +296,17 @@ class Constraint:
         pass
 
     def boundaryCheck(self,mol):
-        if self.distanceToPath >= self.pathDistCutOff[self.pathNode] and self.pathStuckCountdown == 0:
+        if self.pathNode == False:
+            distCutOff = 100
+        else:
+            distCutOff = self.pathDistCutOff[self.pathNode]
+        if self.distanceToPath >= distCutOff and self.pathStuckCountdown == 0:
             self.boundHit = "path"
             self.pathStuckCountdown = 5
             return True
         #Check for hit against upper boundary
         if self.boxList[self.box].upper.hit(self.s, "up"):
-            if self.boxList[self.box].upper.transparent and self.distanceToPath <= self.pathDistCutOff[self.pathNode]:
+            if self.boxList[self.box].upper.transparent and self.distanceToPath <= distCutOff:
                 self.boxList[self.box].upper.transparent = False
                 if self.adaptive:
                     self.boxList[self.box].upper.hits = 0
@@ -329,7 +333,7 @@ class Constraint:
                 self.boundHit = "upper"
                 return True
         elif self.boxList[self.box].lower.hit(self.s, "down"):
-            if self.boxList[self.box].lower.transparent and self.distanceToPath <= self.pathDistCutOff[self.pathNode]:
+            if self.boxList[self.box].lower.transparent and self.distanceToPath <= distCutOff:
                 self.boxList[self.box].lower.transparent = False
                 if self.adaptive:
                     self.boxList[self.box].upper.hits = 0
@@ -345,7 +349,7 @@ class Constraint:
                     self.boxList[self.box].data = []
                     self.boxList[self.box].lower.transparent = True
                 return False
-            elif self.distanceToPath <= self.pathDistCutOff[self.pathNode]:
+            elif self.distanceToPath <= distCutOff:
                 if self.stepsSinceAnyBoundaryHit > self.decorrelationSteps:
                     self.boxList[self.box].lower.hits += 1
                     self.boxList[self.box].lower.rates.append(self.boxList[self.box].lower.stepSinceHit)
