@@ -30,7 +30,8 @@ def runNormal(p):
             print(str(base))
         # Run Trajectory
         p[1].runTrajectory()
-
+        print('trajectory done')
+        print(p[1].productGeom)
         # Geom opt part
         # Optimise Product
         p[0].optProd(p[1].productGeom, False)
@@ -40,7 +41,8 @@ def runNormal(p):
 
         #Get the indicies of the bonds which have either formed or broken over the course of the reaction
         changedBonds = CT.getChangedBonds(p[0].CombReac, p[0].CombProd)
-
+        print('changesBonds ' + str(changedBonds))
+        print(str(p[0].ProdName))
         # Check the reaction product is not the orriginal reactant
         if p[0].ProdName != p[0].ReacName:
 
@@ -89,7 +91,7 @@ def runNormal(p):
 
 
                 #Then check barrier isnt ridiculous
-                if (((p[0].forwardBarrier - p[0].eneBaseline) * 96.45) > 800):
+                if (((p[0].forwardBarrier - p[0].reactantEnergy) * 96.45) > 500):
                    printXML = False
                    print('channel barrier too large')
 
@@ -116,6 +118,9 @@ def runNormal(p):
                     tmppath = p[3].replace('/MESMER/mestemplate.xml','/')
                     tmppath = tmppath + p[0].ProdName
 
+                    data = open(('MechanismData.txt'), "a")
+                    data.write('Reactant = ' + str(p[0].ReacName) + ' Product = ' + str(p[0].ProdName) + ' BarrierHeight = ' +  str((p[0].forwardBarrier - p[0].reactantEnergy) * 96.45) + '\n' )
+
                     if not os.path.exists(tmppath):
                         io.writeMinXML(p[0], p[3], False, False)
                         if p[0].is_bimol_prod == True:
@@ -138,9 +143,12 @@ def runNormal(p):
 
 def run(glo):
 
-
     # Get path to current directory
     path = os.getcwd()
+
+    #Check whether there is a directory for putting calcuation data in. If not create it
+    if not os.path.exists(path + '/Raw'):
+        os.mkdir(path + '/Raw')
 
     #Set restart bool for now
     glo.restart = True
@@ -151,8 +159,8 @@ def run(glo):
 
     #Make working directories for each core
     for i in range(0,glo.cores):
-        if not os.path.exists(path + '/' + str(i)):
-            os.mkdir(path + '/' + str(i))
+        if not os.path.exists(path + '/Raw/' + str(i)):
+            os.mkdir(path + '/Raw/' + str(i))
 
     #Start counter which tracks the kinetic timescale
     mechanismRunTime = 0.0

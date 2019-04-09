@@ -256,6 +256,7 @@ class Trajectory:
         namefile.close()
         os.chdir(workingDir)
 
+
     def runBXDEconvergence(self, maxHits,maxAdapSteps,eneAdaptive, decorrelationSteps, histogramLevel, runsThough, numberOfBoxes, grainSize):
 
         # Create specific directory

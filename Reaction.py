@@ -24,13 +24,13 @@ class Reaction:
         self.eneBaseline = 0.0
         self.workingDir = os.getcwd()
         self.procNum = str(i)
-        self.lowString = 'calcLow' + str(i) + '/calc'
+        self.lowString = 'Raw/calcLow' + str(i) + '/calc'
         self.lowLev = glo.lowerLevel
         self.lowMeth = glo.lowerMethod
         self.highLev = glo.higherLevel
         self.highMeth = glo.higherMethod
-        self.highString = 'calcHigh' + str(i) +'/calc'
-        self.singleString = 'calcSingle' + str(i) +'/calc'
+        self.highString = 'Raw/calcHigh' + str(i) +'/calc'
+        self.singleString = 'Raw/calcSingle' + str(i) +'/calc'
         self.singleMeth = glo.singleMethod
         self.singleLev = glo.singleLevel
         self.ReacFreqs = []
@@ -115,7 +115,7 @@ class Reaction:
             min.run(fmax=0.1, steps=100)
         if high:
             if self.highMeth == "gauss":
-                mol, freqs, zpe = tl.getGausOut(self.workingDir + '/calcHigh' + self.procNum, self.highLev, mol)
+                mol, freqs, zpe = tl.getGausOut(self.workingDir + 'Raw/calcHigh' + self.procNum, self.highLev, mol)
                 os.chdir((self.workingDir))
             else:
                 # Higher level optimisation via some external program
@@ -124,21 +124,21 @@ class Reaction:
                     mol.get_forces()
                 except:
                     pass
-                mol = tl.getOptGeom(self.workingDir + '/' + 'calcHigh' + self.procNum +'/', 'none',  self.Reac, self.highMeth )
+                mol = tl.getOptGeom(self.workingDir + '/' + 'Raw/calcHigh' + self.procNum +'/', 'none',  self.Reac, self.highMeth )
 
 
                 # Then calculate frequencies
-                os.chdir((self.workingDir + '/' + self.procNum))
+                os.chdir((self.workingDir + '/Raw/' + self.procNum))
                 mol  = tl.setCalc(mol,self.highString, self.highMeth + 'Freq', self.highLev)
                 try:
                     mol.get_forces()
                 except:
                     pass
-                freqs, zpe = tl.getFreqs(self.workingDir + '/' + self.procNum + '/calcHigh' + self.procNum, self.highMeth)
+                freqs, zpe = tl.getFreqs(self.workingDir + '/Raw/' + self.procNum + '/Raw/calcHigh' + self.procNum, self.highMeth)
                 os.chdir((self.workingDir))
         else:
             if self.lowMeth == "gauss":
-                mol, freqs, zpe = tl.getGausOut(self.workingDir + '/calcLow' + self.procNum, self.lowLev, mol)
+                mol, freqs, zpe = tl.getGausOut(self.workingDir + '/Raw/calcLow' + self.procNum, self.lowLev, mol)
                 os.chdir((self.workingDir))
             else:
                 # Higher level optimisation via some external program
@@ -147,17 +147,17 @@ class Reaction:
                     mol.get_forces()
                 except:
                     pass
-                mol = tl.getOptGeom(self.workingDir + '/' + 'calcLow' + self.procNum +'/', 'none',  self.Reac, self.lowMeth )
+                mol = tl.getOptGeom(self.workingDir + '/Raw/' + 'calcLow' + self.procNum +'/', 'none',  self.Reac, self.lowMeth )
 
 
                 # Then calculate frequencies
-                os.chdir((self.workingDir + '/' + self.procNum))
+                os.chdir((self.workingDir + '/Raw/' + self.procNum))
                 mol  = tl.setCalc(mol,self.lowString, self.lowMeth + 'Freq', self.lowLev)
                 try:
                     mol.get_forces()
                 except:
                     pass
-                freqs, zpe = tl.getFreqs(self.workingDir + '/' + self.procNum +'/calcLow' + self.procNum, self.lowMeth)
+                freqs, zpe = tl.getFreqs(self.workingDir + '/Raw/' + self.procNum +'/Raw/calcLow' + self.procNum, self.lowMeth)
                 os.chdir((self.workingDir))
         # Finally get single point energy
         mol = tl.setCalc(mol,self.singleString, self.singleMeth, self.singleLev)
@@ -180,17 +180,17 @@ class Reaction:
             pass
 
         if not low and self.highMeth == "gauss":
-            mol, imaginaryFreq, TSFreqs, zpe, rmol, pmol = tl.getGausTSOut(self.workingDir + '/calcHigh' + self.procNum, path, self.highLev, self.CombReac, self.CombProd, mol,self.is_bimol_reac,QTS3)
+            mol, imaginaryFreq, TSFreqs, zpe, rmol, pmol = tl.getGausTSOut(self.workingDir + '/Raw/calcHigh' + self.procNum, path, self.highLev, self.CombReac, self.CombProd, mol,self.is_bimol_reac,QTS3)
             os.chdir((self.workingDir))
         else:
             print("getting TS geom")
             if low:
-                mol = tl.getOptGeom(self.workingDir + '/' + 'calcLow' + self.procNum +'/', 'none',  self.Reac, self.lowMeth )
+                mol = tl.getOptGeom(self.workingDir + '/Raw/' + 'calcLow' + self.procNum +'/', 'none',  self.Reac, self.lowMeth )
             else:
-                mol = tl.getOptGeom(self.workingDir + '/' + 'calcLow' + self.procNum +'/', 'none',  self.Reac, self.lowMeth )
+                mol = tl.getOptGeom(self.workingDir + '/Raw/' + 'calcLow' + self.procNum +'/', 'none',  self.Reac, self.lowMeth )
 
             # Then calculate frequencies
-            os.chdir((self.workingDir + '/' + self.procNum))
+            os.chdir((self.workingDir + '/Raw/' + self.procNum))
             print("getting TS freqs")
             if low:
                 mol  = tl.setCalc(mol,self.lowString, self.lowMeth + 'Freq', self.lowLev)
@@ -203,12 +203,12 @@ class Reaction:
             print("reading TS freqs")
             if low:
                 try:
-                    imaginaryFreq, TSFreqs, zpe, rmol, pmol = tl.getTSFreqs(self.workingDir + '/' + self.procNum + '/calcLow' + self.procNum, path + '/TSPreDirectImag', self.lowMeth, self.TS )
+                    imaginaryFreq, TSFreqs, zpe, rmol, pmol = tl.getTSFreqs(self.workingDir + '/Raw/' + self.procNum + '/Raw/calcLow' + self.procNum, path + '/TSPreDirectImag', self.lowMeth, self.TS )
                 except:
                     os.chdir((self.workingDir))
             else:
                 try:
-                    imaginaryFreq, TSFreqs, zpe, rmol, pmol = tl.getTSFreqs(self.workingDir + '/' + self.procNum+'/calcHigh' + self.procNum, path + '/TSDirectImag', self.highMeth, self.TS )
+                    imaginaryFreq, TSFreqs, zpe, rmol, pmol = tl.getTSFreqs(self.workingDir + '/Raw/' + self.procNum+'/Raw/calcHigh' + self.procNum, path + '/TSDirectImag', self.highMeth, self.TS )
                 except:
                     os.chdir((self.workingDir))
             os.chdir((self.workingDir))
@@ -220,7 +220,7 @@ class Reaction:
         return TSFreqs, imaginaryFreq, zpe, energy, mol, rmol, pmol
 
     def characteriseTSinternal(self,mol):
-        os.chdir((self.workingDir + '/' + self.procNum))
+        os.chdir((self.workingDir + '/Raw/' + self.procNum))
         if (self.lowMeth == 'nwchem'):
             mol  = tl.setCalc(mol,self.lowString, 'nwchem2', self.lowLev)
             self.Reac.get_forces()
@@ -289,6 +289,7 @@ class Reaction:
             self.reactantEnergy += Ene
 
     def optProd(self, cart, alt):
+        print('optimising product')
         self.is_bimol_prod = False
         if alt == True:
             self.CombProd = self.AltProd.copy()
@@ -296,7 +297,7 @@ class Reaction:
             self.CombProd.set_positions(cart)
         self.CombProd = tl.setCalc(self.CombProd,self.lowString, self.lowMeth, self.lowLev)
         min = BFGS(self.CombProd)
-        self.ProdName = tl.getSMILES(self.CombProd,True,partialOpt=True)
+        self.ProdName = tl.getSMILES(self.CombProd,True, partialOpt=True)
         if self.is_bimol_reac == True:
             self.ProdName = self.ProdName.replace('____', 'comp')
         FullName = self.ProdName.split('____',1)

@@ -6,7 +6,7 @@ import numpy as np
 # Class to track constraints and calculate required derivatives for BXD constraints
 # Inversion procedure occurs in MDintegrator class
 class Constraint:
-    def __init__(self, mol, start,  end, hitLimit = 100, adapMax = 100, activeS = [], topBox = 500, hist = 1, decorrelationSteps = 10, path = 0, pathType = 'linear',runType = 'adaptive', stuckLimit = 20, numberOfBoxes = 10000, endType = 'RMSD', endDistance = '', fixToPath = False, pathDistCutOff = 100 ):
+    def __init__(self, mol, start,  end, hitLimit = 100, adapMax = 100, activeS = [], topBox = 500, hist = 1, decorrelationSteps = 10, path = 0, pathType = 'linear',runType = 'adaptive', stuckLimit = 20, numberOfBoxes = 10000, endType = 'RMSD', endDistance = 1000000000, fixToPath = False, pathDistCutOff = 100 ):
         self.decorrelationSteps = decorrelationSteps
         self.pathStuckCountdown = 0
         self.boundFile = open("bounds.txt","w")
@@ -118,7 +118,9 @@ class Constraint:
             self.boxList.append(box)
         self.boxList.pop(0)
 
-    def gatherData(self, path, rawPath):
+    def gatherData(self, path, rawPath,T):
+        #Multiply T by the gas constant in kJ/mol
+        T *= (8.314/1000)
         profile = []
         totalProb = 0
         i = 0
@@ -145,11 +147,11 @@ class Constraint:
             if i == 0:
                 self.boxList[i].Gibbs = 0
             Keq = self.boxList[i].upper.averageRate / self.boxList[i+1].lower.averageRate
-            deltaG = -1.0 * np.log(Keq)
+            deltaG = -1.0 * np.log(Keq) * T
             self.boxList[i+1].Gibbs = deltaG + self.boxList[i].Gibbs
 
         for i in range(0,len(self.boxList)):
-            self.boxList[i].eqPopulation =  np.exp(-1.0 * (self.boxList[i].Gibbs))
+            self.boxList[i].eqPopulation = np.exp(-1.0 * (self.boxList[i].Gibbs / T))
             totalProb += self.boxList[i].eqPopulation
 
         for i in range(0,len(self.boxList)):
@@ -162,11 +164,11 @@ class Constraint:
             for j in range(0,len(dens)):
                 d= float(dens[j]) / float(len(self.boxList[i].data))
                 p = d * self.boxList[i].eqPopulation
-                p = -1.0 * np.log(p/width)
-                altp = -1.0 * np.log(p)
+                mainp = -1.0 * np.log(p/width) * T
+                altp = -1.0 * np.log(p) * T
                 s_path = s[j] + lastS - (width / 2.0)
                 profile.append((s_path,p))
-                path.write( "S = " + str(s_path) + " G = " + str(p) + " altG = " + str(altp) + "\n")
+                path.write( "S = " + str(s_path) + " G = " + str(mainp) + " altG = " + str(altp) + "\n")
             lastS += s[len(s)-1] - width / 2.0
 
     @abstractmethod

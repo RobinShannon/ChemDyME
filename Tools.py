@@ -441,7 +441,7 @@ def getGausOut(workPath, keyWords, mol):
     level = keyWords.split('_')
     if len(level) == 2:
         triplet = True
-
+        keyWords = level[0]
     commands = "# opt=(calcall, tight) " + keyWords + "\n\nOpt\n\n"
     spinLine = " 0 " + str(getSpinMult(mol,"none",trip = triplet)) + "\n"
     inp = str(commands) + spinLine + str(convertMolToGauss(mol))
@@ -464,6 +464,7 @@ def getGausTSOut(workPath, outpath, keyWords, rMol, pMol, mol, biMole, QST3):
     level = keyWords.split('_')
     if len(level) == 2:
         triplet = True
+        keyWords = level[0]
     if (QST3):
         commands = "# opt=(QST3,calcall,tight) Guess=Always " + keyWords + "\n\nReac\n\n"
         spinLine = " 0 " + str(getSpinMult(rMol,"none",trip = triplet)) + "\n"

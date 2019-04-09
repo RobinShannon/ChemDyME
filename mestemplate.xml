@@ -27,7 +27,7 @@
         <me:bathGas>N2</me:bathGas>
         <me:PTs>
             
-            <me:PTpair me:units="Torr" me:P="5000" me:T="2000" refReactionExcess="R2"  me:precision="d" >
+            <me:PTpair me:units="Torr" me:P="0.1" me:T="2000" refReactionExcess="R2"  me:precision="d" >
             </me:PTpair>
 
         </me:PTs>
@@ -42,10 +42,10 @@
   <me:modelParameters>
     <me:numberStochasticTrials>1</me:numberStochasticTrials>
     <me:stochasticStartTime>1E-11</me:stochasticStartTime>
-    <me:stochasticEndTime>1E-0</me:stochasticEndTime>
+    <me:stochasticEndTime>1E100</me:stochasticEndTime>
     <me:StochasticThermalThreshold>100</me:StochasticThermalThreshold>
     <me:StochasticEqilThreshold>100000000</me:StochasticEqilThreshold>
-    <me:StochasticAxdLimit>-100</me:StochasticAxdLimit>
+    <me:StochasticAxdLimit>0</me:StochasticAxdLimit>
     <!--Specify grain size directly...-->
     <me:grainSize units="cm-1">100</me:grainSize>
     <!--...or by the total number of grains
