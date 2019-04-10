@@ -395,7 +395,7 @@ class Trajectory:
 
         BXD.gatherData(False,units.kB * self.LangTemp)
 
-    def runGenBXD(self, Reac, Prod, maxHits, adapMax, pathType, path, bonds, decSteps, histogramSize, pathLength, fixToPath, pathDistCutOff):
+    def runGenBXD(self, Reac, Prod, maxHits, adapMax, pathType, path, bonds, decSteps, histogramBins, pathLength, fixToPath, pathDistCutOff, epsilon):
 
         self.iterations = 0
 
@@ -419,7 +419,7 @@ class Trajectory:
             mdInt = MDIntegrator.Langevin(units.kB * self.LangTemp, self.LangFric, self.forces, self.velocity, self.Mol, self.timeStep)
 
         #Check whether a list of bounds is present? If so read adaptive boundaries from previous run
-        BXD = BXDconstraint.genBXD(self.Mol, Reac, Prod, adapMax = adapMax, activeS = bonds, path = path, pathType = pathType, decorrelationSteps = decSteps, runType = 'adaptive', hitLimit = 1, hist = histogramSize, endDistance=pathLength, fixToPath=fixToPath, pathDistCutOff=pathDistCutOff )
+        BXD = BXDconstraint.genBXD(self.Mol, Reac, Prod, adapMax = adapMax, activeS = bonds, path = path, pathType = pathType, decorrelationSteps = decSteps, runType = 'adaptive', hitLimit = 1, hist = histogramBins, endDistance=pathLength, fixToPath=fixToPath, pathDistCutOff=pathDistCutOff, epsilon=epsilon )
         #Check whether a list of bounds is present? If so read adaptive boundaries from previous run
         if os.path.isfile("BXDbounds.txt"):
             BXD.readExisitingBoundaries("BXDbounds.txt")
@@ -451,8 +451,8 @@ class Trajectory:
             elif self.iterations % self.printFreq == 0 and not eBounded:
                 print('pathNode = ' +str(BXD.pathNode) + ' distFromPath = ' + str(BXD.distanceToPath) + ' project = ' +str(BXD.s[2]) + ' S ' + str(BXD.s[0]) + " hits " + str(BXD.boxList[BXD.box].upper.hits) + ' ' + str(BXD.boxList[BXD.box].lower.hits) + " points in box " + str(len(BXD.boxList[BXD.box].data))  + ' box ' + str(BXD.box) + ' time ' + str(process_time()-t) + ' temperature ' + str(self.Mol.get_temperature()))
 
-            if self.iterations % 1 == 0:
-                sfile.write('S \t=\t' + str(BXD.s[0]) + '\tbox\t=\t' + str(BXD.box) + "\n")
+            if self.iterations % (self.printFreq/100) == 0:
+                sfile.write('S \t=\t' + str(BXD.s[0]) + '\tbox\t=\t' + str(BXD.box) + " hits " + str(BXD.boxList[BXD.box].upper.hits) + ' ' + str(BXD.boxList[BXD.box].lower.hits) + "\n")
                 sfile.flush()
 
             # Perform inversion if required

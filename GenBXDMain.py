@@ -74,7 +74,7 @@ def run(gl):
 
     # initialise then run trajectory
     t = Trajectory.Trajectory(Reac,gl,os.getcwd(),0,False)
-    t.runGenBXD(Reac,Prod,gl.maxHits,gl.maxAdapSteps,gl.PathType,distPath, cbs, gl.decorrelationSteps, gl.histogramLevel,totalPathLength, gl.fixToPath, gl.pathDistCutOff)
+    t.runGenBXD(Reac,Prod,gl.maxHits,gl.maxAdapSteps,gl.PathType,distPath, cbs, gl.decorrelationSteps, gl.histogramBins,totalPathLength, gl.fixToPath, gl.pathDistCutOff,gl.epsilon)
 
 def getPath(Reac,Prod,gl):
     xyzfile3 = open(("IRC3.xyz"), "w")

@@ -41,7 +41,8 @@ class Globals:
 
         # BXD defaults
         self.decorrelationSteps = 10
-        self.histogramLevel = 1
+        self.histogramBins = 1
+        self.epsilon = 0.95
         self.principalCoordinates = []
 
         # Open Input
@@ -216,7 +217,9 @@ class Globals:
             if re.search('decorrelationSteps', line):
                 self.decorrelationSteps = int(line.split()[2])
             if re.search('histogramLevel', line):
-                self.histogramLevel = int(line.split()[2])
+                self.epsilon = float(line.split()[2])
+            if re.search('histogramBins', line):
+                self.histogramBins = int(line.split()[2])
             if re.search('fixToPath', line):
                 self.fixToPath = True
             if re.search('pathDistCutOff', line):

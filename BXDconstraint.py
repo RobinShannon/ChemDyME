@@ -6,7 +6,7 @@ import numpy as np
 # Class to track constraints and calculate required derivatives for BXD constraints
 # Inversion procedure occurs in MDintegrator class
 class Constraint:
-    def __init__(self, mol, start,  end, hitLimit = 100, adapMax = 100, activeS = [], topBox = 500, hist = 1, decorrelationSteps = 10, path = 0, pathType = 'linear',runType = 'adaptive', stuckLimit = 20, numberOfBoxes = 10000, endType = 'RMSD', endDistance = 100000000, fixToPath = False, pathDistCutOff = 100 ):
+    def __init__(self, mol, start,  end, hitLimit = 100, adapMax = 100, activeS = [], topBox = 500, hist = 1, decorrelationSteps = 10, path = 0, pathType = 'linear',runType = 'adaptive', stuckLimit = 20, numberOfBoxes = 10000, endType = 'RMSD', endDistance = 100000000, fixToPath = False, pathDistCutOff = 100, epsilon = 0.95 ):
         self.decorrelationSteps = decorrelationSteps
         self.pathStuckCountdown = 0
         self.boundFile = open("bounds.txt","w")
@@ -23,6 +23,7 @@ class Constraint:
             self.adaptive = True
         else:
             self.adaptive = False
+        self.epsilon = epsilon
         self.mol = mol
         self.histogramSize = int(adapMax / hist)
         self.adapMax = adapMax
@@ -235,7 +236,7 @@ class Constraint:
             self.oldS = self.s
             self.boxList[self.box].upper.stepSinceHit += 1
             self.boxList[self.box].lower.stepSinceHit += 1
-            if (self.s[1] >= 0 or not self.__class__.__name__ == 'genBXD') and self.pathNode != False and self.distanceToPath<=self.pathDistCutOff[self.pathNode]:
+            if (self.s[1] >= 0 or not self.__class__.__name__ == 'genBXD') and self.pathNode is not False and self.distanceToPath <=self.pathDistCutOff[self.pathNode]:
                 self.boxList[self.box].data.append(self.s)
 
         if self.stuckCount > self.stuckLimit:
@@ -249,7 +250,7 @@ class Constraint:
             # If adaptive sampling has ended then add a boundary based up sampled data
             self.boxList[self.box].type = "normal"
             if not self.reverse:
-                self.boxList[self.box].getSExtremes(self.histogramSize)
+                self.boxList[self.box].getSExtremes(self.histogramSize, self.epsilon)
                 if self.box > 0:
                     bottom = self.boxList[self.box].bot
                 else:
@@ -272,7 +273,7 @@ class Constraint:
                 self.boxList.append(newBox)
             elif self.reverse and self.__class__.__name__ == 'genBXD':
                 # at this point we partition the box into two and insert a new box at the correct point in the boxList
-                self.boxList[self.box].getSExtremes(self.histogramSize)
+                self.boxList[self.box].getSExtremes(self.histogramSize,self.epsilon)
                 bottom = self.boxList[self.box].bot
                 try:
                     top = self.boxList[self.box].top
@@ -302,7 +303,7 @@ class Constraint:
             distCutOff = self.pathDistCutOff[self.pathNode]
         if self.distanceToPath >= distCutOff and self.pathStuckCountdown == 0:
             self.boundHit = "path"
-            self.pathStuckCountdown = 5
+            self.pathStuckCountdown = 10
             return True
         #Check for hit against upper boundary
         if self.boxList[self.box].upper.hit(self.s, "up"):
@@ -616,13 +617,22 @@ class bxdBox:
         self.Gibbs = 0
 
 
-    def getSExtremes(self,b):
+    def getSExtremes(self,b,eps):
         self.topData = []
         self.botData = []
         data = [d[2] for d in self.data]
         hist, edges = np.histogram(data, bins=b)
+        cumProb = 0
+        limit = 0
+        for h in range(0, len(hist)):
+            cumProb += hist[h]/len(data)
+            if cumProb > eps:
+                limit = h
+                break
+        if limit == 0:
+            limit = len(data)-1
         for d in self.data:
-            if d[2] > edges[b-1]:
+            if d[2] > edges[limit] and d[2] <= edges[limit + 1]:
                 self.topData.append(d[0])
         self.top = np.mean(self.topData,axis=0)
         for d in self.data:
