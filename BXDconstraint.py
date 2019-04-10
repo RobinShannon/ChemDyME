@@ -297,13 +297,13 @@ class Constraint:
         pass
 
     def boundaryCheck(self,mol):
-        if self.pathNode == False:
+        if self.pathNode is False:
             distCutOff = 100
         else:
             distCutOff = self.pathDistCutOff[self.pathNode]
         if self.distanceToPath >= distCutOff and self.pathStuckCountdown == 0:
             self.boundHit = "path"
-            self.pathStuckCountdown = 10
+            self.pathStuckCountdown = 1
             return True
         #Check for hit against upper boundary
         if self.boxList[self.box].upper.hit(self.s, "up"):
