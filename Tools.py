@@ -437,9 +437,8 @@ def getGausOut(workPath, keyWords, mol):
     if not os.path.exists(workPath):
         os.makedirs(workPath)
     os.chdir(workPath)
-
-    level = keyWords.split('_')
-    if len(level) == 2:
+    if keyWords.contains('triplet'):
+        level = keyWords.split('_')
         triplet = True
         keyWords = level[0]
     commands = "# opt=(calcall, tight) " + keyWords + "\n\nOpt\n\n"
@@ -462,7 +461,8 @@ def getGausTSOut(workPath, outpath, keyWords, rMol, pMol, mol, biMole, QST3):
     path = os.getcwd()
     os.chdir(workPath)
     level = keyWords.split('_')
-    if len(level) == 2:
+    if keyWords.contains('triplet'):
+        level = keyWords.split('_')
         triplet = True
         keyWords = level[0]
     if (QST3):
