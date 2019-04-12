@@ -115,7 +115,7 @@ class Reaction:
             min.run(fmax=0.1, steps=100)
         if high:
             if self.highMeth == "gauss":
-                mol, freqs, zpe = tl.getGausOut(self.workingDir + 'Raw/calcHigh' + self.procNum, self.highLev, mol)
+                mol, freqs, zpe = tl.getGausOut(self.workingDir + '/' + 'Raw/calcHigh' + self.procNum, self.highLev, mol)
                 os.chdir((self.workingDir))
             else:
                 # Higher level optimisation via some external program
@@ -243,7 +243,7 @@ class Reaction:
         return TSFreqs, imaginaryFreq, zpe, energy
 
     def characteriseMinInternal(self, mol):
-        os.chdir((self.workingDir + '/' + self.procNum))
+        os.chdir((self.workingDir + '/' + '/Raw/'  + self.procNum))
         if (self.lowMeth == 'nwchem'):
             mol  = tl.setCalc(mol,self.lowString, 'nwchem2', self.lowLev)
             self.Reac.get_forces()
