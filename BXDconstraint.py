@@ -303,7 +303,7 @@ class Constraint:
             distCutOff = self.pathDistCutOff[self.pathNode]
         if self.distanceToPath >= distCutOff and self.pathStuckCountdown == 0:
             self.boundHit = "path"
-            self.pathStuckCountdown = 1
+            self.pathStuckCountdown = 3
             return True
         #Check for hit against upper boundary
         if self.boxList[self.box].upper.hit(self.s, "up"):
