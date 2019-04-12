@@ -7,7 +7,6 @@ from ase.calculators.gaussian import Gaussian
 
 
 def dftb(mol, lab, level):
-    lab = 'lab'
     symbols = mol.get_chemical_symbols()
     if level == 'SCC':
         scc = 'Yes'
