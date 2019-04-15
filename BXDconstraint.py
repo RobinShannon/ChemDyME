@@ -119,7 +119,7 @@ class Constraint:
             self.boxList.append(box)
         self.boxList.pop(0)
 
-    def gatherData(self, path, rawPath, T):
+    def gatherData(self, path, rawPath, T,lowResPath):
         # Multiply T by the gas constant in kJ/mol
         T *= (8.314 / 1000)
         profile = []
@@ -137,6 +137,7 @@ class Constraint:
             data = [d[1] for d in box.data]
             for d in data:
                 boxfile.write(str(d) + "\n")
+            boxfile.close()
 
         rawPath.close()
         for box in self.boxList:
@@ -152,6 +153,7 @@ class Constraint:
             deltaG = -1.0 * np.log(Keq) * T
             self.boxList[i + 1].Gibbs = deltaG + self.boxList[i].Gibbs
 
+
         for i in range(0, len(self.boxList)):
             self.boxList[i].eqPopulation = np.exp(-1.0 * (self.boxList[i].Gibbs / T))
             totalProb += self.boxList[i].eqPopulation
@@ -163,6 +165,7 @@ class Constraint:
         for i in range(0, len(self.boxList)):
             s, dens = self.boxList[i].getFullHistogram()
             width = s[1] - s[0]
+            lowResPath.write("S = " + str(lastS) + " G = " + str(self.boxList[i].Gibbs) + "\n")
             for j in range(0, len(dens)):
                 d = float(dens[j]) / float(len(self.boxList[i].data))
                 p = d * self.boxList[i].eqPopulation
