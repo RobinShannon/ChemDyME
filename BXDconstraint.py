@@ -321,7 +321,7 @@ class Constraint:
                 if self.adaptive == False and self.box == (len(self.boxList) - 1) and self.reverse == False:
                     self.reverse = True
                 return False
-            elif self.distanceToPath <= self.pathDistCutOff[self.pathNode]:
+            elif self.distanceToPath <= distCutOff:
                 if self.stepsSinceAnyBoundaryHit > self.decorrelationSteps:
                     self.boxList[self.box].upper.hits += 1
                     self.boxList[self.box].upper.rates.append(self.boxList[self.box].upper.stepSinceHit)
