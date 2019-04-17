@@ -218,6 +218,10 @@ def writeReactionXML(React,path, printTS2):
         rct2 = ET.SubElement(rxn, "reactant")
         ml1_2 = ET.SubElement(rct2, "molecule", ref = React.biReacName)
         ml1_2.set("{http://www.chem.leeds.ac.uk/mesmer}type","excessReactant")
+        act = ((React.forwardBarrier - React.productEnergy) * 96.45 )
+        if act < 0:
+            act = 0
+        React.barrierlessReaction = True
     if React.is_bimol_prod == False:
         prod = ET.SubElement(rxn, "product")
         pml1 = ET.SubElement(prod, "molecule", ref = React.ProdName)

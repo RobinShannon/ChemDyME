@@ -243,7 +243,7 @@ class Trajectory:
                 else:
                     consistantChange = 0
                     con.criteriaMet = False
-                    if self.endBXD and not self.comBXD:
+                    if self.eneBXD and not self.comBXD:
                         eneBXDon = True
 
                 if not self.ReactionCountDown == 0:
