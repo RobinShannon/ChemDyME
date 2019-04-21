@@ -391,9 +391,9 @@ class Reaction:
     def optDynPath(self, trans, path, MolList, changePoints):
 
         # Open files for saving IRCdata
-        xyzfile = open((path +"/dynPath.xyz"), "w")
-        MEP = open((path +"/MEP.txt"), "w")
-        dyn = open((path +"/traj.xyz"), "w")
+        xyzfile = open((path +"/Data/dynPath.xyz"), "w")
+        MEP = open((path +"/Data/MEP.txt"), "w")
+        dyn = open((path +"/Data/traj.xyz"), "w")
 
         dynList = []
         endFrame =min(changePoints + self.dynPrintStart , len(MolList))

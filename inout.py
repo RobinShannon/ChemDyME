@@ -38,7 +38,7 @@ def writeTSXML(React, path):
     ene = ET.SubElement(prop, "property", dictRef ="me:ZPE")
     enedata = ET.SubElement(ene,"scalar", units="kJ/mol")
     symb  = "".join(React.CombReac.get_chemical_symbols())
-    enedata.text = str((React.forwardBarrier - React.energyDictionary[symb]) * 96.45 )
+    enedata.text = str((React.forwardBarrier - React.energyDictionary[symb]) * 96.45)
 
     # Append the new "data" elements to the root element of the XML document
     tree.append(prop)
@@ -201,6 +201,7 @@ def writeReactionXML(React,path, printTS2):
 
     bigTree = ET.fromstring(data)
     act = 0
+    symb = "".join(React.CombReac.get_chemical_symbols())
     #buffer is added to rxn element as the print function removes the third word
     rxn = ET.Element("reaction", id=name, active='true' )
     if React.is_bimol_reac == False and React.is_bimol_prod == False:
@@ -218,7 +219,7 @@ def writeReactionXML(React,path, printTS2):
         rct2 = ET.SubElement(rxn, "reactant")
         ml1_2 = ET.SubElement(rct2, "molecule", ref = React.biReacName)
         ml1_2.set("{http://www.chem.leeds.ac.uk/mesmer}type","excessReactant")
-        act = ((React.forwardBarrier - React.productEnergy) * 96.45 )
+        act = ((React.forwardBarrier - React.energyDictionary[symb]) * 96.45)
         if act < 0:
             act = 0
         React.barrierlessReaction = True
@@ -234,7 +235,7 @@ def writeReactionXML(React,path, printTS2):
         pml1_2 = ET.SubElement(prod2, "molecule", ref = React.biProdName)
         pml1_2.set("{http://www.chem.leeds.ac.uk/mesmer}type","excessReactant")
         React.barrierlessReaction = True
-        act = ((React.forwardBarrier - React.productEnergy) * 96.45 )
+        act = ((React.forwardBarrier - (React.productEnergy-React.energyDictionary[symb])) * 96.45)
         if act < 0:
             act = 0
     else:
