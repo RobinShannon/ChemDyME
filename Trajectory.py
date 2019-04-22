@@ -58,9 +58,9 @@ class Trajectory:
         self.TSgeom = mol.copy()
         self.productGeom = self.Mol.get_positions()
         try:
-            self.window = 2
+            self.window = gl.reactionWindow/2
             self.endOnReac = gl.endOnReaction
-            self.consistantWindow = gl.reactionWindow
+            self.consistantWindow = gl.reactionWindow/2
         except:
             pass
         self.savePath = path
