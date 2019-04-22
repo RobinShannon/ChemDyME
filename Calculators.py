@@ -366,7 +366,7 @@ def nwchem2(mol, lab, level):
         bas = level[1]
         lev = level[0]
         Igrid = level[2]
-    if len(level) == 3:
+    elif len(level) == 3:
         bas = level[1]
         lev = level[0]
         Igrid = level[2]
