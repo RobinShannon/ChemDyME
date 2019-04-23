@@ -449,7 +449,8 @@ def getGausOut(workPath, keyWords, mol):
     f=open("Opt.gjf", "w")
     f.write(inp)
     f.close()
-    os.system("g09 Opt.gjf" )
+    gaussPath = os.environ['CHEMDYME_GAUSS']
+    os.system(os.environ['CHEMDYME_GAUSS'] + " Opt.gjf" )
     try:
         mol,vibs,zpe = readGaussOutput((workPath +"/Opt.log"))
     except:
@@ -482,7 +483,7 @@ def getGausTSOut(workPath, outpath, keyWords, rMol, pMol, mol, biMole, QST3):
     f.write(inp)
     f.close()
     shutil.copyfile("Opt.gjf",str(outpath)+"/TS.gjf")
-    os.system("g09 Opt.gjf")
+    os.system(os.environ['CHEMDYME_GAUSS'] + " Opt.gjf")
     mol,vibs,zpe,imaginaryFreq = readGaussTSOutput("Opt.log")
     print("Gaussian ts opt finished. Output copied to " + str(outpath) +"/TS2.log")
     oPath = os.path.normpath(str(outpath)+"/TS.log")

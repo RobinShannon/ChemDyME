@@ -1,4 +1,5 @@
 from subprocess import Popen, PIPE
+import os
 
 # Class to run master equation calculation
 class MasterEq:
@@ -11,10 +12,11 @@ class MasterEq:
         self.prodName = 'none'
         self.visitedList = []
         self.equilCount = 0
+        self.MESCommand = os.environ['CHEMDYME_ME_PATH']
 
     def runTillReac(self, args2):
         args1 = '/Users/RobinS/Documents/mesmerStoch/bin/mesmer'
-        p = Popen([args1,args2], stdout=PIPE, stderr=PIPE )
+        p = Popen([self.MESCommand,args2], stdout=PIPE, stderr=PIPE )
         stdout, stderr = p.communicate()
         out = stderr.decode("utf-8")
         lines = str(out).split('\n')
