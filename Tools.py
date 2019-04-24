@@ -479,7 +479,7 @@ def getGausTSOut(workPath, outpath, keyWords, rMol, pMol, mol, biMole, QST3):
         spinLine3 = "TS\n\n 0 " + str(getSpinMult(rMol,"none",trip = triplet)) + "\n"
         inp = inp + spinLine3 + str(convertMolToGauss(mol))
     else:
-        commands = "# opt=(ts,calcall,tight, noeigentest)" + keyWords + "\n\nTS\n\n"
+        commands = "# opt=(ts,calcall,tight, noeigentest) " + keyWords + "\n\nTS\n\n"
         spinLine = " 0 " + str(getSpinMult(rMol,"none")) + "\n"
         inp = str(commands) + spinLine + str(convertMolToGauss(mol))
 
