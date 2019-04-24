@@ -65,7 +65,7 @@ class Trajectory:
             pass
         self.savePath = path
         self.ReactionCountDown = 0
-        self.MolList = [self.Mol]
+        self.MolList = []
         self.KeepTracking = True
         self.tempList = [1000]
         self.transindex = np.zeros(3)

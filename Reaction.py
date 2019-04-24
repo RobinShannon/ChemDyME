@@ -396,7 +396,12 @@ class Reaction:
         dyn = open((path +"/Data/traj.xyz"), "w")
 
         dynList = []
-        endFrame =min(changePoints + self.dynPrintStart , len(MolList))
+        end = int(changePoints + self.dynPrintStart)
+        length = int(len(MolList))
+        if end < length:
+            endFrame = end
+        else:
+            endFrame = length
         for i in range( int(changePoints - self.dynPrintStart), int(endFrame), self.inc):
             iMol = MolList[i].copy()
             tl.printTraj(dyn, iMol)

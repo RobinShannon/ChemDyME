@@ -437,10 +437,12 @@ def getGausOut(workPath, keyWords, mol):
     if not os.path.exists(workPath):
         os.makedirs(workPath)
     os.chdir(workPath)
-    if keyWords.contains('triplet'):
+    if 'triplet' in keyWords:
         level = keyWords.split('_')
         triplet = True
         keyWords = level[0]
+    else:
+        triplet = False
     commands = "# opt=(calcall, tight) " + keyWords + "\n\nOpt\n\n"
     spinLine = " 0 " + str(getSpinMult(mol,"none",trip = triplet)) + "\n"
     inp = str(commands) + spinLine + str(convertMolToGauss(mol))
@@ -462,10 +464,12 @@ def getGausTSOut(workPath, outpath, keyWords, rMol, pMol, mol, biMole, QST3):
     path = os.getcwd()
     os.chdir(workPath)
     level = keyWords.split('_')
-    if keyWords.contains('triplet'):
+    if 'triplet' in keyWords:
         level = keyWords.split('_')
         triplet = True
         keyWords = level[0]
+    else:
+        triplet = False
     if (QST3):
         commands = "# opt=(QST3,calcall,tight) Guess=Always " + keyWords + "\n\nReac\n\n"
         spinLine = " 0 " + str(getSpinMult(rMol,"none",trip = triplet)) + "\n"
