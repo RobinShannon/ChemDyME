@@ -8,7 +8,7 @@ class Globals:
 
     def __init__(self, path):
         self.fixToPath = False
-        self.pathDistCutOff = 10000
+        self.pathDistCutOff = False
         self.BiList = []
         mpath = path + '/inp.txt'
 

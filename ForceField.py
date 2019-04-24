@@ -1,6 +1,7 @@
 from abc import ABCMeta, abstractmethod
 import numpy as np
 import ConnectTools as ct
+import xml.etree.ElementTree as etree
 
 class ForceField:
 
@@ -12,6 +13,16 @@ class ForceField:
     @abstractmethod
     def getConnectivity(self, mol):
         pass
+
+class Narupa(ForceField):
+    def getConnectivity(self, mol):
+        file = 'template.xml'
+        tree = etree.parse(file)
+        if tree.getroot().find('AtomTypes') is not None:
+            for type in tree.getroot().find('AtomTypes').findall('Type'):
+                self.registerAtomType(type.attrib)
+
+
 
 class MM3(ForceField):
 

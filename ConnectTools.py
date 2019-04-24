@@ -237,8 +237,7 @@ def getDistMatrix(mol,active):
             D[i] = mol.get_distance(int(active[i][0]),int(active[i][1]))
             Dind.append([active[i][0],active[i][1]])
     else:
-        D = np.zeros[1]
-        D[0] = mol.get_distance(int(active[0]),int(active[1]))
+        D = mol.get_distance(int(active[0]),int(active[1]))
         Dind.append([active[0], active[1]])
     elapsed_time = process_time() - t
     #print("time to get S = " + str(elapsed_time))
@@ -355,6 +354,7 @@ def projectPointOnPath(S,path,type,n,D,reac, pathNode):
         project += path[node-1][1]
     if type == 'linear':
         project = np.vdot(baseline,path) / np.linalg.norm(path)
+        minPoint = False
     if type == 'distance':
         project = np.linalg.norm(baseline)
     if type =='simple distance':
@@ -362,7 +362,10 @@ def projectPointOnPath(S,path,type,n,D,reac, pathNode):
     return Sdist,project,minPoint,distFromPath
 
 def genBXDDel(mol,S,Sind,n):
-    l = Sind[0].shape[1]
+    try:
+        l = Sind[0].shape[1]
+    except:
+        l =0
     if l == 3:
         constraint = genLinCombBXDDel(mol,S,Sind,n)
     else:
@@ -381,20 +384,29 @@ def genDistBXDDel(mol,S,Sind,n):
         #Then check wether that atom contributes to a collective variable
         for j in range(0,len(Sind)):
             # need a check here in case the collective variable is zero since nan would be returned
-            if S[j] != 0:
+            if isinstance(S,list) and S[j] != 0:
                 firstTerm = (1/(2*S[j]))
+            elif not isinstance(S,list) and S != 0:
+                firstTerm = (1 / (2 * S))
             else:
                 firstTerm=0
+            if isinstance(n,list):
+                norm = n[j]
+            else:
+                norm = n
             # if atom i is the first atom in bond j then add component to the derivative based upon chain rule differentiation
             if Sind[j][0] == i:
-                constraint[i][0] += firstTerm*2*(pos[i][0]-pos[Sind[j][1]][0])*n[j]
-                constraint[i][1] += firstTerm*2*(pos[i][1]-pos[Sind[j][1]][1])*n[j]
-                constraint[i][2] += firstTerm*2*(pos[i][2]-pos[Sind[j][1]][2])*n[j]
+                index=int(Sind[j][1])
+                constraint[i][0] += firstTerm*2*(pos[i][0]-pos[index][0])*norm
+                constraint[i][1] += firstTerm*2*(pos[i][1]-pos[index][1])*norm
+                constraint[i][2] += firstTerm*2*(pos[i][2]-pos[index][2])*norm
             # alternate formula for case where i is the seccond atom
             if Sind[j][1] == i:
-                constraint[i][0] += firstTerm*2*(pos[Sind[j][0]][0]-pos[i][0])*-1*n[j]
-                constraint[i][1] += firstTerm*2*(pos[Sind[j][0]][1]-pos[i][1])*-1*n[j]
-                constraint[i][2] += firstTerm*2*(pos[Sind[j][0]][2]-pos[i][2])*-1*n[j]
+                index = int(Sind[j][0])
+                constraint[i][0] += firstTerm*2*(pos[index][0]-pos[i][0])*-1*norm
+                constraint[i][1] += firstTerm*2*(pos[index][1]-pos[i][1])*-1*norm
+                constraint[i][2] += firstTerm*2*(pos[index][2]-pos[i][2])*-1*norm
+    print('inversion')
     return constraint
 
 # Get del_phi for bxd for linear combination of interatomic distances

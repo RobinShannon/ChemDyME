@@ -575,7 +575,7 @@ class genBXD(Constraint):
         except:
             Snorm = 0
             project = 0
-            node = 0
+            node = False
             dist = 0
         return S[0],Snorm, project, node, dist
 

@@ -43,6 +43,13 @@ class OpenMMCalculator(Calculator):
             self.system = self.setUpMM3(self.parameters.ASEmol, self.parameters.atomTypes)
             positions = [x for x in self.parameters.ASEmol.get_positions()]
 
+        if fileType == "xml":
+            print("Generating OpenMM system")
+            f = open('amb.xml','r')
+            sys = f.read()
+            #self.system = forcefield.createSystem(topology, nonbondedMethod=self.parameters.nonbondedMethod,nonbondedCutoff=self.parameters.nonbondedCutoff)
+            self.system = XmlSerializer.deserialize(sys)
+            positions = [x for x in self.parameters.ASEmol.get_positions()]
         if fileType == "amber":
             # Instantiate the parm and create the system
             prmtop = AmberPrmtopFile('amb.prmtop')
