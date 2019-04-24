@@ -486,15 +486,15 @@ def getGausTSOut(workPath, outpath, keyWords, rMol, pMol, mol, biMole, QST3):
     f=open("Opt.gjf", "w")
     f.write(inp)
     f.close()
-    shutil.copyfile("Opt.gjf",str(outpath)+"/TS.gjf")
+    shutil.copyfile("Opt.gjf",str(outpath)+"/Data/TS.gjf")
     os.system(os.environ['CHEMDYME_GAUSS'] + " Opt.gjf")
     mol,vibs,zpe,imaginaryFreq = readGaussTSOutput("Opt.log")
     print("Gaussian ts opt finished. Output copied to " + str(outpath) +"/TS2.log")
     oPath = os.path.normpath(str(outpath)+"/TS.log")
     if os.path.isfile(oPath):
-        shutil.copyfile("Opt.log",str(outpath)+"/TS_2.log")
+        shutil.copyfile("Opt.log",str(outpath)+"/Data/TS_2.log")
     else:
-        shutil.copyfile("Opt.log",str(outpath)+"/TS.log")
+        shutil.copyfile("Opt.log",str(outpath)+"/Data/TS.log")
     print("Gaussian TS opt read zpe = " + str(zpe))
     os.chdir(workPath)
     return mol,imaginaryFreq,vibs,zpe,rMol,pMol
