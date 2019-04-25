@@ -479,22 +479,25 @@ def getGausTSOut(workPath, outpath, keyWords, rMol, pMol, mol, biMole, QST3):
         spinLine3 = "TS\n\n 0 " + str(getSpinMult(rMol,"none",trip = triplet)) + "\n"
         inp = inp + spinLine3 + str(convertMolToGauss(mol))
     else:
-        commands = "# opt=(ts,calcall,tight, noeigentest)" + keyWords + "\n\nTS\n\n"
+        commands = "# opt=(ts,calcall,tight, noeigentest) " + keyWords + "\n\nTS\n\n"
         spinLine = " 0 " + str(getSpinMult(rMol,"none")) + "\n"
         inp = str(commands) + spinLine + str(convertMolToGauss(mol))
 
     f=open("Opt.gjf", "w")
     f.write(inp)
     f.close()
-    shutil.copyfile("Opt.gjf",str(outpath)+"/TS.gjf")
-    os.system(os.environ['CHEMDYME_GAUSS'] + " Opt.gjf")
-    mol,vibs,zpe,imaginaryFreq = readGaussTSOutput("Opt.log")
+    os.system(os.environ['CHEMDYME_GAUSS'] + " Opt.gjf" )
+    try:
+        mol,vibs,zpe,imaginaryFreq = readGaussTSOutput("Opt.log")
+    except:
+        print('Error reading gaussian ts output')
     print("Gaussian ts opt finished. Output copied to " + str(outpath) +"/TS2.log")
     oPath = os.path.normpath(str(outpath)+"/TS.log")
+    shutil.copyfile("Opt.gjf", str(outpath) + "/Data/TS.gjf")
     if os.path.isfile(oPath):
-        shutil.copyfile("Opt.log",str(outpath)+"/TS_2.log")
+        shutil.copyfile("Opt.log",str(outpath)+"/Data/TS_2.log")
     else:
-        shutil.copyfile("Opt.log",str(outpath)+"/TS.log")
+        shutil.copyfile("Opt.log",str(outpath)+"/Data/TS.log")
     print("Gaussian TS opt read zpe = " + str(zpe))
     os.chdir(workPath)
     return mol,imaginaryFreq,vibs,zpe,rMol,pMol
