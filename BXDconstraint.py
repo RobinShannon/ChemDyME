@@ -239,7 +239,7 @@ class Constraint:
             self.oldS = self.s
             self.boxList[self.box].upper.stepSinceHit += 1
             self.boxList[self.box].lower.stepSinceHit += 1
-            if (self.s[1] >= 0 or not self.__class__.__name__ == 'genBXD') and self.pathNode is not False and self.distanceToPath <=self.pathDistCutOff[self.pathNode]:
+            if (self.s[1] >= 0 or not self.__class__.__name__ == 'genBXD') and self.pathNode is False or self.distanceToPath <=self.pathDistCutOff[self.pathNode]:
                 self.boxList[self.box].data.append(self.s)
 
         if self.stuckCount > self.stuckLimit:
@@ -315,6 +315,7 @@ class Constraint:
                 if self.adaptive:
                     self.boxList[self.box].upper.hits = 0
                     self.boxList[self.box].lower.hits = 0
+                    self.boxList[self.box].data = []
                 self.box += 1
                 self.boxList[self.box].lower.stepSinceHit = 0
                 self.boxList[self.box].upper.stepSinceHit = 0
@@ -342,6 +343,7 @@ class Constraint:
                 if self.adaptive:
                     self.boxList[self.box].upper.hits = 0
                     self.boxList[self.box].lower.hits = 0
+                    self.boxList[self.box].data = []
                 self.box -=1
                 self.boxList[self.box].lower.stepSinceHit = 0
                 self.boxList[self.box].upper.stepSinceHit = 0

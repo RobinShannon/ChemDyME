@@ -62,7 +62,6 @@ def run(gl):
         else:
             Path = read(gl.PathFile,index='::1')
 
-
         distPath.append((ct.getDistMatrix(Path[0],cbs)[0],0))
         for i in range(1,len(Path)):
             l = np.linalg.norm(ct.getDistMatrix(Path[i],cbs)[0] - ct.getDistMatrix(Path[i-1], cbs)[0])

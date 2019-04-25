@@ -45,7 +45,7 @@ class OpenMMCalculator(Calculator):
 
         if fileType == "xml":
             print("Generating OpenMM system")
-            f = open('amb.xml','r')
+            f = open('OpenMM.xml','r')
             sys = f.read()
             #self.system = forcefield.createSystem(topology, nonbondedMethod=self.parameters.nonbondedMethod,nonbondedCutoff=self.parameters.nonbondedCutoff)
             self.system = XmlSerializer.deserialize(sys)
