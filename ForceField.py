@@ -68,12 +68,12 @@ class MM3(ForceField):
             sigma,epsilon = self.getLJParams(i,self.types)
             LJList.append((sigma,epsilon))
         #Loop through bond matrix and add any dihedral to the list
-        #for i in range(0,size):
-            #for j in range(i,size):
-                #for k in range(0,size):
-                    #for l in range(0,size):
-                        #if bondMat[i][j] == 1.0 and bondMat[j][k] == 1.0 and bondMat[k][l] == 1.0:
-                            #dihedralList.append((i,j,k,l))
+        for i in range(0,size):
+            for j in range(i,size):
+                for k in range(0,size):
+                    for l in range(0,size):
+                        if bondMat[i][j] == 1.0 and bondMat[j][k] == 1.0 and bondMat[k][l] == 1.0:
+                            dihedralList.append((i,j,k,l))
         return bondList,angleList,dihedralList,LJList
 
     def getBondParams(self,i,j,types):

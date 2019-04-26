@@ -276,7 +276,7 @@ class Constraint:
                 self.boxList.append(newBox)
             elif self.reverse and self.__class__.__name__ == 'genBXD':
                 # at this point we partition the box into two and insert a new box at the correct point in the boxList
-                self.boxList[self.box].getSExtremes(self.histogramSize,self.epsilon)
+                self.boxList[self.box].getSExtremesReverse(self.histogramSize,self.epsilon)
                 bottom = self.boxList[self.box].bot
                 try:
                     top = self.boxList[self.box].top
@@ -644,6 +644,29 @@ class bxdBox:
             if d[2] >= edges[0] and d[2]< edges[1]:
                 self.botData.append(d[0])
         self.bot = np.mean(self.botData,axis=0)
+
+        def getSExtremesReverse(self, b, eps):
+            self.topData = []
+            self.botData = []
+            data = [d[2] for d in self.data]
+            hist, edges = np.histogram(data, bins=b)
+            cumProb = 0
+            limit = 0
+            for h in range(0, len(hist)):
+                cumProb += hist[h] / len(data)
+                if cumProb > (1-eps):
+                    limit = h
+                    break
+            if limit == 0:
+                limit = len(data) - 1
+            for d in self.data:
+                if d[2] > edges[-2] and d[2] <= edges[-1]:
+                    self.topData.append(d[0])
+            self.top = np.mean(self.topData, axis=0)
+            for d in self.data:
+                if d[2] >= edges[limit] and d[2] < edges[limit+1]:
+                    self.botData.append(d[0])
+            self.bot = np.mean(self.botData, axis=0)
 
     def getFullHistogram(self):
         del self.data[0]
