@@ -493,7 +493,10 @@ def getGausTSOut(workPath, outpath, keyWords, rMol, pMol, mol, biMole, QST3):
         print('Error reading gaussian ts output')
     print("Gaussian ts opt finished. Output copied to " + str(outpath) +"/TS2.log")
     oPath = os.path.normpath(str(outpath)+"/TS.log")
-    shutil.copyfile("Opt.gjf", str(outpath) + "/Data/TS.gjf")
+    try:
+        shutil.copyfile("Opt.gjf", str(outpath) + "/Data/TS.gjf")
+    except:
+        shutil.copyfile("Opt.gjf", str(outpath) + "/Data/TS2.gjf")
     if os.path.isfile(oPath):
         shutil.copyfile("Opt.log",str(outpath)+"/Data/TS_2.log")
     else:

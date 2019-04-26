@@ -243,7 +243,6 @@ def writeReactionXML(React,path, printTS2):
         pml1_1 = ET.SubElement(prod1, "molecule", ref = React.ProdName)
         pml1_1.set("{http://www.chem.leeds.ac.uk/mesmer}type","modelled")
 
-
     # Transition state section, if not present then ILT
     if React.barrierlessReaction == False:
         TS = ET.SubElement(rxn, "{http://www.chem.leeds.ac.uk/mesmer}transitionState")
