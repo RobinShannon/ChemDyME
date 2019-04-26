@@ -326,7 +326,7 @@ def projectPointOnPath(S,path,type,n,D,reac, pathNode):
         else:
             start = pathNode - 2
             end = max(pathNode + 2, len(path))
-        for i in range(0,len(path)):
+        for i in range(start,end):
             dist = np.linalg.norm(S - path[i][0])
             distArray.append(dist)
             if dist < min:

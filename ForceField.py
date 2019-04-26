@@ -72,8 +72,14 @@ class MM3(ForceField):
             for j in range(i,size):
                 for k in range(0,size):
                     for l in range(0,size):
-                        if bondMat[i][j] == 1.0 and bondMat[j][k] == 1.0 and bondMat[k][l] == 1.0:
-                            dihedralList.append((i,j,k,l))
+                        if bondMat[i][j] == 1.0 and bondMat[j][k] == 1.0 and bondMat[k][l] == 1.0 and self.noDuplicates([i,j,k,l]):
+                            a,b = self.types[i],self.types[l]
+                            if a > b:
+                                V1,V2,V3 = self.getDihedralParams(l,k,j,i,self.types)
+                            elif a <= b:
+                                V1, V2, V3 = self.getDihedralParams(i, j, k, l, self.types)
+                            if V1 != 0 or V2 != 0 or V3 != 0:
+                                dihedralList.append((i,j,k,l,V1,V2,V3))
         return bondList,angleList,dihedralList,LJList
 
     def getBondParams(self,i,j,types):
@@ -108,6 +114,20 @@ class MM3(ForceField):
                 pass
         return K,theta_eq
 
+    def getDihedralParams(self,i,j,k,l,types):
+        inp = open("mm3.prm", "r")
+        V1 = 0
+        V2 = 0
+        V3 = 0
+        for line in inp:
+            words = line.split()
+            try:
+                if words[0] == "torsion" and float(words[1]) == types[i] and float(words[2]) == types[j] and float(words[3]) == types[k] and float(words[4]) == types[l]:
+                    V1,V2,V3 = float(words[5]),float(words[8]),float(words[11])
+            except:
+                pass
+        return V1,V2,V3
+
     def getLJParams(self,i,types):
         inp = open("mm3.prm", "r")
         sigma = 0
@@ -125,4 +145,12 @@ class MM3(ForceField):
         seen = set()
         seen_add = seen.add
         return [x for x in seq if not (x in seen or seen_add(x))]
+
+    def noDuplicates(self,list):
+        seen = set()
+        for l in list:
+            if l in seen:
+                return True
+            seen.add(l)
+        return False
 

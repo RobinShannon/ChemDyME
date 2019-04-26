@@ -645,28 +645,28 @@ class bxdBox:
                 self.botData.append(d[0])
         self.bot = np.mean(self.botData,axis=0)
 
-        def getSExtremesReverse(self, b, eps):
-            self.topData = []
-            self.botData = []
-            data = [d[2] for d in self.data]
-            hist, edges = np.histogram(data, bins=b)
-            cumProb = 0
-            limit = 0
-            for h in range(0, len(hist)):
-                cumProb += hist[h] / len(data)
-                if cumProb > (1-eps):
-                    limit = h
-                    break
-            if limit == 0:
-                limit = len(data) - 1
-            for d in self.data:
-                if d[2] > edges[-2] and d[2] <= edges[-1]:
-                    self.topData.append(d[0])
-            self.top = np.mean(self.topData, axis=0)
-            for d in self.data:
-                if d[2] >= edges[limit] and d[2] < edges[limit+1]:
-                    self.botData.append(d[0])
-            self.bot = np.mean(self.botData, axis=0)
+    def getSExtremesReverse(self, b, eps):
+        self.topData = []
+        self.botData = []
+        data = [d[2] for d in self.data]
+        hist, edges = np.histogram(data, bins=b)
+        cumProb = 0
+        limit = 0
+        for h in range(0, len(hist)):
+            cumProb += hist[h] / len(data)
+            if cumProb > (1-eps):
+                limit = h
+                break
+        if limit == 0:
+            limit = len(data) - 1
+        for d in self.data:
+            if d[2] > edges[-2] and d[2] <= edges[-1]:
+                self.topData.append(d[0])
+        self.top = np.mean(self.topData, axis=0)
+        for d in self.data:
+            if d[2] >= edges[limit] and d[2] < edges[limit+1]:
+                self.botData.append(d[0])
+        self.bot = np.mean(self.botData, axis=0)
 
     def getFullHistogram(self):
         del self.data[0]

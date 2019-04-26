@@ -124,7 +124,17 @@ class OpenMMCalculator(Calculator):
         system.addForce(angleForce)
         for angle in f.angleList:
             #Add bond term to forces. Fields 1, 2 and 3 are the atom indicies and fields 4 and 5 are parameters k and r_eq
-            angleForce.addAngle(angle[0],angle[1],angle[2], [angle[3]*602.2,angle[4]*RadiansPerDegree])
+            angleForce.addAngle(angle[0],angle[1],angle[2], [angle[3]*602.3,angle[4]*RadiansPerDegree])
+
+        # Custom angle term
+        # dihedralForce = openmm.CustomTorsionForce("0.5*V1*(1-cos(theta)) + 0.5*V2*(1-cos(2* (theta-3.141592)))+0.5*V3*(1-cos(3*theta))")
+        # dihedralForce.addPerTorsionParameter("V1")
+        # dihedralForce.addPerTorsionParameter("V2")
+        # dihedralForce.addPerTorsionParameter("V3")
+        # system.addForce(dihedralForce)
+        # for dihedral in f.dihedralList:
+        #     #Add bond term to forces. Fields 1, 2 and 3 are the atom indicies and fields 4 and 5 are parameters k and r_eq
+        #     dihedralForce.addTorsion(dihedral[0],dihedral[1],dihedral[2],dihedral[3], [dihedral[4]*4.184,dihedral[5]*4.184,dihedral[6]*4.184])
 
         LJforce = openmm.CustomNonbondedForce("4.0*epsilon*(sigma^12/r^12 - sigma^6/r^6);"
 																				 "sigma=((sig1+sig2)/2.0);"
