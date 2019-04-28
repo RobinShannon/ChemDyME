@@ -248,7 +248,7 @@ def projectPointOnPath2(S,path,type,n,D,reac, pathNode):
     Sdist = np.vdot(S,n) + D
     distFromPath = 0
     if type == 'curve':
-        min = 10000
+        mini = 10000
         minPoint = 0
         distArray =[]
         #Only consider nodes either side of current node
@@ -265,9 +265,9 @@ def projectPointOnPath2(S,path,type,n,D,reac, pathNode):
         for i in range(start,end):
             dist = np.linalg.norm(S - path[i][0])
             distArray.append(dist)
-            if dist < min:
+            if dist < minim:
                 minPoint = i
-                min = dist
+                minim = dist
                 distArray.append(dist)
         if minPoint == (len(path)-1) or (minPoint !=0 and distArray[minPoint + 1] > distArray[minPoint - 1]):
             pathSeg = path[minPoint][0] - path[minPoint-1][0]
@@ -312,36 +312,36 @@ def projectPointOnPath(S,path,type,n,D,reac, pathNode):
         project = np.vdot(gBase,path[pathNode+1][0]) / np.linalg.norm(path[pathNode+1][0])
         project += path[minPoint][1]
     if type == 'curve':
-        min = 100000
+        minim = 100000
         minPoint = 0
         distArray =[]
         #Only consider nodes either side of current node
         #Use current node to define start and end point
         if pathNode == 0:
             start = 0
-            end = 2
+            end = 3
         elif pathNode == 1:
             start = 0
-            end =  3
+            end =  4
         else:
             start = pathNode - 2
-            end = max(pathNode + 2, len(path))
+            end = min(pathNode + 3, len(path))
         for i in range(start,end):
             dist = np.linalg.norm(S - path[i][0])
             distArray.append(dist)
-            if dist < min:
+            if dist < minim:
                 minPoint = i
-                min = dist
+                minim = dist
         if minPoint == 0:
             node = 1
         else:
             pathSeg = path[minPoint][0] - path[minPoint - 1][0]
             pathSegLength = np.linalg.norm(pathSeg)
             linProject = np.vdot((S - path[minPoint-1][0]), pathSeg) / np.linalg.norm(pathSeg)
-            node = minPoint
-            minPoint -= 1
             if linProject > pathSegLength and minPoint < (len(path)-1):
                 node = minPoint + 1
+            else:
+                node = minPoint
         pathSeg = path[node][0] - path[node-1][0]
         project = np.vdot((S - path[node-1][0]),pathSeg) / np.linalg.norm(pathSeg)
         # Also get vector projection
@@ -354,12 +354,12 @@ def projectPointOnPath(S,path,type,n,D,reac, pathNode):
         project += path[node-1][1]
     if type == 'linear':
         project = np.vdot(baseline,path) / np.linalg.norm(path)
-        minPoint = False
+        node = False
     if type == 'distance':
         project = np.linalg.norm(baseline)
     if type =='simple distance':
         project = Sdist
-    return Sdist,project,minPoint,distFromPath
+    return Sdist,project,node,distFromPath
 
 def genBXDDel(mol,S,Sind,n):
     try:
