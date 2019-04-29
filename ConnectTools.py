@@ -339,9 +339,8 @@ def projectPointOnPath(S,path,type,n,D,reac, pathNode):
             pathSegLength = np.linalg.norm(pathSeg)
             linProject = np.vdot((S - path[minPoint-1][0]), pathSeg) / np.linalg.norm(pathSeg)
             if linProject > pathSegLength and minPoint < (len(path)-1):
-                node = minPoint + 1
-            else:
-                node = minPoint
+                minPoint += 1
+            node = minPoint
         pathSeg = path[node][0] - path[node-1][0]
         project = np.vdot((S - path[node-1][0]),pathSeg) / np.linalg.norm(pathSeg)
         # Also get vector projection
@@ -354,12 +353,12 @@ def projectPointOnPath(S,path,type,n,D,reac, pathNode):
         project += path[node-1][1]
     if type == 'linear':
         project = np.vdot(baseline,path) / np.linalg.norm(path)
-        node = False
+        minPoint = False
     if type == 'distance':
         project = np.linalg.norm(baseline)
     if type =='simple distance':
         project = Sdist
-    return Sdist,project,node,distFromPath
+    return Sdist,project,minPoint,distFromPath
 
 def genBXDDel(mol,S,Sind,n):
     try:
