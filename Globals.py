@@ -7,6 +7,7 @@ from io import StringIO
 class Globals:
 
     def __init__(self, path):
+        self.pathStride = 1
         self.fixToPath = False
         self.pathDistCutOff = False
         self.BiList = []
@@ -222,10 +223,16 @@ class Globals:
                 self.histogramBins = int(line.split()[2])
             if re.search('fixToPath', line):
                 self.fixToPath = True
+            if re.search('pathStride', line):
+                self.pathStride = int(line.split()[2])
             if re.search('pathDistCutOff', line):
                 uVar = line.split()[2]
-                c = StringIO(uVar)
-                self.pathDistCutOff = np.loadtxt(c, delimiter=',')
+                if ',' in uVar:
+                    c = StringIO(uVar)
+                    self.pathDistCutOff = np.loadtxt(c, delimiter=',')
+                else:
+                    self.pathDistCutOff= np.empty(1000)
+                    self.pathDistCutOff.fill(float(uVar))
             if re.search("maxHits",line):
                     self.maxHits  = int(line.split()[2])
             if re.search("runsThrough",line):

@@ -60,7 +60,7 @@ def run(gl):
         if gl.PathFile == 'none':
             Path = getPath(Reac,Prod,gl)
         else:
-            Path = read(gl.PathFile,index='::1')
+            Path = read(gl.PathFile,index=('::'+str(gl.pathStride)))
 
         distPath.append((ct.getDistMatrix(Path[0],cbs)[0],0))
         for i in range(1,len(Path)):
@@ -69,6 +69,12 @@ def run(gl):
             distPath.append((ct.getDistMatrix(Path[i],cbs)[0],totalPathLength))
     elif gl.PathType == 'linear':
         distPath = ct.getDistMatrix(Prod,cbs)[0] - ct.getDistMatrix(Reac, cbs)[0]
+
+    pathFile = open('reducedPath.txt','w')
+    for p in distPath:
+        pathFile.write('s = ' + str(p[0]) + '\n')
+    pathFile.close()
+
 
 
     # initialise then run trajectory
