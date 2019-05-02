@@ -38,6 +38,7 @@ class Constraint:
         self.oldS = 0
         self.s = 0
         self.oldMol = 0
+        self.oldDistanceToPath = 0
         self.inversion = False
         self.stuckCount = 0
         self.stuck = False
@@ -304,10 +305,10 @@ class Constraint:
             distCutOff = 100
         else:
             distCutOff = self.pathDistCutOff[self.pathNode]
-        if self.distanceToPath >= distCutOff and self.pathStuckCountdown == 0:
+        if self.distanceToPath >= distCutOff and self.distanceToPath > self.oldDistanceToPath:
             self.boundHit = "path"
-            self.pathStuckCountdown = 2
             return True
+        self.oldDistanceToPath = self.distanceToPath
         #Check for hit against upper boundary
         if self.boxList[self.box].upper.hit(self.s, "up"):
             if self.boxList[self.box].upper.transparent and self.distanceToPath <= distCutOff:
