@@ -445,6 +445,8 @@ class Trajectory:
             eBounded = BXD.inversion
             if eBounded:
                 self.Mol.set_positions(mdInt.oldPos)
+                if self.Mol.pbc.any():
+                    self.Mol.wrap()
                 bxd_del_phi = BXD.del_constraint(self.Mol)
 
             if self.MDIntegrator == 'VelocityVerlet' and not eBounded:
@@ -510,6 +512,8 @@ class Trajectory:
             eBounded = BXD.inversion
             if eBounded:
                 self.Mol.set_positions(mdInt.oldPos)
+                if self.Mol.pbc.any():
+                    self.Mol.wrap()
 
             eBounded = BXD.inversion
             if self.MDIntegrator == 'VelocityVerlet' and self.iterations % self.printFreq == 0:

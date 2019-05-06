@@ -114,6 +114,8 @@ class VelocityVerlet(MDIntegrator):
 
         # Return positions
         mol.set_positions(self.currentPos)
+        if mol.pbc.any():
+            mol.wrap()
 
     def mdStepVel(self, forces, timestep, mol):
 
@@ -239,6 +241,8 @@ class Langevin(MDIntegrator):
 
         # Return positions
         mol.set_positions(self.currentPos)
+        if mol.pbc.any():
+            mol.wrap()
 
     def mdStepVel(self, forces, timestep, mol):
 

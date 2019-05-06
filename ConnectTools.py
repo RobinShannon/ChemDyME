@@ -298,7 +298,7 @@ def projectPointOnPath2(S,path,type,n,D,reac, pathNode):
     return Sdist,project,minPoint,distFromPath
 
 def projectPointOnPath(S,path,type,n,D,reac, pathNode):
-    numberOfSegments = 10
+    numberOfSegments = 1
     baseline = S - reac
     Sdist = np.vdot(S,n) + D
     minPoint = 0
@@ -313,38 +313,30 @@ def projectPointOnPath(S,path,type,n,D,reac, pathNode):
         project = np.vdot(gBase,path[pathNode+1][0]) / np.linalg.norm(path[pathNode+1][0])
         project += path[minPoint][1]
     if type == 'curve':
-        minim = 100000
+        distFromPath = 100000
         minPoint = 0
-        distArray =[]
         #Only consider nodes either side of current node
         #Use current node to define start and end point
         start = max(pathNode - (numberOfSegments-1), 0)
-        end = min(pathNode + numberOfSegments, len(path))
+        end = min(pathNode + numberOfSegments, len(path)-1)
         for i in range(start,end):
-            dist = np.linalg.norm(S - path[i][0])
-            distArray.append(dist)
-            if dist < minim:
-                minPoint = i
-                minim = dist
-        if minPoint == 0:
-            node = 1
-        else:
-            pathSeg = path[minPoint][0] - path[minPoint - 1][0]
+            pathSeg = path[i+1][0] - path[i][0]
+            proj = np.vdot((S - path[i][0]), pathSeg) / np.linalg.norm(pathSeg)
             pathSegLength = np.linalg.norm(pathSeg)
-            linProject = np.vdot((S - path[minPoint-1][0]), pathSeg) / np.linalg.norm(pathSeg)
-            if linProject < pathSegLength or minPoint == len(path)-1:
-                minPoint -= 1
-            node = minPoint + 1
-        pathSeg = path[node][0] - path[node-1][0]
-        project = np.vdot((S - path[node-1][0]),pathSeg) / np.linalg.norm(pathSeg)
-        # Also get vector projection
-        # Get vector for and length of linear segment
-        pathSegLength = np.linalg.norm(pathSeg)
-        # finally get distance of projected point along vec
-        plength = path[node-1][0] + project * pathSeg/pathSegLength
-        # Length of this vector projection gives distance from line
-        distFromPath = np.linalg.norm(S - plength)
-        project += path[node-1][1]
+            # get distance of projected point along vec
+            plength = path[i][0] + ((proj * pathSeg)/ pathSegLength)
+            # Length of this vector projection gives distance from line
+            if proj < 0:
+                dist = np.linalg.norm(S - path[i][0])
+            elif proj > pathSegLength:
+                dist = np.linalg.norm(S - path[i+1][0])
+            else:
+                dist = np.linalg.norm(S - plength)
+            if dist < distFromPath:
+                minPoint = i
+                distFromPath = dist
+                project = proj
+        project += path[minPoint][1]
     if type == 'linear':
         project = np.vdot(baseline,path) / np.linalg.norm(path)
         minPoint = False

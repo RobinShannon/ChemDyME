@@ -210,6 +210,10 @@ class Constraint:
             else:
                 self.updateBoxAdap()
 
+        if self.adaptive and self.boxList[self.box].type == "normal" and len(self.boxList[self.box].data) > 2 * self.adapMax:
+            print('reassigning boundary')
+            self.reassignBoundary()
+
         # Check if box is shrinking in order to pull two fragments together
         if self.boxList[self.box].type == "shrinking":
             if self.oldS == 0:
@@ -240,7 +244,7 @@ class Constraint:
             self.oldS = self.s
             self.boxList[self.box].upper.stepSinceHit += 1
             self.boxList[self.box].lower.stepSinceHit += 1
-            if (self.s[1] >= 0 or not self.__class__.__name__ == 'genBXD') and self.pathNode is False or self.distanceToPath <=self.pathDistCutOff[self.pathNode]:
+            if (self.s[1] >= 0 or not self.__class__.__name__ == 'genBXD') and (self.pathNode is False or self.distanceToPath <=self.pathDistCutOff[self.pathNode]):
                 self.boxList[self.box].data.append(self.s)
 
         if self.stuckCount > self.stuckLimit:
@@ -300,6 +304,28 @@ class Constraint:
     def stuckFix(self):
         pass
 
+    def reassignBoundary(self):
+        fix = self.fixToPath
+        self.fixToPath = False
+        if self.reverse:
+            self.boxList[self.box].getSExtremesReverse(self.histogramSize, self.epsilon)
+        else:
+            self.boxList[self.box].getSExtremes(self.histogramSize, self.epsilon)
+        bottom = self.boxList[self.box].bot
+        top = self.boxList[self.box].top
+        b = self.convertStoBound(bottom, top)
+        b2 = self.convertStoBound(bottom, top)
+        b.transparent = True
+        if self.reverse:
+            self.boxList[self.box].lower = b
+            self.boxList[self.box -1].upper = b2
+        else:
+            self.boxList[self.box].upper = b
+            self.boxList[self.box+1].lower = b2
+        self.fixToPath = fix
+        self.boxList[self.box].data = []
+
+
     def boundaryCheck(self,mol):
         if self.pathNode is False:
             distCutOff = 100
@@ -307,6 +333,7 @@ class Constraint:
             distCutOff = self.pathDistCutOff[self.pathNode]
         if self.distanceToPath >= distCutOff and self.distanceToPath > self.oldDistanceToPath:
             self.boundHit = "path"
+            self.oldDistanceToPath = self.distanceToPath
             return True
         self.oldDistanceToPath = self.distanceToPath
         #Check for hit against upper boundary

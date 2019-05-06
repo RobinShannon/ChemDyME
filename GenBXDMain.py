@@ -26,7 +26,6 @@ def run(gl):
     #Reac = tl.setCalc(Reac,"DOS/", gl.trajMethod, gl.atomTypes)
     if gl.trajMethod == "openMM":
         Reac = tl.setCalc(Reac,"GenBXD/", gl.trajMethod, gl)
-        #Prod = tl.setCalc(Prod,"GenBXD/", gl.trajMethod, gl)
     else:
         Reac = tl.setCalc(Reac,"GenBXD/", gl.trajMethod, gl.trajLevel)
         Prod = tl.setCalc(Prod,"GenBXD/", gl.trajMethod, gl.trajLevel)
@@ -70,10 +69,11 @@ def run(gl):
     elif gl.PathType == 'linear':
         distPath = ct.getDistMatrix(Prod,cbs)[0] - ct.getDistMatrix(Reac, cbs)[0]
 
-    pathFile = open('reducedPath.txt','w')
-    for p in distPath:
-        pathFile.write('s = ' + str(p[0]) + '\n')
-    pathFile.close()
+    if gl.PathType == 'curve' or gl.PathType == 'gates':
+        pathFile = open('reducedPath.txt','w')
+        for p in distPath:
+            pathFile.write('s = ' + str(p[0]) + '\n')
+        pathFile.close()
 
 
 

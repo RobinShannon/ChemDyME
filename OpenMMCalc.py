@@ -31,33 +31,21 @@ class OpenMMCalculator(Calculator):
         Calculator.__init__(self, **kwargs)
         input = self.parameters.input
         fileType = self.parameters.fileType
-        if fileType == "pdb":
-            pdb = PDBFile(input)
-            forcefield = ForceField('amber99sb.xml')
-            topology = pdb.topology
-            positions = pdb.positions
-            print("Generating OpenMM system")
-            self.system = forcefield.createSystem(topology, nonbondedMethod=self.parameters.nonbondedMethod, nonbondedCutoff=self.parameters.nonbondedCutoff)
         if fileType == "xyz":
             print("Generating OpenMM system")
             self.system = self.setUpMM3(self.parameters.ASEmol, self.parameters.atomTypes)
             positions = [x for x in self.parameters.ASEmol.get_positions()]
-
         if fileType == "xml":
             print("Generating OpenMM system")
             f = open('OpenMM.xml','r')
             sys = f.read()
             #self.system = forcefield.createSystem(topology, nonbondedMethod=self.parameters.nonbondedMethod,nonbondedCutoff=self.parameters.nonbondedCutoff)
             self.system = XmlSerializer.deserialize(sys)
+            box_vec = self.system.getDefaultPeriodicBoxVectors()
+            self.parameters.ASEmol.set_cell([box_vec[0]._value[0]*9.9,box_vec[1]._value[1]*9.9,box_vec[2]._value[2]*9.9])
+            self.parameters.ASEmol.pbc = (True,True,True)
+            self.parameters.ASEmol.wrap()
             positions = [x for x in self.parameters.ASEmol.get_positions()]
-        if fileType == "amber":
-            # Instantiate the parm and create the system
-            prmtop = AmberPrmtopFile('amb.prmtop')
-            inpcrd = AmberInpcrdFile('amb.inpcrd')
-            positions = inpcrd.positions
-            topology = prmtop.topology
-            self.system = prmtop.createSystem(nonbondedMethod=PME, nonbondedCutoff=self.parameters.nonbondedCutoff)
-
         # Create a dummy integrator, this doesn't really matter.
         self.integrator = VerletIntegrator(0.001 * picosecond)
         self.platform = Platform.getPlatformByName("CPU")
@@ -71,6 +59,7 @@ class OpenMMCalculator(Calculator):
                   properties=['energy', 'forces'],
                   system_changes=all_changes):
         Calculator.calculate(self, atoms, properties, system_changes)
+        atoms.wrap()
         positions = [x for x in atoms.positions]
         self.context.setPositions(positions * angstrom)
         state = self.context.getState(getEnergy=True, getForces=True)
