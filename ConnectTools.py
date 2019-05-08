@@ -298,7 +298,7 @@ def projectPointOnPath2(S,path,type,n,D,reac, pathNode):
     return Sdist,project,minPoint,distFromPath
 
 def projectPointOnPath(S,path,type,n,D,reac, pathNode):
-    numberOfSegments = 1
+    numberOfSegments = 4
     baseline = S - reac
     Sdist = np.vdot(S,n) + D
     minPoint = 0
@@ -332,7 +332,7 @@ def projectPointOnPath(S,path,type,n,D,reac, pathNode):
                 dist = np.linalg.norm(S - path[i+1][0])
             else:
                 dist = np.linalg.norm(S - plength)
-            if dist < distFromPath:
+            if dist <= distFromPath:
                 minPoint = i
                 distFromPath = dist
                 project = proj
@@ -362,6 +362,7 @@ def genBXDDel(mol,S,Sind,n):
 # S is the vector of collective variables and Sind gives the index of the bonding atoms in the full catesian coords
 # mol stores the full moleculular structure and n gives the coordinates of the boundary that has been hit
 def genDistBXDDel(mol,S,Sind,n):
+    print("constrain")
     constraint = np.zeros(mol.get_positions().shape)
     pos = mol.get_positions()
     #First loop over all atoms
@@ -391,7 +392,6 @@ def genDistBXDDel(mol,S,Sind,n):
                 constraint[i][0] += firstTerm*2*(pos[index][0]-pos[i][0])*-1*norm
                 constraint[i][1] += firstTerm*2*(pos[index][1]-pos[i][1])*-1*norm
                 constraint[i][2] += firstTerm*2*(pos[index][2]-pos[i][2])*-1*norm
-    print('inversion')
     return constraint
 
 # Get del_phi for bxd for linear combination of interatomic distances

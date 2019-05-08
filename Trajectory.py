@@ -281,7 +281,7 @@ class Trajectory:
             mdInt = MDIntegrator.Langevin(units.kB * self.LangTemp, self.LangFric, self.forces, self.velocity, self.Mol, self.timeStep)
 
         if (eneAdaptive == False):
-            BXD = BXDconstraint.Energy(self.Mol, -10000, 10000, runType="fixed", numberOfBoxes = numberOfBoxes, hitLimit = maxHits )
+            BXD = BXDconstraint.Energy(self.Mol, -10000, 10000, runType="fixed", numberOfBoxes = numberOfBoxes, hitLimit = maxHits)
             BXD.createFixedBoxes(grainSize)
         else:
             BXD = BXDconstraint.Energy(self.Mol, -10000, 10000, hitLimit = 1, adapMax = maxAdapSteps, runType="adaptive", numberOfBoxes = numberOfBoxes, decorrelationSteps = decorrelationSteps, hist = histogramLevel)
@@ -464,14 +464,12 @@ class Trajectory:
 
             mdpt = process_time()
             mdInt.mdStepPos(self.forces, self.timeStep, self.Mol)
-            mdpte = process_time()
             # Get forces from designated potential
             ft = process_time()
             try:
                 self.forces = self.Mol.get_forces()
             except:
                 print('forces error')
-            fte = process_time()
             mdvt = process_time()
             mdInt.mdStepVel(self.forces, self.timeStep, self.Mol)
             mdvte = process_time()

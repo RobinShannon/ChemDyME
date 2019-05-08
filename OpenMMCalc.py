@@ -6,6 +6,7 @@ try:
 except:
     print("no openMM version found")
 import numpy as np
+import time
 import ForceField as ff
 from ase.calculators.calculator import Calculator, all_changes
 
@@ -42,7 +43,7 @@ class OpenMMCalculator(Calculator):
             #self.system = forcefield.createSystem(topology, nonbondedMethod=self.parameters.nonbondedMethod,nonbondedCutoff=self.parameters.nonbondedCutoff)
             self.system = XmlSerializer.deserialize(sys)
             box_vec = self.system.getDefaultPeriodicBoxVectors()
-            self.parameters.ASEmol.set_cell([box_vec[0]._value[0]*9.9,box_vec[1]._value[1]*9.9,box_vec[2]._value[2]*9.9])
+            self.parameters.ASEmol.set_cell([box_vec[0]._value[0]*10,box_vec[1]._value[1]*10,box_vec[2]._value[2]*10])
             self.parameters.ASEmol.pbc = (True,True,True)
             self.parameters.ASEmol.wrap()
             positions = [x for x in self.parameters.ASEmol.get_positions()]
