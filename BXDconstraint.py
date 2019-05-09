@@ -496,8 +496,8 @@ class genBXD(Constraint):
         if self.fixToPath == False:
             b = self.convertStoBoundGeneral(s1,s2)
         else:
-            s1vec = ct.projectPointOnPath(s1, self.path, self.pathType,self.boxList[self.box].lower.norm,self.boxList[self.box].lower.D, self.reac, self.pathNode)
-            s2vec = ct.projectPointOnPath(s2, self.path, self.pathType,self.boxList[self.box].lower.norm,self.boxList[self.box].lower.D, self.reac, self.pathNode)
+            s1vec = ct.projectPointOnPath(s1, self.path, self.pathType,self.boxList[self.box].lower.norm,self.boxList[self.box].lower.D, self.reac, self.pathNode, self.reverse)
+            s2vec = ct.projectPointOnPath(s2, self.path, self.pathType,self.boxList[self.box].lower.norm,self.boxList[self.box].lower.D, self.reac, self.pathNode, self.reverse)
             if self.reverse:
                 b = self.convertStoBoundOnPath(s1vec[1],s1vec[2],s1)
             else:
@@ -601,7 +601,7 @@ class genBXD(Constraint):
             self.sInd = S[1]
             self.reac = S[0]
         try:
-            Snorm, project, node, dist = ct.projectPointOnPath(S[0],self.path, self.pathType,self.boxList[self.box].lower.norm,self.boxList[self.box].lower.D,self.reac, self.pathNode )
+            Snorm, project, node, dist = ct.projectPointOnPath(S[0],self.path, self.pathType,self.boxList[self.box].lower.norm,self.boxList[self.box].lower.D,self.reac, self.pathNode, self.reverse )
         except:
             Snorm = 0
             project = 0
