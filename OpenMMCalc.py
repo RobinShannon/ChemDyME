@@ -3,11 +3,16 @@ try:
     from simtk.openmm import *
     from simtk.unit import *
     import simtk.openmm.app as app
+    from simtk.openmm import XmlSerializer
 except:
     print("no openMM version found")
 import numpy as np
 import time
 import ForceField as ff
+from io import StringIO
+from tempfile import TemporaryDirectory
+import os
+from xml.dom.minidom import getDOMImplementation, parseString
 from ase.calculators.calculator import Calculator, all_changes
 
 
@@ -34,7 +39,7 @@ class OpenMMCalculator(Calculator):
         fileType = self.parameters.fileType
         if fileType == "xyz":
             print("Generating OpenMM system")
-            self.system = self.setUpMM3(self.parameters.ASEmol, self.parameters.atomTypes)
+            self.system,self.topology = self.setUpMM3(self.parameters.ASEmol, self.parameters.atomTypes)
             positions = [x for x in self.parameters.ASEmol.get_positions()]
         if fileType == "xml":
             print("Generating OpenMM system")
@@ -42,10 +47,10 @@ class OpenMMCalculator(Calculator):
             sys = f.read()
             #self.system = forcefield.createSystem(topology, nonbondedMethod=self.parameters.nonbondedMethod,nonbondedCutoff=self.parameters.nonbondedCutoff)
             self.system = XmlSerializer.deserialize(sys)
-            box_vec = self.system.getDefaultPeriodicBoxVectors()
-            self.parameters.ASEmol.set_cell([box_vec[0]._value[0]*10,box_vec[1]._value[1]*10,box_vec[2]._value[2]*10])
-            self.parameters.ASEmol.pbc = (True,True,True)
-            self.parameters.ASEmol.wrap()
+            #box_vec = self.system.getDefaultPeriodicBoxVectors()
+            #self.parameters.ASEmol.set_cell([box_vec[0]._value[0]*10,box_vec[1]._value[1]*10,box_vec[2]._value[2]*10])
+            #self.parameters.ASEmol.pbc = (True,True,True)
+            #self.parameters.ASEmol.wrap()
             positions = [x for x in self.parameters.ASEmol.get_positions()]
         # Create a dummy integrator, this doesn't really matter.
         self.integrator = VerletIntegrator(0.001 * picosecond)
@@ -78,7 +83,15 @@ class OpenMMCalculator(Calculator):
 
         masses = mol.get_masses() * amu
         nAtoms = len(masses)
+        topology = app.topology.Topology()
         f = ff.MM3(mol,types)
+
+        chain = topology.addChain('Main')
+        res = topology.addResidue('mm3', chain)
+        atoms = []
+        for a,t in zip(masses, f.types):
+            elem = app.element.Element.getByMass(a)
+            atoms.append(topology.addAtom(str('mm3_')+str(t),elem,res))
 
         # Create a system and add particles to it
         system = openmm.System()
@@ -86,6 +99,8 @@ class OpenMMCalculator(Calculator):
             # Particles are added one at a time
             # Their indices in the System will correspond with their indices in the Force objects we will add later
             system.addParticle(masses[index])
+
+
 
         # Add Lennard-Jones interactions using a NonbondedForce. Only required so that openMM can set up exclusions.
         force = openmm.NonbondedForce()
@@ -106,6 +121,9 @@ class OpenMMCalculator(Calculator):
             #Add bond term to forces. Fields 1 and 2 are the atom indicies and fields 3 and 4 are parameters k and r_eq
             bondForce.addBond(bond[0],bond[1], [bond[2]*602.3*AngstromsPerNm*AngstromsPerNm, bond[3]*NmPerAngstrom])
             bondPairs.append((bond[0],bond[1]))
+            id1,id2 = bond[0],bond[1]
+            topology.addBond(atoms[id1],atoms[id2])
+
 
         # Custom angle term
         angleForce = openmm.CustomAngleForce("k *0.5 *dtheta*dtheta*expansion;""expansion= 1.0 -0.014*dtor*dtheta+ 5.6e-5*dtor^2*dtheta^2-1.0e-6*dtor^3*dtheta^3+2.2e-8*dtor^4*dtheta^4;""dtor=57.295779;""dtheta = theta- theta_eq")
@@ -156,4 +174,69 @@ class OpenMMCalculator(Calculator):
             # Particles are assigned properties in the same order as they appear in the System object
         #    force4.addParticle(charge, sigma, epsilon)
         #force_index4 = system.addForce(force4)
-        return system
+        return system,topology
+
+    """
+    Serialize and deserialize OpenMM simulations to and from XML files.
+
+    A simulation is described as the concatenation of a starting structure as a PDB
+    file, an OpenMM serialized system, an OpenMM serialized integrator, and,
+    optionally, an OpenMM serialized state. The resulting XML file looks like:
+
+    ::
+        <OpenMMSimulation>
+            <pdb>
+                // pasted content of the PDB file
+            </pdb>
+            <System ...>
+                // XML content of the OpenMM serialized system
+            </System>
+            <Integrator ...>
+                // XML content of the OpenMM serialized integrator
+            </Integrator>
+        </OpenMMSimulation>
+
+    The ``System`` and ``Integrator`` tags are the roots of the serialized system
+    and integrator, respectively.
+
+    This module provides a function :fun:`serialize_simulation` that generates an
+    XML file from an existing instance of :class:`simtk.openmm.app.Simulation`, and
+    a function :fun:`deserialize_simulation` that creates an instance of simulation
+    from an XML file.
+    """
+
+    def serialize_simulation(self) -> str:
+
+        ROOT_TAG = 'OpenMMSimulation'
+
+        """
+        Generate an XML string from a simulation.
+
+        :param simulation: The simulation to serialize.
+        :return: A string with the content of an XML file describing the simulation.
+        """
+        implementation = getDOMImplementation()
+        document = implementation.createDocument(None, ROOT_TAG, None)
+
+        # Extract the PDB
+        positions = self.context.getState(getPositions=True).getPositions()
+        pdb_content = StringIO()
+        app.PDBFile.writeFile(self.topology, positions, pdb_content)
+        pdb_node = document.createElement('pdb')
+        pdb_node.appendChild(document.createTextNode(pdb_content.getvalue()))
+
+        # Extract the system
+        system_xml_str = XmlSerializer.serialize(self.system)
+        system_document = parseString(system_xml_str)
+
+        # Extract the integrator
+        integrator_xml_str = XmlSerializer.serialize(self.integrator)
+        integrator_document = parseString(integrator_xml_str)
+
+        # Combine the element in a single
+        root = document.documentElement
+        root.appendChild(pdb_node)
+        root.appendChild(system_document.documentElement)
+        root.appendChild(integrator_document.documentElement)
+
+        return root.toprettyxml()

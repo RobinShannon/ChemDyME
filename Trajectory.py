@@ -444,7 +444,7 @@ class Trajectory:
             bxdte = process_time()
             eBounded = BXD.inversion
             if eBounded:
-                self.Mol.set_positions(mdInt.oldPos)
+                self.Mol.set_positions(mdInt.old_positions)
                 if self.Mol.pbc.any():
                     self.Mol.wrap()
                 bxd_del_phi = BXD.del_constraint(self.Mol)
@@ -463,7 +463,7 @@ class Trajectory:
                 mdInt.constrain(bxd_del_phi)
 
             mdpt = process_time()
-            mdInt.mdStepPos(self.forces, self.timeStep, self.Mol)
+            mdInt.md_step_pos(self.forces, self.timeStep, self.Mol)
             # Get forces from designated potential
             ft = process_time()
             try:
@@ -471,7 +471,7 @@ class Trajectory:
             except:
                 print('forces error')
             mdvt = process_time()
-            mdInt.mdStepVel(self.forces, self.timeStep, self.Mol)
+            mdInt.md_step_vel(self.forces, self.timeStep, self.Mol)
             mdvte = process_time()
 
             self.numberOfSteps += 1

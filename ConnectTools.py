@@ -298,7 +298,7 @@ def projectPointOnPath2(S,path,type,n,D,reac, pathNode):
     return Sdist,project,minPoint,distFromPath
 
 def projectPointOnPath(S,path,type,n,D,reac, pathNode, reverse):
-    numberOfSegments = 2
+    numberOfSegments = 4
     baseline = S - reac
     Sdist = np.vdot(S,n) + D
     minPoint = 0
@@ -321,8 +321,8 @@ def projectPointOnPath(S,path,type,n,D,reac, pathNode, reverse):
             start = max(pathNode, 0)
             end = min(pathNode + numberOfSegments, len(path)-2)
         else:
-            start = max(pathNode, pathNode - numberOfSegments)
-            end = min(pathNode, len(path) - 2)
+            start = min(pathNode, pathNode - numberOfSegments)
+            end = max(pathNode, len(path) - 2)
         for i in range(start,end):
             pathSeg = path[i+1][0] - path[i][0]
             proj = np.vdot((S - path[i][0]), pathSeg) / np.linalg.norm(pathSeg)
