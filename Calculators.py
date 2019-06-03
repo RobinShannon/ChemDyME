@@ -1,5 +1,3 @@
-from ase import Atoms
-import Calculators as calc
 from ase.calculators.nwchem import NWChem
 from ase.calculators.dftb import Dftb
 from ase.calculators.mopac import MOPAC
