@@ -1,11 +1,14 @@
 import numpy as np
 from ase.md import velocitydistribution as vd
+import ase.io as io
 from ase.visualize import view
 
 class Trajectory:
 
-    def __init__(self, mol, bxd, md_integrator, bimolecular=False, process_number=0, geo_print_frequency=100,
-                  data_print_freqency=100, mixed_timestep=False, initial_temperature=np.nan):
+    def __init__(self, mol, bxd, md_integrator, bimolecular=False, process_number=0, geo_print_frequency=1000,
+                 data_print_freqency=100, plot_update_frequency=100, mixed_timestep=False, initial_temperature=np.nan,
+                 no_text_output=False,plot_output=False, plotter=None):
+
         self.bxd = bxd
         self.md_integrator = md_integrator
         self.process_number = process_number
@@ -23,12 +26,27 @@ class Trajectory:
         self.md_integrator.half_step_velocity = self.mol.get_velocities()
         self.ReactionCountDown = 0
         self.ase_traj = []
+        self.points = []
+        self.bounds = [None] * 2
+        self.no_text_output = no_text_output
+        self.plot = False
+        if plot_output:
+            self.plot = True
+            self.bxd_plotter = plotter
+        self.plot_update_frequency = plot_update_frequency
 
 
-    def run_trajectory(self, max_steps = np.inf, save_ase_traj = False, reset = False):
+    def run_trajectory(self, max_steps = np.inf, save_ase_traj = False, reset = False, print_to_file = False):
+
+        if print_to_file:
+           data_file = open('data.txt', 'w')
+           geom_file = open('geom.xyz', 'w')
+           bound_file = open('bound_file.txt', 'w')
+
 
         if reset:
             self.ase_traj = []
+            self.points = []
 
         keep_going = True
 
@@ -48,11 +66,10 @@ class Trajectory:
             self.bxd.update(self.mol)
             bounded = self.bxd.inversion
             if bounded:
-                self.mol.set_positions(self.md_integrator.old_positions)
-                if self.bxd.bound_hit != 'none':
-                    del_phi.append(self.bxd.del_constraint(self.mol))
                 if self.bxd.path_bound_hit:
                     del_phi.append(self.bxd.path_del_constraint(self.mol))
+                if self.bxd.bound_hit != 'none':
+                    del_phi.append(self.bxd.del_constraint(self.mol))
 
             # Perform inversion if required
             self.md_integrator.constrain(del_phi)
@@ -65,11 +82,28 @@ class Trajectory:
 
             if iterations % self.geo_print_frequency == 0:
                 self.ase_traj.append(self.mol.copy())
+                if print_to_file:
+                    io.write(geom_file,self.mol,format='xyz', append=True)
+                    geom_file.flush()
 
+            if iterations % 10 == 0:
+                self.points.append(self.bxd.s)
+                if print_to_file:
+                    data_file.write(str(self.bxd.s)+'\n')
+                    data_file.flush()
 
             if iterations % self.data_print_freqency == 0:
-                print(self.md_integrator.output(self.mol) + self.bxd.output())
+                if not self.no_text_output:
+                    print(self.md_integrator.output(self.mol) + self.bxd.output())
 
+            if iterations % self.plot_update_frequency == 0:
+                self.bounds[0] = self.bxd.box_list[self.bxd.box].lower.get_data()
+                self.bounds[1] = self.bxd.box_list[self.bxd.box].upper.get_data()
+                if print_to_file:
+                    bound_file.write(str(self.bxd.box_list[self.bxd.box].lower.get_data()) + '\n')
+                    bound_file.flush()
+                if self.plot:
+                    self.bxd_plotter.plot_bxd_from_array(self.points, self.bounds)
 
             #check if one full run is complete, if so stop the adaptive search
             if self.bxd.complete_runs == 1 or iterations > max_steps:

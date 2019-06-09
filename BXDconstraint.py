@@ -50,10 +50,6 @@ class BXD(metaclass=ABCMeta):
     def reached_end(self):
         pass
 
-    @abstractmethod
-    def convert_s_to_bound(self, lower, upper):
-        pass
-
     def getDefaultBox(self,lower, upper):
         b = BXDBox(lower, upper,"fixed",True)
         return b
@@ -69,7 +65,7 @@ class BXD(metaclass=ABCMeta):
         if self.bound_hit == 'upper':
             norm = self.box_list[self.box].upper.n
         if self.bound_hit == 'lower':
-            norm = self.box_list[self.box].upper.n
+            norm = self.box_list[self.box].lower.n
         self.delta = self.progress_metric.get_delta(mol, norm)
         return self.delta
 
@@ -79,10 +75,17 @@ class BXD(metaclass=ABCMeta):
     def get_s(self, mol):
         return self.progress_metric.get_s(mol)
 
+    def print_bounds(self, file):
+        file.write("BXD boundary list \n\n")
+        file.write("Boundary\t" + str(0) + "\tD\t=\t" + str(self.box_list[0].lower.d) + "\tn\t=\t" + str(self.box_list[0].lower.n) + "\n" )
+        for i in range(0, len(self.box_list)):
+            file.write("Boundary\t" + str(i+1) + "\tD\t=\t" + str(self.box_list[i].upper.d) + "\tn\t=\t" + str(self.box_list[i].upper.n) + "\tS\t=\t" + str(self.box_list[i].upper.s_point) + "\n" )
+        file.close()
+
 
 class Adaptive(BXD):
 
-    def __init__(self, progress_metric, stuck_limit=20,  fix_to_path=False,
+    def __init__(self, progress_metric, stuck_limit=5,  fix_to_path=False,
                  adaptive_steps=1000, epsilon=0.9, reassign_rate=2):
 
         super(Adaptive, self).__init__(progress_metric, stuck_limit)
@@ -120,6 +123,9 @@ class Adaptive(BXD):
             self.reassign_boundary()
 
         # Check whether a boundary has been hit and if so update whether the hit boundary
+        if self.stuck:
+            self.inversion = False
+            self.stuck = False
         self.inversion = self.boundary_check() or self.path_bound_hit
 
         if self.inversion:
@@ -137,7 +143,7 @@ class Adaptive(BXD):
 
         if self.stuck_count > self.stuck_limit:
             self.stuck = True
-            self.stuck_count = 0
+
 
     def update_adaptive_bounds(self):
         if len(self.box_list[self.box].data) > self.adaptive_steps:
@@ -191,38 +197,6 @@ class Adaptive(BXD):
                 self.reverse = False
                 self.progress_metric.set_bxd_reverse(self.reverse)
 
-    def boundary_check(self):
-        self.path_bound_hit = self.progress_metric.reflect_back_to_path()
-        self.bound_hit = 'none'
-
-        #Check for hit against upper boundary
-        if self.box_list[self.box].upper.hit(self.s, 'up'):
-            if self.box_list[self.box].upper.transparent and not self.path_bound_hit:
-                self.box_list[self.box].upper.transparent = False
-                self.box_list[self.box].data = []
-                self.box += 1
-                return False
-            else:
-                self.bound_hit = 'upper'
-                return True
-        elif self.box_list[self.box].lower.hit(self.s, 'down'):
-            if self.box_list[self.box].lower.transparent and not self.path_bound_hit:
-                self.box_list[self.box].lower.transparent = False
-                self.box_list[self.box].data = []
-                self.box -= 1
-                if self.box == 0:
-                    self.reverse = False
-                    self.complete_runs += 1
-                self.box_list[self.box].type = 'adap'
-                self.box_list[self.box].data = []
-                self.box_list[self.box].lower.transparent = True
-                return False
-            else:
-                self.bound_hit = 'lower'
-                return True
-        else:
-            return False
-
     def reassign_boundary(self):
         fix = self.fix_to_path
         self.fixToPath = False
@@ -245,7 +219,12 @@ class Adaptive(BXD):
         self.box_list[self.box].data = []
 
     def stuck_fix(self):
-        pass
+        if self.bound_hit == 'lower' and self.reverse is False:
+            self.box -= 1
+            self.box_list[self.box].upper.transparent = True
+        elif self.bound_hit =='upper' and self.reverse is True:
+            self.box += 1
+            self.box_list[self.box].lower.transparent = True
 
     def criteria_met(self, boundary):
         pass
@@ -258,6 +237,8 @@ class Adaptive(BXD):
         b1 = BXDBound(n1, d1)
         b2 = BXDBound(n2, d2)
         b2.invisible = True
+        b1.s_point = self.progress_metric.path.s[0]
+        b2.s_point = self.progress_metric.path.s[-1]
         return b1, b2
 
     def convert_s_to_bound(self, low_s, high_s):
@@ -277,12 +258,14 @@ class Adaptive(BXD):
         else:
             d2 = -1 * np.vdot(n2, s2)
         b2 = BXDBound(n2, d2)
+        b2.s_point = s2
         return b2
 
     def convert_s_to_bound_on_path(self, s):
         n = self.progress_metric.get_norm_to_path()
         d = -1 * np.vdot(n, s)
         b = BXDBound(n, d)
+        b.s_point=s
         return b
 
     def getDefaultBox(self, lower, upper):
@@ -294,6 +277,44 @@ class Adaptive(BXD):
               ' total projection = ' + str(self.progress_metric.project_point_on_path(self.s)) + " bound hit = " \
               + str(self.bound_hit) + " distance from path  = " + str(self.progress_metric.distance_from_path)
         return out
+    def get_converging_bxd(self, hits = 10):
+        con = Converging(self.progress_metric, self.stuck_limit, bound_hits=hits)
+        if self.box_list[-1].upper.invisible == True:
+            del self.box_list[-1]
+        con.box_list = self.box_list
+        return con
+
+    def boundary_check(self):
+        self.path_bound_hit = self.progress_metric.reflect_back_to_path()
+        self.bound_hit = 'none'
+
+        #Check for hit against upper boundary
+        if self.box_list[self.box].upper.hit(self.s, 'up'):
+            if self.box_list[self.box].upper.transparent and not self.path_bound_hit:
+                self.box_list[self.box].upper.transparent = False
+                self.box_list[self.box].data = []
+                self.box += 1
+                return False
+            else:
+                self.bound_hit = 'upper'
+                self.box_list[self.box].upper.hits += 1
+                return True
+        elif self.box_list[self.box].lower.hit(self.s, 'down'):
+            if self.box_list[self.box].lower.transparent and not self.path_bound_hit:
+                self.box_list[self.box].lower.transparent = False
+                self.box_list[self.box].data = []
+                self.box -= 1
+                if self.box == 0:
+                    self.reverse = False
+                    self.complete_runs += 1
+                self.box_list[self.box].type = 'adap'
+                return False
+            else:
+                self.bound_hit = 'lower'
+                self.box_list[self.box].lower.hits += 1
+                return True
+        else:
+            return False
 
 
 class Shrinking(BXD):
@@ -375,25 +396,21 @@ class Shrinking(BXD):
 
 class Converging(BXD):
 
-    def __init__(self, collective_variable, progress_metric, lower_s, upper_s, stuck_limit=20, bound_file="bounds.txt",
-                 read_from_file=True, box_width=0, number_of_boxes=0):
+    def __init__(self, progress_metric, stuck_limit=20, bound_file="bounds.txt", bound_hits=100,
+                 read_from_file=False, convert_fixed_boxes = False, box_width=0, number_of_boxes=0):
 
-        super(Converging, self).__init__(collective_variable, stuck_limit)
+        super(Converging, self).__init__(progress_metric, stuck_limit)
         if read_from_file:
             self.box_list = self.read_exsisting_boundaries(bound_file)
-        else:
+        elif convert_fixed_boxes:
             self.create_fixed_boxes(box_width, number_of_boxes, progress_metric.start)
         self.old_s = 0
-        self.s = progress_metric.start
-
-    @classmethod
-    def convert_from_adaptive(self, adaptive_bxd, bound_hits=100):
-        super(Converging, self).__init__(adaptive_bxd.progress_metric, adaptive_bxd.stuck_limit)
-        for b in self.box_list:
-            b.reset('fixed', True)
-
+        self.number_of_hits = bound_hits
 
     def update(self, mol):
+
+        self.update_bounds()
+
         # update current and previous s(r) values
         self.s = self.get_s(mol)
         self.inversion = False
@@ -401,6 +418,9 @@ class Converging(BXD):
 
         # Check whether BXD direction should be changed and update accordingly
         self.reached_end()
+
+        # Check whether a boundary has been hit and if so update whether the hit boundary
+        self.inversion = self.boundary_check() or self.path_bound_hit
 
         if self.inversion:
             self.stuck_count += 1
@@ -420,12 +440,7 @@ class Converging(BXD):
                 self.stuck_count = 0
 
     def create_fixed_boxes(self, width, number_of_boxes, start_s):
-        lower = self.convert_s_to_bound(start_s)
-        for i in range(0,number_of_boxes):
-            upper_s = lower.s + (width * lower.n)
-            upper = self.convert_s_to_bound(upper_s)
-            self.boxList.append(self.get_default_box(lower, upper))
-            lower = upper
+        pass
 
     def read_exsisting_boundaries(self,file):
         box_list = []
@@ -451,31 +466,94 @@ class Converging(BXD):
         return box_list
 
     def reached_end(self):
-        if self.box == len(self.box_list):
+        if self.box == len(self.box_list)-1 and self.reverse is False:
             self.reverse = True
-            self.projection
-            return True
-        else:
-            return False
-
-    def boundary_check(self):
-        pass
+            self.progress_metric.set_bxd_reverse(self.reverse)
+            print('reversing')
+        elif self.box == 0 and self.reverse is True:
+            self.reverse = False
+            self.progress_metric.set_bxd_reverse(self.reverse)
+            self.complete_runs += 1
 
     def stuck_fix(self):
         pass
 
     def criteria_met(self, boundary):
-        return False
+        return boundary.hits >= self.number_of_hits
 
-    def convert_s_to_bound(self, s1):
-        n1 = (s2 - s1) / np.linalg.norm(s1 - s2)
-        n2 = (s2 - s1) / np.linalg.norm(s1 - s2)
-        D1 = -1 * np.vdot(n1, s1)
-        D2 = -1 * np.vdot(n2, s2)
-        b1 = BXDBound(n1, D1)
-        b2 = BXDBound(n2, D2)
-        b2.invisible = True
-        return b1, b2
+    def get_free_energy(self,T,boxes):
+        # Multiply T by the gas constant in kJ/mol
+        T *= (8.314 / 1000)
+        profile_high_res = []
+        profile_low_res = []
+        total_probability = 0
+        for box in self.box_list:
+            box.upper.average_rate = box.upper.hits / len(box.data)
+            try:
+                box.lower.average_rate = box.lower.hits / len(box.data)
+            except:
+                box.lower.average_rate = 0
+        for i in range(0, len(self.box_list) - 1):
+            if i == 0:
+                self.box_list[i].gibbs = 0
+            k_eq = self.box_list[i].upper.average_rate / self.box_list[i + 1].lower.average_rate
+            delta_g = -1.0 * np.log(k_eq) * T
+            self.box_list[i + 1].gibbs = delta_g + self.box_list[i].gibbs
+
+        for i in range(0, len(self.box_list)):
+            self.box_list[i].eq_population = np.exp(-1.0 * (self.box_list[i].gibbs / T))
+            total_probability += self.box_list[i].eq_population
+
+        for i in range(0, len(self.box_list)):
+            self.box_list[i].eq_population /= total_probability
+
+        last_s = 0
+        for i in range(0, len(self.box_list)):
+            s, dens = self.box_list[i].get_full_histogram()
+            width = s[1] - s[0]
+            profile_low_res.append((last_s,self.box_list[i].gibbs))
+            for j in range(0, len(dens)):
+                d = float(dens[j]) / float(len(self.box_list[i].data))
+                p = d * self.box_list[i].eq_population
+                main_p = -1.0 * np.log(p / width) * T
+                alt_p = -1.0 * np.log(p) * T
+                s_path = s[j] + last_s - (width / 2.0)
+                profile_high_res.append((s_path, main_p))
+            last_s += s[len(s) - 1] - width / 2.0
+        return profile_low_res, profile_high_res
+
+    def boundary_check(self):
+        self.path_bound_hit = self.progress_metric.reflect_back_to_path()
+        self.bound_hit = 'none'
+        #Check for hit against upper boundary
+        if self.box_list[self.box].upper.hit(self.s, 'up'):
+            if self.box_list[self.box].upper.transparent and not self.path_bound_hit:
+                self.box_list[self.box].upper.transparent = False
+                self.box += 1
+                return False
+            else:
+                self.bound_hit = 'upper'
+                self.box_list[self.box].upper.hits += 1
+                return True
+        elif self.box_list[self.box].lower.hit(self.s, 'down'):
+            if self.box_list[self.box].lower.transparent and not self.path_bound_hit:
+                self.box_list[self.box].lower.transparent = False
+                self.box -= 1
+                if self.box == 0:
+                    self.reverse = False
+                    self.complete_runs += 1
+                return False
+            else:
+                self.bound_hit = 'lower'
+                self.box_list[self.box].lower.hits += 1
+                return True
+        else:
+            return False
+
+    def output(self):
+        out = " box = " + str(self.box) + ' Lower Bound Hits = ' + str(self.box_list[self.box].lower.hits) + \
+              ' Upper Bound Hits = ' + str(self.box_list[self.box].upper.hits)
+        return out
 
 class BXDBox:
 
@@ -493,7 +571,7 @@ class BXDBox:
         self.eq_population = 0
         self.gibbs = 0
 
-    def rest(self, type, active):
+    def reset(self, type, active):
         self.type = type
         self.active = active
         self.hits = 0
@@ -535,7 +613,7 @@ class BXDBox:
     def get_s_extremes_reverse(self, b, eps):
         self.top_data = []
         self.bot_data = []
-        data = [d[2] for d in self.data]
+        data = [d[1] for d in self.data]
         hist, edges = np.histogram(data, bins=b)
         cumulative_probability = 0
         limit = 0
@@ -547,27 +625,30 @@ class BXDBox:
         if limit == 0:
             limit = len(data) - 1
         for d in self.data:
-            if d[2] > edges[-2] and d[2] <= edges[-1]:
+            if d[1] > edges[-2] and d[1] <= edges[-1]:
                 self.top_data.append(d[0])
         self.top = np.mean(self.top_data, axis=0)
         for d in self.data:
-            if d[2] >= edges[limit] and d[2] < edges[limit + 1]:
+            if d[1] >= edges[limit] and d[1] < edges[limit + 1]:
                 self.bot_data.append(d[0])
         self.bot = np.mean(self.bot_data, axis=0)
 
-    def getFullHistogram(self):
+    def get_full_histogram(self, boxes=10):
         del self.data[0]
         data = [d[1] for d in self.data]
         top = max(data)
         edges = []
-        for i in range(0, 11):
-            edges.append(i * (top / 10))
-        hist = np.zeros(10)
+        for i in range(0, boxes + 1):
+            edges.append(i * (top / boxes))
+        hist = np.zeros(boxes)
         for d in data:
-            for j in range(0, 10):
+            for j in range(0, boxes):
                 if d > edges[j] and d <= edges[j + 1]:
                     hist[j] += 1
         return edges, hist
+
+    def convert_s_to_bound(self, lower, upper):
+        pass
 
 
 class BXDBound:
@@ -595,6 +676,9 @@ class BXDBound:
         self.rate_error = 0
         self.invisible = False
         self.s_point = 0
+
+    def get_data(self):
+        return self.d, self.n, self.s_point
 
     def hit(self, s, bound):
         if self.invisible:

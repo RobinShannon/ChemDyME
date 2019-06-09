@@ -1,5 +1,8 @@
 import numpy as np
 import warnings
+import matplotlib.pyplot as plt
+from mpl_toolkits.mplot3d import Axes3D
+import os
 
 # Class which holds the details of the path in the case of a curve projection.
 # "trajectory" : List of ASE atoms objects defining the path
@@ -50,3 +53,26 @@ class Path:
             # If array was given as a single value then generate a list of the right length
             dist_array = [distance] * length
             return dist_array
+
+    def make_array(self):
+        return np.array(self.s)
+
+    def print_path2D(self, colour_map="jet"):
+        plt.ion()
+        data = self.make_array()
+        fig = plt.figure()
+        ax = fig.add_subplot(111)
+        colour = plt.cm.jet(np.linspace(0,1,len(data)))
+        for i in range(0, len(data) - 1):
+            ax.plot(np.array([data[i][0], data[i + 1][0]]), np.array([data[i][1], data[i + 1][1]]),color=colour[i])
+            fig.show()
+
+    def print_path3D(self, colour_map="jet"):
+        plt.ion()
+        data = self.make_array()
+        fig = plt.figure()
+        ax = fig.add_subplot(111,projection='3d')
+        colour = plt.cm.jet(np.linspace(0,1,len(data)))
+        for i in range(0, len(data) - 1):
+            ax.plot(np.array([data[i][0], data[i + 1][0]]), np.array([data[i][1],data[i + 1][1]]),zs=np.array([data[i][2],data[i + 1][2]]),color=colour[i])
+            fig.show()

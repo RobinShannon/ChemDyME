@@ -23,10 +23,11 @@ class DimensionalityReduction:
         # Reorganise the atom ordering according to the flags and print a modified trajectory for path reducer
         self.atoms_dictionary = self.alter_trajectory()
         self.call_path_reducer()
+        self.variance = []
 
     # Alter the trajectory in order depending on ignoreHydrogens and subset flags
     def alter_trajectory(self):
-        atoms_list = aio.read(self.trajectory, index=':')
+        atoms_list = self.trajectory
         new_atoms_list = []
         new_indicies = []
         # Start creating a new list of that only contains the atom indicies of the remaining atoms after all alterations
@@ -57,6 +58,7 @@ class DimensionalityReduction:
         aio.write("temporaryTraj.xyz", new_atoms_list)
         return atoms_dictionary
 
+
     # This function calls the path reducer python package
     # https://github.com/share1992/PathReducer/
     def call_path_reducer(self):
@@ -66,6 +68,8 @@ class DimensionalityReduction:
         data = XYZReader(file_)
         m = DistancePCA(ndim)
         m.fit(data.coordinates)
+        self.variance = m._model.explained_variance_ratio_
+        print("Path Reducer: Proportion of variance captured by each coordinate is " + str(self.variance))
         d = m.transform(data.coordinates)
         m.inverse_transform(d)
         coeffs = m.get_components()

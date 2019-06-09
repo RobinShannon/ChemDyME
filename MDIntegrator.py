@@ -193,8 +193,6 @@ class Langevin(MDIntegrator):
         self.constrained = True
 
     def constrain2(self, del_phi1, del_phi2):
-        print("double constrain")
-
         # Revert positions and forces to time prior to BXD inversion
         self.current_positions = self.old_positions
         self.current_velocities = self.old_velocities
@@ -246,8 +244,7 @@ class Langevin(MDIntegrator):
 
         # Then get the next half step velocity and update the position.
         # NB currentVel is one full MD step behind currentPos
-        self.half_step_velocity = self.current_velocities + (
-                    self.c1 * accel - self.c2 * self.half_step_velocity + self.c3[:, None] * self.xi - self.c4[:, None] * self.eta)
+        self.half_step_velocity = self.current_velocities + (self.c1 * accel - self.c2 * self.half_step_velocity + self.c3[:, None] * self.xi - self.c4[:, None] * self.eta)
         self.current_positions = self.current_positions + self.timestep * self.half_step_velocity + self.c5[:, None] * self.eta
 
         # Return positions
