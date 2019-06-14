@@ -11,7 +11,7 @@ import numpy as np
 #            in this range
 # "filePrefix" : Prefix for printing output files
 class DimensionalityReduction:
-    def __init__(self, trajectory, number=3, ignore_h=False, subset=False, start_ind=0, end_ind=0, file_prefix="PC"):
+    def __init__(self, trajectory, number=3, ignore_h=False, subset=False, c_only = False, start_ind=[], end_ind=[], file_prefix="PC"):
         self.pc_list = []
         self.trajectory = trajectory
         self.ignore_h = ignore_h
@@ -20,6 +20,7 @@ class DimensionalityReduction:
         self.end_index = end_ind
         self.file_prefix = file_prefix
         self.number = number
+        self.c_only = c_only
         # Reorganise the atom ordering according to the flags and print a modified trajectory for path reducer
         self.atoms_dictionary = self.alter_trajectory()
         self.call_path_reducer()
@@ -30,27 +31,32 @@ class DimensionalityReduction:
         atoms_list = self.trajectory
         new_atoms_list = []
         new_indicies = []
-        # Start creating a new list of that only contains the atom indicies of the remaining atoms after all alterations
-        if self.ignore_h and self.subset:
+
+        if self.subset:
             for i, atom in enumerate(atoms_list[0]):
-                if atom.symbol != 'H' and (atom.index < self.start_index and atom.index >= self.end_index):
-                    new_indicies.append(atom.index)
-        elif self.ignore_h :
-            for i, atom in enumerate(atoms_list[0]):
-                if atom.symbol != 'H':
-                    new_indicies.append(atom.index)
-        elif self.subset:
-            for i, atom in enumerate(atoms_list[0]):
-                if atom.index < self.start_index and atom.index >= self.end_index:
-                    new_indicies.append(atom.index)
+                for j in range(0, len(atom.index())):
+                    if atom.index < self.start_index[j] and atom.index >= self.end_index[j]:
+                        new_indicies.append(atom.index)
         else:
-            new_indicies = range(len(atoms_list[0]))
+            for i, atom in enumerate(atoms_list[0]):
+                new_indicies.append(atom.index)
+
+        for i, atom in enumerate(atoms_list[0]):
+            if self.c_only:
+                if atom.symbol != 'C' and atom.index in new_indicies:
+                    new_indicies.remove(atom.index)
+            elif self.ignore_h:
+                if atom.symbol == 'H' and atom.index in new_indicies:
+                    new_indicies.remove(atom.index)
+
         # For each frame of the trajectory create a new atoms object with unwanted atoms deleted
         for atoms in atoms_list:
             atoms2 = atoms.copy()
             if self.subset:
                 del atoms2[[atom.index for atom in atoms if (atom.index >= self.start_index and atom.index < self.end_index)]]
-            if self.ignore_h:
+            if self.c_only:
+                del atoms2[[atom.index for atom in atoms if atom.symbol != 'C']]
+            elif self.ignore_h:
                 del atoms2[[atom.index for atom in atoms if atom.symbol == 'H']]
             new_atoms_list.append(atoms2)
         old_indicies = range(len(new_indicies))
@@ -84,6 +90,12 @@ class DimensionalityReduction:
             # Sort the new array from largest to smallest coefficient
             new_array = new_array[a[:, 0].argsort()]
             self.pc_list.append(new_array[::-1])
+
+    def print_pcs(self, file_root_name):
+        for i in range(0,self.number):
+            f = open(str(file_root_name)+str(i)+".txt", 'w')
+            for row in self.pc_list[i]:
+                f.write(str(row[0]) + '\t' + str(row[1]) + '\t' + str(row[2]) + '\n')
 
 
 

@@ -7,7 +7,7 @@ class Trajectory:
 
     def __init__(self, mol, bxd, md_integrator, bimolecular=False, process_number=0, geo_print_frequency=1000,
                  data_print_freqency=100, plot_update_frequency=100, mixed_timestep=False, initial_temperature=np.nan,
-                 no_text_output=False,plot_output=False, plotter=None):
+                 no_text_output=False, plot_output=False, plotter=None):
 
         self.bxd = bxd
         self.md_integrator = md_integrator
@@ -110,4 +110,9 @@ class Trajectory:
                 keep_going = False
 
             iterations += 1
+
+    def write_traj_to_file(self, file_name = 'geom.xyz'):
+        io.write(file_name,self.ase_traj)
+
+
 

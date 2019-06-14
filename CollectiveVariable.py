@@ -47,8 +47,7 @@ class PrincipalCoordinates(CollectiveVariable):
     # Function to return n dimesnional vector of PC's
     # util contains Cythonized function for calculating the value of each PC at the geometry given by mol
     def get_s(self, mol):
-        distances = self.get_distance_vector(mol, self.highest_index_considered)
-        d = util.getPC(self.indicies, self.coefficients, distances)
+        d = util.getPC(self.indicies, self.coefficients, mol.get_positions())
         return d
 
     # Read principal coordijnates from array
@@ -68,6 +67,9 @@ class PrincipalCoordinates(CollectiveVariable):
     # Function to return a BXD constrain at a given geometry (mol) having hit a given boundary (n)
     # TODO, this function needs tidying up and Cythoning
     def get_delta(self, mol, n):
+        return util.get_delta(mol, n, self.indicies, self.coefficients)
+
+    def get_delta2(self, mol, n):
         constraint_final = np.zeros(mol.get_positions().shape)
         pos = mol.get_positions()
         # First loop over all atoms
