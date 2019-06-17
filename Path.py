@@ -11,7 +11,7 @@ import os
 
 
 class Path:
-    def __init__(self, trajectory, collective_variable, stride=1, max_distance_from_path=float("inf")):
+    def __init__(self, trajectory, collective_variable, stride=1, max_distance_from_path=float("inf"), path_file='reducedPath.txt' ):
         # Apply the defined stride to the path
         self.trajectory = trajectory[0::stride]
         # S stores each path node in the collective Variable representation
@@ -29,10 +29,10 @@ class Path:
         # Format the max distance from path so it is an array of the correct length
         self.max_distance = self.format_max_distance(max_distance_from_path)
         # Print path to file
-        path_file = open('reducedPath.txt', 'w')
+        file = open(path_file, 'w')
         for p in self.s:
-            path_file.write('s = ' + str(p) + '\n')
-        path_file.close()
+            file.write('s = ' + str(p) + '\n')
+        file.close()
 
     def format_max_distance(self, distance):
         # The required length of maxDistance is equal to len(self.S) - 1 since S counts nodes rather than segments

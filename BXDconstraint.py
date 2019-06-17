@@ -427,9 +427,10 @@ class Converging(BXD):
     def update(self, mol):
 
         self.update_bounds()
-
         # update current and previous s(r) values
         self.s = self.get_s(mol)
+        projected_data = self.progress_metric.project_point_on_path(self.s)
+        distance_from_bound = self.progress_metric.get_dist_from_bound(self.s, self.box_list[self.box].lower)
         self.inversion = False
         self.bound_hit = "none"
 
@@ -450,7 +451,7 @@ class Converging(BXD):
             self.box_list[self.box].upper.step_since_hit += 1
             self.box_list[self.box].lower.step_since_hit += 1
             if not self.progress_metric.reflect_back_to_path():
-                self.box_list[self.box].data.append(self.s)
+                self.box_list[self.box].data.append(self.s, projected_data, distance_from_bound)
 
             if self.stuck_count > self.stuck_limit:
                 self.stuck = True
@@ -498,7 +499,7 @@ class Converging(BXD):
     def criteria_met(self, boundary):
         return boundary.hits >= self.number_of_hits
 
-    def get_free_energy(self,T,boxes):
+    def get_free_energy(self,T, boxes=10):
         # Multiply T by the gas constant in kJ/mol
         T *= (8.314 / 1000)
         profile_high_res = []
@@ -526,7 +527,7 @@ class Converging(BXD):
 
         last_s = 0
         for i in range(0, len(self.box_list)):
-            s, dens = self.box_list[i].get_full_histogram()
+            s, dens = self.box_list[i].get_full_histogram(boxes)
             width = s[1] - s[0]
             profile_low_res.append((last_s,self.box_list[i].gibbs))
             for j in range(0, len(dens)):
@@ -652,7 +653,7 @@ class BXDBox:
 
     def get_full_histogram(self, boxes=10):
         del self.data[0]
-        data = [d[1] for d in self.data]
+        data = [d[2] for d in self.data]
         top = max(data)
         edges = []
         for i in range(0, boxes + 1):

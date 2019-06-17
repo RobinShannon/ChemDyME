@@ -27,6 +27,9 @@ class ProgressMetric:
     def update_dist_from_bound(self, s, n, d):
         self.dist_from_bound = np.vdot(s, n) + d
 
+    def get_dist_from_bound(self, s, bound):
+        return np.vdot(s, bound.n) + bound.d
+
     # Get the current distance of BXD trajectory along defined path
     @abstractmethod
     def project_point_on_path(self, s):

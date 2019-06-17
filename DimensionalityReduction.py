@@ -34,8 +34,8 @@ class DimensionalityReduction:
 
         if self.subset:
             for i, atom in enumerate(atoms_list[0]):
-                for j in range(0, len(atom.index())):
-                    if atom.index < self.start_index[j] and atom.index >= self.end_index[j]:
+                for j in range(0, len(self.start_index)):
+                    if atom.index > self.start_index[j] and atom.index <= self.end_index[j]:
                         new_indicies.append(atom.index)
         else:
             for i, atom in enumerate(atoms_list[0]):
@@ -53,7 +53,12 @@ class DimensionalityReduction:
         for atoms in atoms_list:
             atoms2 = atoms.copy()
             if self.subset:
-                del atoms2[[atom.index for atom in atoms if (atom.index >= self.start_index and atom.index < self.end_index)]]
+                del atoms2[:]
+                for j in range(0, len(self.start_index)):
+                    atoms_temp = atoms.copy()
+                    del atoms_temp[[atom.index for atom in atoms if not (atom.index > self.start_index[j] and atom.index <= self.end_index[j])]]
+                    atoms2 += atoms_temp
+                atoms = atoms2.copy()
             if self.c_only:
                 del atoms2[[atom.index for atom in atoms if atom.symbol != 'C']]
             elif self.ignore_h:
