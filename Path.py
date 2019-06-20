@@ -19,7 +19,7 @@ class Path:
         # totalDistance stores the cumulative path length upto a given path node
         self.total_distance = []
         length = 0
-        for i, mol in enumerate(trajectory):
+        for i, mol in enumerate(self.trajectory):
             self.s.append(collective_variable.get_s(mol))
             if i == 0:
                 length += 0

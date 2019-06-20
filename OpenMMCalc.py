@@ -37,8 +37,8 @@ class OpenMMCalculator(Calculator):
         print("Energy: ", state.getPotentialEnergy(), len(positions))
         self.n_atoms = len(positions)
         if pbc:
-            self.set_periodic_bounds(self.atoms)
-        self.set_constraints()
+            self.set_periodic_bounds(atoms)
+        self.set_constraints(atoms)
         self.kjmol_to_ev = 0.01036
 
     def calculate(self, atoms: Optional[Atoms] = None,
@@ -75,19 +75,21 @@ class OpenMMCalculator(Calculator):
         :param atoms: ASE Atoms
         :return:
         """
-        if self.simulation.system.usesPeriodicBoundaryConditions():
-            boxvectors: Quantity = self.simulation.system.getDefaultPeriodicBoxVectors()
+        if self.system.usesPeriodicBoundaryConditions():
+            boxvectors: Quantity = self.system.getDefaultPeriodicBoxVectors()
             atoms.set_pbc(True)
             atoms.set_cell(np.array([vector.value_in_unit(angstrom) for vector in boxvectors]))
 
-    def set_constraints(self):
+    def set_constraints(self, atoms: Atoms):
         """
         Sets ASE atoms object with the same constraints as those used in the given OpenMM system.
         :param atoms: ASE Atoms
         :return:
         """
+        fix = []
         for i in range(0,self.system.getNumConstraints()):
             index1, index2, distance = self.system.getConstraintParameters(i)
-            c = constraints.FixBondLength(index1, index2)
-            self.atoms.set_constraint(c)
+            fix .append([index1,index2])
+        c =constraints.FixBondLengths(fix)
+        atoms.set_constraint(c)
 

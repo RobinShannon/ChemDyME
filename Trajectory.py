@@ -1,6 +1,7 @@
 import numpy as np
 from ase.md import velocitydistribution as vd
 import ase.io as io
+import os, datetime
 from ase.visualize import view
 
 class Trajectory:
@@ -36,12 +37,14 @@ class Trajectory:
         self.plot_update_frequency = plot_update_frequency
 
 
-    def run_trajectory(self, max_steps = np.inf, save_ase_traj = False, reset = False, print_to_file = False):
+    def run_trajectory(self, max_steps = np.inf, save_ase_traj = False, reset = False, print_to_file = False, print_directory = 'BXD_data'):
 
         if print_to_file:
-           data_file = open('data.txt', 'w')
-           geom_file = open('geom.xyz', 'w')
-           bound_file = open('bound_file.txt', 'w')
+           dir = str(print_directory + str(datetime.datetime.now().isoformat(timespec='minutes')))
+           os.mkdir(dir)
+           data_file = open(dir+'/data.txt', 'w')
+           geom_file = open(dir+'/geom.xyz', 'w')
+           bound_file = open(dir+'/bound_file.txt', 'w')
 
 
         if reset:
@@ -49,8 +52,6 @@ class Trajectory:
             self.points = []
 
         keep_going = True
-
-        file = open("geo.xyz","w")
 
         # Get forces from atoms
         try:

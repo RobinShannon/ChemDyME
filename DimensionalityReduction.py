@@ -3,6 +3,18 @@ from pathreducer.filereaders import XYZReader
 import ase.io as aio
 import numpy as np
 
+
+def read_pcs(file_root_name='PC', number=2):
+    pc_list = []
+    for i in range(0, number):
+        f = open(str(file_root_name) + str(i) + ".txt", 'r')
+        pc = []
+        for line in f.readlines():
+            words = line.split()
+            pc.append([float(words[0]), float(words[1]), float(words[2])])
+        pc_list.append(np.asarray(pc))
+    return pc_list
+
 # Class which holds options for getting principal coordinates from path reducer
 # "trajectory" : Trajectory file to be used
 # "number" : Number of PC's wanted
@@ -101,6 +113,8 @@ class DimensionalityReduction:
             f = open(str(file_root_name)+str(i)+".txt", 'w')
             for row in self.pc_list[i]:
                 f.write(str(row[0]) + '\t' + str(row[1]) + '\t' + str(row[2]) + '\n')
+
+
 
 
 

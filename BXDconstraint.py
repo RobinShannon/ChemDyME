@@ -160,7 +160,7 @@ class Adaptive(BXD):
                 bottom = self.box_list[self.box].bot
                 top = self.box_list[self.box].top
                 b1 = self.convert_s_to_bound(bottom, top)
-                b2 = b1
+                b2 = BXDBound(b1.n, b1.d)
                 b3 = BXDBound(self.box_list[self.box].upper.n, self.box_list[self.box].upper.d)
                 b3.invisible = True
                 self.box_list[self.box].upper = b1
@@ -451,7 +451,7 @@ class Converging(BXD):
             self.box_list[self.box].upper.step_since_hit += 1
             self.box_list[self.box].lower.step_since_hit += 1
             if not self.progress_metric.reflect_back_to_path():
-                self.box_list[self.box].data.append(self.s, projected_data, distance_from_bound)
+                self.box_list[self.box].data.append([self.s, projected_data, distance_from_bound])
 
             if self.stuck_count > self.stuck_limit:
                 self.stuck = True
@@ -480,7 +480,6 @@ class Converging(BXD):
             upper_bound = BXDBound(norm_upper,d_upper)
             box = BXDBox(lower_bound, upper_bound, "fixed", True)
             box_list.append(box)
-        box_list.pop(0)
         return box_list
 
     def reached_end(self):
