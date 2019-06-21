@@ -52,9 +52,9 @@ class PrincipalCoordinates(CollectiveVariable):
 
     # Read principal coordijnates from array
     def read_principal_components(self, arr):
-        indicies = arr[:, 0]
-        coefficients = arr[:,1:].astype(int)
-        return indicies, coefficients
+        coefficients = arr[:self.number_of_elements, 0]
+        indicies = arr[:self.number_of_elements,1:].astype(int)
+        return coefficients, indicies
 
     # Vectorised function to quickly get array of euclidean distances between atoms
     def get_distance_vector(self, mol, highest_index_considered):

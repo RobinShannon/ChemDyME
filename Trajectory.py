@@ -1,7 +1,7 @@
 import numpy as np
 from ase.md import velocitydistribution as vd
 import ase.io as io
-import os, datetime
+import os
 from ase.visualize import view
 
 class Trajectory:
@@ -40,11 +40,16 @@ class Trajectory:
     def run_trajectory(self, max_steps = np.inf, save_ase_traj = False, reset = False, print_to_file = False, print_directory = 'BXD_data'):
 
         if print_to_file:
-           dir = str(print_directory + str(datetime.datetime.now().isoformat(timespec='minutes')))
-           os.mkdir(dir)
-           data_file = open(dir+'/data.txt', 'w')
-           geom_file = open(dir+'/geom.xyz', 'w')
-           bound_file = open(dir+'/bound_file.txt', 'w')
+           dir = str(print_directory)
+           i=1
+           temp_dir = dir
+           while os.path.isdir(temp_dir):
+               temp_dir = dir + ("_" + str(i))
+               i += 1
+           os.mkdir(temp_dir)
+           data_file = open(temp_dir+'/data.txt', 'w')
+           geom_file = open(temp_dir+'/geom.xyz', 'w')
+           bound_file = open(temp_dir+'/bound_file.txt', 'w')
 
 
         if reset:
@@ -101,8 +106,11 @@ class Trajectory:
                 self.bounds[0] = self.bxd.box_list[self.bxd.box].lower.get_data()
                 self.bounds[1] = self.bxd.box_list[self.bxd.box].upper.get_data()
                 if print_to_file:
-                    bound_file.write(str(self.bxd.box_list[self.bxd.box].lower.get_data()) + '\n')
-                    bound_file.flush()
+                    bound_file.seek(0)
+                    bound_file.truncate()
+                    for b in self.bxd.box_list:
+                        bound_file.write(str(b.upper.get_data()) + '\n')
+                        bound_file.flush()
                 if self.plot:
                     self.bxd_plotter.plot_bxd_from_array(self.points, self.bounds)
 

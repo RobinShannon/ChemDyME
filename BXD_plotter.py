@@ -55,9 +55,11 @@ class boundary3D:
 class bxd_plotter_2d:
 
     def __init__(self, path_data, path_colour="tomato", point_colour="teal", bound_colour="orange",
-                 bound_size = 5, double_bounds = False):
+                 bound_size = 5, double_bounds = False, zoom=False, all_bounds=True, ):
         plt.ion()
         self.path_colour = path_colour
+        self.follow_current_box = zoom
+        self.all_bounds = all_bounds
         self.point_colour = point_colour
         self.bound_colour = bound_colour
         self.bound_size = bound_size
@@ -72,7 +74,7 @@ class bxd_plotter_2d:
         self.bound_lines.append(b1)
         self.bound_lines.append(b2)
         self.path_lines = []
-        colour = plt.cm.tab20c(np.linspace(0, 1, len(self.path_data)))
+        colour = plt.cm.copper(np.linspace(0, 1, len(self.path_data)))
         for i in range(0, len(self.path_data)-1):
             path = self.ax.plot(np.array([self.path_data[i][0], self.path_data[i + 1][0]]), np.array([self.path_data[i][1], self.path_data[i + 1][1]]),
                      color=colour[i], alpha=0.5)
@@ -121,8 +123,12 @@ class bxd_plotter_2d:
 
     def plot_update(self, points, bounds):
         self.scatter.set_offsets(points[:,:2])
-        self.ax.set_xlim([min(points[:,0])-1, max(points[:,0])+1])
-        self.ax.set_ylim([min(points[:,1])-1, max(points[:,1])+1])
+        if self.follow_current_box:
+            self.ax.set_xlim([(points[-1,0])-2, (points[-1,0])+2])
+            self.ax.set_ylim([(points[-1,1])-2, (points[-1,1])+2])
+        else:
+            self.ax.set_xlim([min(points[:,0])-2, max(points[:,0])+1])
+            self.ax.set_ylim([min(points[:,1])-2, max(points[:,1])+1])
         self.bound_lines = []
         for b in bounds:
             line_start, line_end = b.getLine(self.bound_size)

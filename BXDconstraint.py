@@ -160,9 +160,10 @@ class Adaptive(BXD):
                 bottom = self.box_list[self.box].bot
                 top = self.box_list[self.box].top
                 b1 = self.convert_s_to_bound(bottom, top)
-                b2 = BXDBound(b1.n, b1.d)
+                b2 = self.convert_s_to_bound(bottom, top)
                 b3 = BXDBound(self.box_list[self.box].upper.n, self.box_list[self.box].upper.d)
                 b3.invisible = True
+                b3.s_point = self.box_list[self.box].upper.s_point
                 self.box_list[self.box].upper = b1
                 self.box_list[self.box].upper.transparent = True
                 new_box = self.get_default_box(b2, b3)
@@ -175,6 +176,7 @@ class Adaptive(BXD):
                 b1 = self.convert_s_to_bound(bottom, top)
                 b2 = self.convert_s_to_bound(bottom, top)
                 b3 = BXDBound(self.box_list[self.box].lower.n, self.box_list[self.box].lower.d)
+                b3.s_point = self.box_list[self.box].lower.s_point
                 self.box_list[self.box].lower = b1
                 new_box = self.get_default_box(b3, b2)
                 self.box_list.insert(self.box, new_box)
