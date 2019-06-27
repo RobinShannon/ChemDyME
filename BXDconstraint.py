@@ -538,7 +538,7 @@ class Converging(BXD):
                 alt_p = -1.0 * np.log(p) * T
                 s_path = s[j] + last_s - (width / 2.0)
                 profile_high_res.append((s_path, main_p))
-            last_s += s[len(s) - 1] - width / 2.0
+            last_s += s[-1] - width / 2.0
         return profile_low_res, profile_high_res
 
     def boundary_check(self):
@@ -619,7 +619,7 @@ class BXDBox:
                 limit = h
                 break
         if limit == 0:
-            limit = len(data) - 1
+            limit = len(hist) - 2
         for d in self.data:
             if d[1] > edges[limit] and d[1] <= edges[limit + 1]:
                 self.top_data.append(d[0])
@@ -641,8 +641,6 @@ class BXDBox:
             if cumulative_probability > (1 - eps):
                 limit = i
                 break
-        if limit == 0:
-            limit = len(data) - 1
         for d in self.data:
             if d[1] > edges[-2] and d[1] <= edges[-1]:
                 self.top_data.append(d[0])

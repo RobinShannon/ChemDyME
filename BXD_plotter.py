@@ -124,8 +124,8 @@ class bxd_plotter_2d:
     def plot_update(self, points, bounds):
         self.scatter.set_offsets(points[:,:2])
         if self.follow_current_box:
-            self.ax.set_xlim([(points[-1,0])-2, (points[-1,0])+2])
-            self.ax.set_ylim([(points[-1,1])-2, (points[-1,1])+2])
+            self.ax.set_xlim([(points[-1,0])-5, (points[-1,0])+5])
+            self.ax.set_ylim([(points[-1,1])-5, (points[-1,1])+5])
         else:
             self.ax.set_xlim([min(points[:,0])-2, max(points[:,0])+1])
             self.ax.set_ylim([min(points[:,1])-2, max(points[:,1])+1])
