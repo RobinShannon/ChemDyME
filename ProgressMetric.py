@@ -109,11 +109,13 @@ class Curve(ProgressMetric):
         # segStart or segEnd respectively
         if scalar_projection < 0:
             dist = np.linalg.norm(s - segment_start)
+            scalar_projection = 0
         elif scalar_projection > path_segment_length:
+            scalar_projection = path_segment_length
             dist = np.linalg.norm(s - segment_end)
         else:
             dist = np.linalg.norm(s - vector_projection)
-        return dist, scalar_projection
+        return dist, scalar_projection, scalar_projection/path_segment_length
 
     def vector_to_segment(self, s, segment_end, segment_start):
         # Get vector from segStart to segEnd
@@ -147,21 +149,23 @@ class Curve(ProgressMetric):
         # Now loop over all segments considered and get the distance from S to that segment and the projected distance
         # of S along that segment
         for i in range(start, end):
-            dist, projection = self.distance_to_segment(s, self.path.s[i+1], self.path.s[i])
+            dist, projection, percent = self.distance_to_segment(s, self.path.s[i+1], self.path.s[i])
             if dist < minim:
+                percentage = percent
                 closest_segment = i
                 minim = dist
                 p = projection
         # Update the current distance from path and path segment
         self.old_distance_from_path = self.distance_from_path
         self.distance_from_path = minim
+        self.percentage_along_segment = percentage
         self.path_segment = closest_segment
         # To get the total distance along the path add the total distance along all segments seg < minPoint
         p += self.path.total_distance[closest_segment]
         return p
 
     def reflect_back_to_path(self):
-        if self.distance_from_path > self.max_distance_from_path[self.path_segment]:
+        if self.distance_from_path > self.path_bound_distance_at_point():
             if self.distance_from_path > self.old_distance_from_path:
                 return True
             else:
@@ -169,9 +173,18 @@ class Curve(ProgressMetric):
         else:
             return False
 
-    def path_bound_distance_at_point(self):
-        self.max_distance_from_path[self.path_segment]
+    def outside_path(self):
+        if self.distance_from_path > self.path_bound_distance_at_point():
+            return True
+        else:
+            return False
 
+    def path_bound_distance_at_point(self):
+        try:
+            gradient = self.max_distance_from_path[self.path_segment][self.path_segment + 1] - self.max_distance_from_path[self.path_segment]
+            return  self.max_distance_from_path[self.path_segment] + gradient * self.percentage_along_segment
+        except:
+            return self.max_distance_from_path[self.path_segment]
 
     # Set the current BXD direction
     def set_bxd_reverse(self, reverse):

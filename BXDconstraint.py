@@ -504,16 +504,22 @@ class Converging(BXD):
     def criteria_met(self, boundary):
         return boundary.hits >= self.number_of_hits
 
-    def get_free_energy(self,T, boxes=10):
+    def get_free_energy(self,T, boxes=10, milestoning = False):
         # Multiply T by the gas constant in kJ/mol
         T *= (8.314 / 1000)
         profile_high_res = []
         profile_low_res = []
         total_probability = 0
         for box in self.box_list:
-            box.upper.average_rate = box.upper.hits / len(box.data)
+            if milestoning:
+                box.upper.average_rates()
+            else:
+                box.upper.average_rate = box.upper.hits / len(box.data)
             try:
-                box.lower.average_rate = box.lower.hits / len(box.data)
+                if milestoning:
+                    box.lower.average_rates()
+                else:
+                    box.lower.average_rate = box.lower.hits / len(box.data)
             except:
                 box.lower.average_rate = 0
         for i in range(0, len(self.box_list) - 1):
@@ -548,10 +554,17 @@ class Converging(BXD):
     def boundary_check(self):
         self.path_bound_hit = self.progress_metric.reflect_back_to_path()
         self.bound_hit = 'none'
+        if self.path_bound_hit:
+            self.box_list[self.box].decorrelation_count = 0
+        else:
+            self.box_list[self.box].decorrelation_count = 0
         self.box_list[self.box].milestoning_count += 1
-        self.box_list[self.box].decorrelation_count += 1
+
         #Check for hit against upper boundary
         if self.box_list[self.box].upper.hit(self.s, 'up'):
+            if self.progress_metric.outside_path():
+                self.bound_hit = 'upper'
+                return True
             if self.box_list[self.box].upper.transparent and not self.path_bound_hit:
                 self.box_list[self.box].upper.transparent = False
                 self.box_list[self.box].milestoning_count = 0
@@ -570,6 +583,9 @@ class Converging(BXD):
                     self.box_list[self.box].decorrelation_count += 1
                 return True
         elif self.box_list[self.box].lower.hit(self.s, 'down'):
+            if self.progress_metric.outside_path():
+                self.bound_hit = 'lower'
+                return True
             if self.box_list[self.box].lower.transparent and not self.path_bound_hit:
                 self.box_list[self.box].lower.transparent = False
                 self.box_list[self.box].milestoning_count = 0
