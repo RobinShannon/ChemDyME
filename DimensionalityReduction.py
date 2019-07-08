@@ -35,8 +35,8 @@ class DimensionalityReduction:
         self.c_only = c_only
         # Reorganise the atom ordering according to the flags and print a modified trajectory for path reducer
         self.atoms_dictionary = self.alter_trajectory()
-        self.call_path_reducer()
         self.variance = []
+        self.call_path_reducer()
 
     # Alter the trajectory in order depending on ignoreHydrogens and subset flags
     def alter_trajectory(self):

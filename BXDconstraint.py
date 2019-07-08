@@ -85,7 +85,9 @@ class BXD(metaclass=ABCMeta):
         f.write("BXD boundary list \n\n")
         f.write("Boundary\t" + str(0) + "\tD\t=\t" + str(self.box_list[0].lower.d) + "\tn\t=\t" + str(self.box_list[0].lower.n) + "\n" )
         for i in range(0, len(self.box_list)):
-            f.write("Boundary\t" + str(i+1) + "\tD\t=\t" + str(self.box_list[i].upper.d) + "\tn\t=\t" + str(self.box_list[i].upper.n) + "\tS\t=\t" + str(self.box_list[i].upper.s_point) + "\n" )
+            string = "Boundary\t" + str(i+1) + "\tD\t=\t" + str(self.box_list[i].upper.d) + "\tn\t=\t" + str(self.box_list[i].upper.n) + "\tS\t=\t" + str(self.box_list[i].upper.s_point)
+            string = string.strip(('/n'))
+            f.write(string + "\n" )
         f.close()
 
 
@@ -416,7 +418,8 @@ class Shrinking(BXD):
 class Converging(BXD):
 
     def __init__(self, progress_metric, stuck_limit=20, bound_file="bounds.txt", bound_hits=100,
-                 read_from_file=False, convert_fixed_boxes = False, box_width=0, number_of_boxes=0):
+                 read_from_file=False, convert_fixed_boxes = False, box_width=0, number_of_boxes=0,
+                 decorrelation_limit=1):
 
         super(Converging, self).__init__(progress_metric, stuck_limit)
         if read_from_file:
@@ -425,6 +428,7 @@ class Converging(BXD):
             self.create_fixed_boxes(box_width, number_of_boxes, progress_metric.start)
         self.old_s = 0
         self.number_of_hits = bound_hits
+        self.decorrelation_limit = decorrelation_limit
 
     def update(self, mol):
 
@@ -544,27 +548,47 @@ class Converging(BXD):
     def boundary_check(self):
         self.path_bound_hit = self.progress_metric.reflect_back_to_path()
         self.bound_hit = 'none'
+        self.box_list[self.box].milestoning_count += 1
+        self.box_list[self.box].decorrelation_count += 1
         #Check for hit against upper boundary
         if self.box_list[self.box].upper.hit(self.s, 'up'):
             if self.box_list[self.box].upper.transparent and not self.path_bound_hit:
                 self.box_list[self.box].upper.transparent = False
+                self.box_list[self.box].milestoning_count = 0
+                self.box_list[self.box].decorrelation_count = 0
                 self.box += 1
+                self.box_list[self.box].last_hit = 'upper'
                 return False
             else:
                 self.bound_hit = 'upper'
-                self.box_list[self.box].upper.hits += 1
+                if self.box_list[self.box].last_hit == 'lower':
+                    self.box_list[self.box].upper.rates.append(self.box_list[self.box].milestoning_count)
+                    self.box_list[self.box].milestoning_count = 0
+                    self.box_list[self.box].last_hit = 'upper'
+                if self.box_list[self.box].decorrelation_count > self.decorrelation_limit:
+                    self.box_list[self.box].upper.hits += 1
+                    self.box_list[self.box].decorrelation_count += 1
                 return True
         elif self.box_list[self.box].lower.hit(self.s, 'down'):
             if self.box_list[self.box].lower.transparent and not self.path_bound_hit:
                 self.box_list[self.box].lower.transparent = False
+                self.box_list[self.box].milestoning_count = 0
+                self.box_list[self.box].decorrelation_count = 0
                 self.box -= 1
+                self.box_list[self.box].last_hit = 'upper'
                 if self.box == 0:
                     self.reverse = False
                     self.complete_runs += 1
                 return False
             else:
                 self.bound_hit = 'lower'
-                self.box_list[self.box].lower.hits += 1
+                if self.box_list[self.box].last_hit == 'upper':
+                    self.box_list[self.box].lower.rates.append(self.box_list[self.box].milestoning_count)
+                    self.box_list[self.box].milestoning_count = 0
+                    self.box_list[self.box].last_hit = 'upper'
+                if self.box_list[self.box].decorrelation_count > self.decorrelation_limit:
+                    self.box_list[self.box].lower.hits += 1
+                    self.box_list[self.box].decorrelation_count += 1
                 return True
         else:
             return False
@@ -589,6 +613,9 @@ class BXDBox:
         self.bot = 0
         self.eq_population = 0
         self.gibbs = 0
+        self.last_hit = 'lower'
+        self.milestoning_count = 0
+        self.decorrelation_count = 0
 
     def reset(self, type, active):
         self.type = type
@@ -604,6 +631,9 @@ class BXDBox:
         self.s_point = 0
         self.upper.reset()
         self.lower.reset()
+        self.last_hit = 'lower'
+        self.milestoning_count = 0
+        self.decorrelation_count = 0
 
 
     def get_s_extremes(self, b, eps):

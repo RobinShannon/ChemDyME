@@ -169,6 +169,10 @@ class Curve(ProgressMetric):
         else:
             return False
 
+    def path_bound_distance_at_point(self):
+        self.max_distance_from_path[self.path_segment]
+
+
     # Set the current BXD direction
     def set_bxd_reverse(self, reverse):
         self.bxd_reverse = reverse
