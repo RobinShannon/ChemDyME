@@ -600,7 +600,7 @@ class Converging(BXD):
                 if self.box_list[self.box].last_hit == 'upper':
                     self.box_list[self.box].lower.rates.append(self.box_list[self.box].milestoning_count)
                     self.box_list[self.box].milestoning_count = 0
-                    self.box_list[self.box].last_hit = 'upper'
+                    self.box_list[self.box].last_hit = 'lower'
                 if self.box_list[self.box].decorrelation_count > self.decorrelation_limit:
                     self.box_list[self.box].lower.hits += 1
                 self.box_list[self.box].decorrelation_count += 1
