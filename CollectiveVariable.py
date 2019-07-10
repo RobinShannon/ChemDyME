@@ -65,7 +65,6 @@ class PrincipalCoordinates(CollectiveVariable):
         return d
 
     # Function to return a BXD constrain at a given geometry (mol) having hit a given boundary (n)
-    # TODO, this function needs tidying up and Cythoning
     def get_delta(self, mol, n):
         return util.get_delta(mol, n, self.indicies, self.coefficients)
 
@@ -106,3 +105,95 @@ class Energy(CollectiveVariable):
     # Function to return a BXD constrain at a given geometry (mol) having hit a given boundary (n)
     def get_delta(self, mol, bound):
         return mol.get_forces()
+
+class Distances(CollectiveVariable):
+
+    def __init__(self, mol, distances):
+        self.mol = mol
+        self.distances = distances
+
+    def get_s(self, mol):
+        d = np.zeros(len(self.distances))
+        for i,dis in enumerate(self.distances):
+            d[i] = mol.get_distance(int(dis[0]), int(dis[1]))
+        return d
+
+    def get_delta(self, mol, n):
+        constraint = np.zeros(mol.get_positions().shape)
+        pos = mol.get_positions()
+        # First loop over all atoms
+        for i in range(0, len(mol)):
+            # Then check wether that atom contributes to a collective variable
+            for j,d in enumerate(self.distances):
+                # need a check here in case the collective variable is zero since nan would be returned
+                if mol.get_distance(int(d[0]), int(d[1])) != 0:
+                    firstTerm = (1 / (2 * mol.get_distance(int(d[0]), int(d[1]))))
+                else:
+                    firstTerm = 0
+                norm = n[j]
+                # if atom i is the first atom in bond j then add component to the derivative based upon chain rule differentiation
+                if d[0] == i:
+                    index = int(d[1])
+                    constraint[i][0] += firstTerm * 2 * (pos[i][0] - pos[index][0]) * norm
+                    constraint[i][1] += firstTerm * 2 * (pos[i][1] - pos[index][1]) * norm
+                    constraint[i][2] += firstTerm * 2 * (pos[i][2] - pos[index][2]) * norm
+                # alternate formula for case where i is the seccond atom
+                if d[1] == i:
+                    index = int(d[0])
+                    constraint[i][0] += firstTerm * 2 * (pos[index][0] - pos[i][0]) * -1 * norm
+                    constraint[i][1] += firstTerm * 2 * (pos[index][1] - pos[i][1]) * -1 * norm
+                    constraint[i][2] += firstTerm * 2 * (pos[index][2] - pos[i][2]) * -1 * norm
+        return constraint
+
+class COM(CollectiveVariable):
+
+    def __init__(self, mol, fragment_1, fragment_2):
+        self.mol = mol
+        self.fragment_1 = fragment_1
+        self.fragment_2 = fragment_2
+
+    def get_s(self, mol):
+        self.mass_1 = 0.0
+        self.mass_2 = 0.0
+        com_1 = np.zeros(3)
+        com_2 = np.zeroes(3)
+        masses = mol.get_masses()
+        # First need total mass of each fragment
+        for f_1 in self.fragment_1:
+            i = int(f_1)
+            self.mass_1 += masses[i]
+            com_1[0] += masses[i] * mol.get_positions()[i, 0]
+            com_1[1] += masses[i] * mol.get_positions()[i, 1]
+            com_1[2] += masses[i] * mol.get_positions()[i, 2]
+        for f_2 in self.fragment_2:
+            i = int(f_2)
+            self.mass_2 += masses[i]
+            com_2[0] += masses[i] * mol.get_positions()[i, 0]
+            com_2[1] += masses[i] * mol.get_positions()[i, 1]
+            com_2[2] += masses[i] * mol.get_positions()[i, 2]
+
+        com_1 /= self.mass_1
+        com_2 /= self.mass_2
+
+        self.com_1 = com_1
+        self.com_2 = com_2
+
+        #Finally get distance between the two centers of mass
+        com_dist = np.sqrt(((com_1[0]-com_2[0])**2)+((com_1[1]-com_2[1])**2)+((com_1[2]-com_2[2])**2))
+        return com_dist
+
+    def get_delta(self, mol, n):
+        constraint = np.zeros(mol.get_positions().shape)
+        masses = mol.get_masses()
+        com_dist = self.get_s(mol)
+        for i in range(0, masses.size):
+            for j in range(0, 3):
+                constraint[i][j] = 1 / (2 * com_dist)
+                constraint[i][j] *= 2 * (self.com_1[j] - self.com_2[j])
+                if i in self.fragment_1:
+                    constraint[i][j] *= -masses[i] / self.mass_1
+                elif i in self.fragment_2:
+                    constraint[i][j] *= masses[i] / self.mass_2
+                else:
+                    constraint[i][j] *= 0
+        return constraint

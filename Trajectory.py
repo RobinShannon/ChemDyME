@@ -89,7 +89,7 @@ class Trajectory:
             if iterations % self.geo_print_frequency == 0:
                 self.ase_traj.append(self.mol.copy())
                 if print_to_file:
-                    io.write(geom_file,self.mol,format='xyz', append=True)
+                    io.write(geom_file,self.mol, format='xyz', append=True)
                     geom_file.flush()
 
             if iterations % 10 == 0:

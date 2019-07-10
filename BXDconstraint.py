@@ -252,8 +252,8 @@ class Adaptive(BXD):
         b1 = BXDBound(n1, d1)
         b2 = BXDBound(n2, d2)
         b2.invisible = True
-        b1.s_point = self.progress_metric.path.s[0]
-        b2.s_point = self.progress_metric.path.s[-1]
+        b1.s_point = low_s
+        b2.s_point = high_s
         return b1, b2
 
     def convert_s_to_bound(self, low_s, high_s):
@@ -289,12 +289,12 @@ class Adaptive(BXD):
 
     def output(self):
         out = " box = " + str(self.box) + ' path segment = ' + str(self.progress_metric.path_segment) +\
-              ' % progress = ' + str(self.progress_metric.project_point_on_path(self.s) / self.progress_metric.path.total_distance[-1])\
+              ' % progress = ' + str(self.progress_metric.project_point_on_path(self.s) / self.progress_metric.end_point)\
               + " bound hit = " + str(self.bound_hit) + " distance from path  = " + str(self.progress_metric.distance_from_path)
         return out
 
-    def get_converging_bxd(self, hits = 10):
-        con = Converging(self.progress_metric, self.stuck_limit, bound_hits=hits)
+    def get_converging_bxd(self, hits = 10, decorrelation_limit = 1):
+        con = Converging(self.progress_metric, self.stuck_limit, bound_hits=hits, decorrelation_limit = decorrelation_limit)
         con.box_list = []
         for b in self.box_list:
             n1 = b.lower.n
@@ -557,7 +557,7 @@ class Converging(BXD):
         if self.path_bound_hit:
             self.box_list[self.box].decorrelation_count = 0
         else:
-            self.box_list[self.box].decorrelation_count = 0
+            self.box_list[self.box].decorrelation_count += 1
         self.box_list[self.box].milestoning_count += 1
 
         #Check for hit against upper boundary
@@ -565,10 +565,9 @@ class Converging(BXD):
             if self.progress_metric.outside_path():
                 self.bound_hit = 'upper'
                 return True
-            if self.box_list[self.box].upper.transparent and not self.path_bound_hit:
+            elif self.box_list[self.box].upper.transparent and not self.path_bound_hit:
                 self.box_list[self.box].upper.transparent = False
                 self.box_list[self.box].milestoning_count = 0
-                self.box_list[self.box].decorrelation_count = 0
                 self.box += 1
                 self.box_list[self.box].last_hit = 'upper'
                 return False
@@ -580,7 +579,7 @@ class Converging(BXD):
                     self.box_list[self.box].last_hit = 'upper'
                 if self.box_list[self.box].decorrelation_count > self.decorrelation_limit:
                     self.box_list[self.box].upper.hits += 1
-                    self.box_list[self.box].decorrelation_count += 1
+                self.box_list[self.box].decorrelation_count = 0
                 return True
         elif self.box_list[self.box].lower.hit(self.s, 'down'):
             if self.progress_metric.outside_path():
@@ -604,7 +603,7 @@ class Converging(BXD):
                     self.box_list[self.box].last_hit = 'upper'
                 if self.box_list[self.box].decorrelation_count > self.decorrelation_limit:
                     self.box_list[self.box].lower.hits += 1
-                    self.box_list[self.box].decorrelation_count += 1
+                self.box_list[self.box].decorrelation_count += 1
                 return True
         else:
             return False

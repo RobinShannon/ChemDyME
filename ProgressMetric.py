@@ -14,14 +14,29 @@ class ProgressMetric:
     :distanceType:  "distance"  BXD progress is defined by the distance from the reactant geometry to the current point
                     "simple" Progress defined by the distance of the current point from the current lower boundary
     """
-    def __init__(self, start_mol, collective_variable, distance_type="simple"):
+    def __init__(self, start_mol, collective_variable, end_point, end_type='distance',  distance_type="simple", number_of_boxes = 50):
         self.collective_variable = collective_variable
         # Convert start geometry into the appropriate collective variable
         self.start_s = collective_variable.get_s(start_mol)
         self.distance_type = distance_type
         # Distance from current point to lower boundary
         self.dist_from_bound = 0
-        self.project = collections.namedtuple('distance', 'projection, distance_from_bound')
+        if isinstance(end_point,list):
+            self.target_mol = np.asarray(end_point)
+        else:
+            self.target_mol = collective_variable.get_s(end_point)
+
+        if end_type == 'distance':
+            self.end_type = end_type
+            self.end_point = self.project_point_on_path(self.target_mol)
+        elif end_type == 'boxes':
+            self.end_type = end_type
+            self.end_point = number_of_boxes
+        self.path_segment = 0
+
+
+    def get_start_s(self):
+        return self.start_s, self.target_mol
 
     # Update the distance from the current point to the lower boundary
     def update_dist_from_bound(self, s, n, d):
@@ -36,12 +51,7 @@ class ProgressMetric:
         if self.distance_type == 'distance':
             line = s - self.start_s
             p = np.linalg.norm(line)
-        elif self.distance_type == 'simple':
-            p = self.dist_from_bound
-        else:
-            sys.exit("Simple projection type " + str(self.distance_type) +
-                     " is not recognised. This should be either \"distance\" or \"simple\"\n")
-        return self.project(p)
+        return p
 
     # This method returns a bool signifying whether the current max distance from the path has been exceeded
     # In the simple case there is no path and this returns False
@@ -217,20 +227,14 @@ class Line(ProgressMetric):
     # "end_type" : Specifies the format of the target geometry. Can be either "geom : ASE object" or
     #              "collective : array of collective variable values"
 
-    def __init__(self, start_mol, collective_variable, end, max_distance_from_path=float("inf"), end_type="geom"):
-        super(Line, self).__init__(start_mol, collective_variable)
-        self.max_distance_from_path = max_distance_from_path
-        # The current distance from the path
-        self.distance_from_path = 0
-        if end_type == "collective":
-            self.end = end
-        elif end_type == "geom":
-            self.end = collective_variable.get_s(end)
+    def __init__(self, start_mol, collective_variable, end_point, end_type='distance', max_distance_from_path=float("inf"), number_of_boxes = 50):
+        start_s = collective_variable.get_s(start_mol)
+        if isinstance(end_point, list):
+            self.path = np.asarray(end_point) - start_s
         else:
-            sys.exit("Projection endType " + str(end_type) +
-                     " is not recognised. This should be either \"geom\" or \"collective\"\n")
-        # In this case the path is simply the vector between start and end coordinates
-        self.path = self.start_s - self.end
+            self.path = collective_variable.get_s(end_point) - start_s
+        super(Line, self).__init__(start_mol, collective_variable, end_point,  end_type=end_type, number_of_boxes=number_of_boxes)
+        self.max_distance_from_path = max_distance_from_path
 
     def project_point_on_path(self, s):
         # get line from the start coordinate to current S
@@ -248,6 +252,16 @@ class Line(ProgressMetric):
             return True
         else:
             return False
+
+    def outside_path(self):
+        if self.distance_from_path > self.max_distance_from_path:
+            return True
+        else:
+            return False
+
+        # Set the current BXD direction
+    def set_bxd_reverse(self, reverse):
+        print('reversing')
 
 
 

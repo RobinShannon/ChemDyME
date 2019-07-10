@@ -3,6 +3,7 @@
 from typing import Optional
 import numpy as np
 from ase import Atoms, constraints
+from ase.constraints import FixBondLengths
 from ase.calculators.calculator import Calculator, all_changes
 from simtk.openmm import System, State, XmlSerializer
 from simtk.openmm.app import Simulation
@@ -90,6 +91,7 @@ class OpenMMCalculator(Calculator):
         for i in range(0,self.system.getNumConstraints()):
             index1, index2, distance = self.system.getConstraintParameters(i)
             fix .append([index1,index2])
-        c =constraints.FixBondLengths(fix)
-        atoms.set_constraint(c)
+        if len(fix) != 0:
+            atoms.constraints = FixBondLengths(fix)
+
 
