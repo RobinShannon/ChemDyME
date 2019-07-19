@@ -7,7 +7,7 @@ class ProgressMetric:
     """
     Abstract Base Class controlling the metric used to define BXD progress for a given point in collective variable space.
     The base class measures the BXD progress as the distance from the lower boundary to the a given point: The line and
-    curve derived classes project a given point onto a line or curve respectivley describing reaction from reactants to
+    curve derived classes project a given point onto a line or curve respectively describing reaction from reactants to
     products.
     :start_mol: :   An ASE Atoms object holding the reactant geometry
     :collectiveVar: An instance of the collectiveVariable class which holds the particular distances considered
@@ -119,9 +119,9 @@ class Curve(ProgressMetric):
         # segStart or segEnd respectively
         if scalar_projection < 0:
             dist = np.linalg.norm(s - segment_start)
-            scalar_projection = 0
+            #scalar_projection = 0
         elif scalar_projection > path_segment_length:
-            scalar_projection = path_segment_length
+            #scalar_projection = path_segment_length
             dist = np.linalg.norm(s - segment_end)
         else:
             dist = np.linalg.norm(s - vector_projection)
@@ -136,6 +136,12 @@ class Curve(ProgressMetric):
         path_segment_length = np.linalg.norm(segment)
         # Vector projection of S onto segment
         vector_projection = segment_start + (scalar_projection * (segment / path_segment_length))
+        if scalar_projection < 0:
+            norm = (s - segment_start) / np.linalg.norm(s - vector_projection)
+        elif scalar_projection > 0:
+            norm = (s - segment_end) / np.linalg.norm(s - vector_projection)
+        else:
+            norm = (s - vector_projection)/np.linalg.norm(s - vector_projection)
         norm = (s - vector_projection)/np.linalg.norm(s - vector_projection)
         return norm
 

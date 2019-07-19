@@ -92,6 +92,38 @@ class PrincipalCoordinates(CollectiveVariable):
             constraint_final += constraint
         return constraint_final
 
+class CartesianPrincipalCoordinates(CollectiveVariable):
+
+        # Collective variable is a linear combinations of interatomic distances.
+        # "pc_files" : List of files defining principal coordinates. One PC per file
+        # 'number_of_elements' : Point at which to truncate linear combination in each PC
+        # 'highest_index_considered" : If PC's only refer to a subset of the atoms this variable give the highest atom index
+        #                            needed
+    def __init__(self, number_of_PCs, input_prefix):
+        self.number_of_pcs = number_of_PCs
+        self.pc_array = []
+        for i in range(0,number_of_PCs):
+            input = input_prefix + str(i) + '.txt'
+            file = open(input,'r')
+            array = np.loadtxt(file)
+            self.pc_array.append(array)
+
+        # Function to return n dimesnional vector of PC's
+        # util contains Cythonized function for calculating the value of each PC at the geometry given by mol
+    def get_s(self, mol):
+        d = np.zeros(self.number_of_pcs)
+        for i,pc in enumerate(self.pc_array):
+            s = np.vdot(pc,mol.get_positions())
+            d[i] = s
+        return d
+
+
+    def get_delta(self, mol, n):
+        constraint = np.zeros(mol.get_positions().shape)
+        for pc,norm in zip(self.pc_array,n):
+            constraint += pc * norm
+        return constraint
+
 class Energy(CollectiveVariable):
     # Collective variable is a list of interatomic distances
     # "indicies" : n by 2 array of atom indicies. Each row defines an internuclear distance

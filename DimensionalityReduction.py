@@ -1,4 +1,4 @@
-from pathreducer import DistancePCA
+from pathreducer import PCA
 from pathreducer.filereaders import XYZReader
 import ase.io as aio
 import numpy as np
@@ -89,7 +89,7 @@ class DimensionalityReduction:
         # Number of PCA components
         ndim = self.number
         data = XYZReader(file_)
-        m = DistancePCA(ndim)
+        m = PCA(ndim)
         m.fit(data.coordinates)
         self.variance = m._model.explained_variance_ratio_
         print("Path Reducer: Proportion of variance captured by each coordinate is " + str(self.variance))

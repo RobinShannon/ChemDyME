@@ -569,7 +569,8 @@ class Converging(BXD):
                 self.box_list[self.box].upper.transparent = False
                 self.box_list[self.box].milestoning_count = 0
                 self.box += 1
-                self.box_list[self.box].last_hit = 'upper'
+                self.box_list[self.box].milestoning_count = 0
+                self.box_list[self.box].last_hit = 'lower'
                 return False
             else:
                 self.bound_hit = 'upper'
@@ -590,6 +591,7 @@ class Converging(BXD):
                 self.box_list[self.box].milestoning_count = 0
                 self.box_list[self.box].decorrelation_count = 0
                 self.box -= 1
+                self.box_list[self.box].milestoning_count = 0
                 self.box_list[self.box].last_hit = 'upper'
                 if self.box == 0:
                     self.reverse = False

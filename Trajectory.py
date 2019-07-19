@@ -109,7 +109,9 @@ class Trajectory:
                     bound_file.seek(0)
                     bound_file.truncate()
                     for b in self.bxd.box_list:
-                        bound_file.write(str(b.upper.get_data()) + '\n')
+                        string = str(b.upper.get_data())
+                        string=string.strip('\n')
+                        bound_file.write(string + '\n')
                         bound_file.flush()
                 if self.plot:
                     self.bxd_plotter.plot_bxd_from_array(self.points, self.bounds)
