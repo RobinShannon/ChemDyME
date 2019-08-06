@@ -655,7 +655,7 @@ class BXDBox:
 
     def get_s_extremes(self, b, eps):
         self.top_data = []
-        self.bot_bata = []
+        self.bot_data = []
         data = [d[1] for d in self.data]
         hist, edges = np.histogram(data, bins=b)
         cumulative_probability = 0
