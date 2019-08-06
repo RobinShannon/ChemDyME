@@ -23,8 +23,9 @@ def read_pcs(file_root_name='PC', number=2):
 #            in this range
 # "filePrefix" : Prefix for printing output files
 class DimensionalityReduction:
-    def __init__(self, trajectory, number=3, ignore_h=False, subset=False, c_only = False, start_ind=[], end_ind=[], file_prefix="PC"):
+    def __init__(self, trajectory, number=3, ignore_h=False, subset=False, c_only = False, prune_frequency = 1, start_ind=[], end_ind=[], file_prefix="PC"):
         self.pc_list = []
+        self.prune_frequency = prune_frequency
         self.trajectory = trajectory
         self.ignore_h = ignore_h
         self.subset = subset
@@ -37,6 +38,7 @@ class DimensionalityReduction:
         self.atoms_dictionary = self.alter_trajectory()
         self.variance = []
         self.call_path_reducer()
+
 
     # Alter the trajectory in order depending on ignoreHydrogens and subset flags
     def alter_trajectory(self):
@@ -61,6 +63,15 @@ class DimensionalityReduction:
                 if atom.symbol == 'H' and atom.index in new_indicies:
                     new_indicies.remove(atom.index)
 
+        if self.prune_frequency > 1:
+            i = 0
+            for atom in atoms_list[0]:
+                if atom.index in new_indicies:
+                    if i % self.prune_frequency != 0:
+                        new_indicies.remove(atom.index)
+                    i += 1
+
+
         # For each frame of the trajectory create a new atoms object with unwanted atoms deleted
         for atoms in atoms_list:
             atoms2 = atoms.copy()
@@ -75,6 +86,8 @@ class DimensionalityReduction:
                 del atoms2[[atom.index for atom in atoms if atom.symbol != 'C']]
             elif self.ignore_h:
                 del atoms2[[atom.index for atom in atoms if atom.symbol == 'H']]
+            if self.prune_frequency > 1:
+                del atoms2[[atom.index for atom in atoms2 if atom.index % self.prune_frequency != 0]]
             new_atoms_list.append(atoms2)
         old_indicies = range(len(new_indicies))
         atoms_dictionary = dict(zip(old_indicies,new_indicies))

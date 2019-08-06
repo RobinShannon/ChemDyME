@@ -110,7 +110,7 @@ class Trajectory:
                     bound_file.truncate()
                     for b in self.bxd.box_list:
                         string = str(b.upper.get_data())
-                        string=string.strip('\n')
+                        string = string.strip('\n')
                         bound_file.write(string + '\n')
                         bound_file.flush()
                 if self.plot:
