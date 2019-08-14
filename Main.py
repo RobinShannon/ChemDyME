@@ -293,7 +293,7 @@ def run(glo):
                     if me.time > (1 / float(glo.BiRates[i])):
                         print("assessing whether or not to look for bimolecular channel. Rate = " + str(float(glo.BiRates[i])) + "Mesmer reaction time = " + str(me.time))
                         glo.InitialBi = True
-                        xyz = CT.get_bi_xyz(reacs['reac_0'].ReacName, glo.BiList[i])
+                        xyz = CT.get_bi_xyz(reacs['reac_0'].Reac, glo.BiList[i])
                         spec = np.append(baseXYZ,np.array(glo.BiList[i].get_chemical_symbols()))
                         combinedMol = Atoms(symbols=spec, positions = xyz)
                         #Set reaction instance

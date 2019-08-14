@@ -159,8 +159,7 @@ def getChangedBonds2(mol1, mol2):
     return ind2
 
 
-def get_bi_xyz(smile1, mol):
-    mol1 = tl.getMolFromSmile(smile1)
+def get_bi_xyz(mol1, mol2):
     COM1 = getCOMonly(mol1)
 
     #Translate COM1 to the origin
@@ -170,18 +169,18 @@ def get_bi_xyz(smile1, mol):
         xyz1[i][1] -= COM1[1]
         xyz1[i][2] -= COM1[2]
 
-    # Get random point vector at 7 angstrom separation from COM1
+    # Get random point vector at 8 angstrom separation from COM1
     # Get three normally distrubted numbers
     x_y_z = np.random.normal(0,1,3)
     # normalise and multiply by sphere radius
     sum = np.sqrt(x_y_z[0]**2 + x_y_z[1]**2 + x_y_z[2]**2)
-    x_y_z *= 1/sum * 7
+    x_y_z *= 1/sum * 8
 
     # Get displacement from COM2 to x_y_z
-    COM2 = getCOMonly(mol)
+    COM2 = getCOMonly(mol2)
     displace = COM2 - x_y_z
     # Modify xyz2 coords accordingly
-    xyz2 = mol.get_positions()
+    xyz2 = mol2.get_positions()
     for i in range(0,xyz2.shape[0]):
         xyz2[i][0] -= displace[0]
         xyz2[i][1] -= displace[1]
