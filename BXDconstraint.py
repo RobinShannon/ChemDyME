@@ -214,6 +214,7 @@ class Adaptive(BXD):
 
     def reassign_boundary(self):
         fix = self.fix_to_path
+        print("re-assigning boundary")
         self.fixToPath = False
         if self.reverse:
             self.box_list[self.box].get_s_extremes_reverse(self.histogram_boxes, self.epsilon)
