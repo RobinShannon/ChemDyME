@@ -281,7 +281,7 @@ class Trajectory:
             mdInt = MDIntegrator.Langevin(units.kB * self.LangTemp, self.LangFric, self.forces, self.velocity, self.Mol, self.timeStep)
 
         if (eneAdaptive == False):
-            BXD = BXDconstraint.Energy(self.Mol, -10000, 10000, runType="fixed", numberOfBoxes = numberOfBoxes, hitLimit = maxHits)
+            BXD = BXDconstraint.Energy(self.Mol, -10000, 10000, runType="fixed", numberOfBoxes = numberOfBoxes, hitLimit = maxHits )
             BXD.createFixedBoxes(grainSize)
         else:
             BXD = BXDconstraint.Energy(self.Mol, -10000, 10000, hitLimit = 1, adapMax = maxAdapSteps, runType="adaptive", numberOfBoxes = numberOfBoxes, decorrelationSteps = decorrelationSteps, hist = histogramLevel)
@@ -444,9 +444,7 @@ class Trajectory:
             bxdte = process_time()
             eBounded = BXD.inversion
             if eBounded:
-                self.Mol.set_positions(mdInt.old_positions)
-                if self.Mol.pbc.any():
-                    self.Mol.wrap()
+                self.Mol.set_positions(mdInt.oldPos)
                 bxd_del_phi = BXD.del_constraint(self.Mol)
 
             if self.MDIntegrator == 'VelocityVerlet' and not eBounded:
@@ -463,15 +461,17 @@ class Trajectory:
                 mdInt.constrain(bxd_del_phi)
 
             mdpt = process_time()
-            mdInt.md_step_pos(self.forces, self.timeStep, self.Mol)
+            mdInt.mdStepPos(self.forces, self.timeStep, self.Mol)
+            mdpte = process_time()
             # Get forces from designated potential
             ft = process_time()
             try:
                 self.forces = self.Mol.get_forces()
             except:
                 print('forces error')
+            fte = process_time()
             mdvt = process_time()
-            mdInt.md_step_vel(self.forces, self.timeStep, self.Mol)
+            mdInt.mdStepVel(self.forces, self.timeStep, self.Mol)
             mdvte = process_time()
 
             self.numberOfSteps += 1
@@ -510,8 +510,6 @@ class Trajectory:
             eBounded = BXD.inversion
             if eBounded:
                 self.Mol.set_positions(mdInt.oldPos)
-                if self.Mol.pbc.any():
-                    self.Mol.wrap()
 
             eBounded = BXD.inversion
             if self.MDIntegrator == 'VelocityVerlet' and self.iterations % self.printFreq == 0:
