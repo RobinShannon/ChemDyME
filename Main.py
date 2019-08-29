@@ -289,7 +289,7 @@ def run(glo):
                 for i in range(0, glo.cores):
                     name = 'reac_' + str(i)
                     reacs[name] = outputs2[i][0]
-                    sumfile.write(str(outputs2[i][0].ProdName) + '_' + str(outputs2[i][0].biProdName) + '\t' + str(outputs2[i][0].forwardBarrier) + '\t' + str(outputs2[i][1].numberOfSteps)) + '\n'
+                    sumfile.write(str(outputs2[i][0].ProdName) + '_' + str(outputs2[i][0].biProdName) + '\t' + str(outputs2[i][0].forwardBarrier) + '\t' + str(outputs2[i][1].numberOfSteps) + '\n')
                     sumfile.flush()
 
             # run a master eqution to estimate the lifetime of the current species
