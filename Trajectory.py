@@ -95,7 +95,11 @@ class Trajectory:
             if iterations % 10 == 0:
                 self.points.append(self.bxd.s)
                 if print_to_file:
-                    data_file.write(str(self.bxd.s)+'\n')
+                    string = str(self.bxd.s)
+                    string = string.replace('\n', '')
+                    string = string.replace('\t', '')
+                    string = ' '.join(string.split())
+                    data_file.write(string+'\n')
                     data_file.flush()
 
             if iterations % self.data_print_freqency == 0:
@@ -110,7 +114,9 @@ class Trajectory:
                     bound_file.truncate()
                     for b in self.bxd.box_list:
                         string = str(b.upper.get_data())
-                        string = string.strip('\n')
+                        string = string.replace('\n', '')
+                        string = string.replace('\t', '')
+                        string = ' '.join(string.split())
                         bound_file.write(string + '\n')
                         bound_file.flush()
                 if self.plot:

@@ -31,7 +31,8 @@ class Path:
         # Print path to file
         file = open(path_file, 'w')
         for p in self.s:
-            file.write('s = ' + str(p) + '\n')
+            string = 's = ' + ' '.join(map(str, p))
+            file.write(string + '\n')
         file.close()
 
     def format_max_distance(self, distance):
