@@ -86,8 +86,7 @@ class BXD(metaclass=ABCMeta):
         f.write("Boundary\t" + str(0) + "\tD\t=\t" + str(self.box_list[0].lower.d) + "\tn\t=\t" + str(self.box_list[0].lower.n) + "\n" )
         for i in range(0, len(self.box_list)):
             string = "Boundary\t" + str(i+1) + "\tD\t=\t" + str(self.box_list[i].upper.d) + "\tn\t=\t" + str(self.box_list[i].upper.n) + "\tS\t=\t" + str(self.box_list[i].upper.s_point)
-            string = string.replace(('/n',''))
-            string = string.replace(('/t', ''))
+            string = string.replace('\n','')
             string = ' '.join(string.split())
             f.write(string + "\n")
         f.close()
