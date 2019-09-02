@@ -186,13 +186,13 @@ class Trajectory:
                 eBounded = eneBXD.inversion
 
             if comBounded is True and self.ReactionCountDown == 0:
-                self.Mol.set_positions(mdInt.oldPos)
+                self.Mol.set_positions(mdInt.old_positions)
                 com_del_phi = comBxd.del_constraint(self.Mol)
                 if comBxd.stuck == True  and comBxd.s[0] < self.minCOM:
                     comBxd.stuckFix()
 
             if eBounded:
-                self.Mol.set_positions(mdInt.oldPos)
+                self.Mol.set_positions(mdInt.old_positions)
                 try:
                     e_del_phi = eneBXD.del_constraint(self.Mol)
                 except:
@@ -210,7 +210,8 @@ class Trajectory:
                 self.numberOfSteps += 1
                 timeStep = self.timeStep
 
-            mdInt.mdStepPos(self.forces, timeStep, self.Mol)
+
+            mdInt.md_step_pos(self.forces, timeStep, self.Mol)
             try:
                 self.forces = self.Mol.get_forces()
             except:
@@ -220,7 +221,7 @@ class Trajectory:
                     print("forces error")
                     self.forces = np.zeros(len(self.forces.shape))
 
-            mdInt.mdStepVel(self.forces, timeStep, self.Mol)
+            mdInt.md_step_vel(self.forces, timeStep, self.Mol)
 
             self.MolList.append(self.Mol.copy())
 
@@ -329,6 +330,7 @@ class Trajectory:
             # Perform inversion if required
             if eBounded is True:
                 mdInt.constrain(e_del_phi)
+
 
             mdInt.mdStepPos(self.forces, self.timeStep, self.Mol)
             t = process_time()

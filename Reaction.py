@@ -414,6 +414,7 @@ class Reaction:
         # Open files for saving IRCdata
         xyzfile = open((path + "/Data/dynPath.xyz"), "w")
         MEP = open((path + "/Data/MEP.txt"), "w")
+        orriginal = open((path + "/Data/orriginalPath.txt"), "w")
         dyn = open((path + "/Data/traj.xyz"), "w")
 
         dynList = []
@@ -427,8 +428,8 @@ class Reaction:
             iMol = MolList[i].copy()
             tl.printTraj(dyn, iMol)
             iMol = tl.setCalc(iMol, self.lowString, self.lowMeth, self.lowLev)
+            orriginal.write(str(i) + ' ' + str(iMol.get_potential_energy()) + '\n')
             c = FixAtoms(trans)
-            iMol.set_constraint(c)
             min = BFGS(iMol)
             try:
                 min.run(fmax=0.1, steps=50)
