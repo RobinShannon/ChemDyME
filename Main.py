@@ -213,8 +213,10 @@ def run(glo):
         MESpath = syspath + '/MESMER/'
         symb = "".join(reacs[name].CombReac.get_chemical_symbols())
         if symb not in reacs['reac_0'].energyDictionary:
-            d = {symb: base_ene}
-            reacs[name].energyDictionary.update(d)
+            for i in range(0, glo.cores):
+                name = 'reac_' + str(i)
+                d = {symb: base_ene}
+                reacs[name].energyDictionary.update(d)
         if reacs['reac_0'].energyDictionary[symb] == 0.0:
             for i in range(0, glo.cores):
                 name = 'reac_' + str(i)

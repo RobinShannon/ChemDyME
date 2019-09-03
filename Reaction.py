@@ -607,6 +607,7 @@ class Reaction:
         self.is_IntermediateProd = False
         self.AltProd = self.Reac.copy()
         self.TScorrect = False
+        self.optReac()
 
     def newReacFromSMILE(self, SMILE):
         self.ReacName = SMILE
@@ -641,6 +642,7 @@ class Reaction:
         self.is_IntermediateProd = False
         self.AltProd = self.Reac.copy()
         self.TScorrect = False
+        self.optReac()
 
     def re_init(self, path):
         self.TS = read(path + '/Reac.xyz')
