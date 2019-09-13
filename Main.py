@@ -312,27 +312,51 @@ def run(glo):
                         # Set reaction instance
                         for j in range(0, glo.cores):
                             name = 'reac_' + str(j)
-                            d = {symb: reacs[name].reactantEnergy}
                             reacs[name].re_init_bi(xyz, spec)
-                            biTrajs = dict(("traj_" + str(k),
-                                            Trajectory.Trajectory(combinedMol, glo, tempPaths[('tempPath_' + str(k))],
-                                                                  str(k), True)) for k in range(glo.cores))
-                            biTempPaths = dict(
-                                ("tempPath_" + str(k), minpath + '/temp' + str(j)) for k in range(glo.cores))
                         io.writeMinXML(reacs['reac_0'], MESpath, True, True)
-                        if __name__ == "Main":
-                            arguments1 = []
-                            arguments2 = []
-                            for j in range(0, glo.cores):
-                                name = 'reac_' + str(j)
-                                name2 = 'traj_' + str(j)
-                                biTrajs[name2].fragIdx = (len(baseXYZ), len(xyz))
-                                arguments1.append(reacs[name])
-                                arguments2.append(biTrajs[name2])
-                            arguments = list(zip(arguments1, arguments2, [minpath] * glo.cores, [MESpath] * glo.cores,
-                                                 range(glo.cores), [glo] * glo.cores, [glo.BiList[i]] * glo.cores))
-                            p = multiprocessing.Pool(glo.cores)
-                            p.map(runNormal, arguments)
+                        for r in range(0, glo.ReactIters):
+                            bitempPaths = dict(
+                                ("bitempPath_" + str(i), minpath + '/temp' + str(i) + '_' + str(r)) for i in
+                                range(glo.cores))
+                            # Now set up tmp directory for each thread
+                            for i in range(0, glo.cores):
+                                if not os.path.exists(bitempPaths[('bitempPath_' + str(i))]):
+                                    os.makedirs(bitempPaths[('bitempPath_' + str(i))])
+
+                            if r % 2 == 0:
+                                glo.trajMethod = glo.trajMethod1
+                                glo.trajLevel = glo.trajLevel1
+                            else:
+                                glo.trajMethod = glo.trajMethod2
+                                glo.trajLevel = glo.trajLevel2
+
+                            biTrajs = dict(("traj_" + str(k),
+                                            Trajectory.Trajectory(combinedMol, glo, bitempPaths[('bitempPath_' + str(k))],
+                                                                  str(k), True)) for k in range(glo.cores))
+
+                            if __name__ == "Main":
+                                arguments1 = []
+                                arguments2 = []
+                                for j in range(0, glo.cores):
+                                    name = 'reac_' + str(j)
+                                    name2 = 'traj_' + str(j)
+                                    biTrajs[name2].fragIdx = (len(baseXYZ), len(xyz))
+                                    arguments1.append(reacs[name])
+                                    arguments2.append(biTrajs[name2])
+                                arguments = list(zip(arguments1, arguments2, [minpath] * glo.cores, [MESpath] * glo.cores,
+                                                     range(glo.cores), [glo] * glo.cores, [glo.BiList[i]] * glo.cores))
+                                p = multiprocessing.Pool(glo.cores)
+                                p.map(runNormal, arguments)
+                                results2 = p.map(runNormal, arguments)
+                                outputs2 = [result for result in results2]
+
+                                for i in range(0, glo.cores):
+                                    name = 'reac_' + str(i)
+                                    reacs[name] = outputs2[i][0]
+                                    sumfile.write(
+                                        str(outputs2[i][0].ProdName) + '_' + str(outputs2[i][0].biProdName) + '\t' +
+                                        str(outputs2[i][0].forwardBarrier) + '\t' + str(outputs2[i][1].numberOfSteps) + '\n')
+                                    sumfile.flush()
                             glo.InitialBi = False
 
             # Run ME from the given minimum. While loop until species formed is new

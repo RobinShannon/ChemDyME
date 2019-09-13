@@ -52,11 +52,11 @@ def getSMILES(mol, opt, partialOpt = False):
     name = (obConversion.WriteString(BABmol))
 
     # Convert "." to "____" to clearly differentiate between species
-    name = name.replace('.' , '____')
-    name = name.replace('/' , '')
+    name = name.replace('.', '____')
+    name = name.replace('/', '')
     # These options make trans / cis isomers indistinguishable and ignore chirality
-    name = name.replace('\/' , '')
-    name = name.replace('@' , '')
+    name = name.replace('\\', '')
+    name = name.replace('@', '')
     name = name.strip('\n\t')
     return name
 
