@@ -43,6 +43,11 @@ def runNormal(p):
 
         # Get the indicies of the bonds which have either formed or broken over the course of the reaction
         changedBonds = CT.getChangedBonds(p[0].CombReac, p[0].CombProd)
+
+        data = open(('AllData.txt'), "a")
+        data.write('Reactant = ' + str(p[0].ReacName) + ' Product = ' + str(
+            p[0].ProdName) + ' MD Steps = ' + str(p[1].numberOfSteps) + '\n')
+
         print('changesBonds ' + str(changedBonds))
         print(str(p[0].ProdName))
         # Check the reaction product is not the orriginal reactant
@@ -241,8 +246,6 @@ def run(glo):
 
         # If this is a restart then need to find the next new product from the ME, otherwise start trajectories
         if glo.restart == False:
-            # Open files for saving summary
-            sumfile = open((minpath + '/summary.txt'), "w")
 
             reacs['reac_0'].printReac(minpath)
             for r in range(0, glo.ReactIters):
@@ -288,11 +291,6 @@ def run(glo):
                     results2 = p.map(runNormal, arguments)
                     outputs2 = [result for result in results2]
 
-                for i in range(0, glo.cores):
-                    name = 'reac_' + str(i)
-                    reacs[name] = outputs2[i][0]
-                    sumfile.write(str(outputs2[i][0].ProdName) + '_' + str(outputs2[i][0].biProdName) + '\t' + str(outputs2[i][0].forwardBarrier) + '\t' + str(outputs2[i][1].numberOfSteps) + '\n')
-                    sumfile.flush()
 
             # run a master eqution to estimate the lifetime of the current species
             me.runTillReac(MESpath)
@@ -300,11 +298,13 @@ def run(glo):
 
             # check whether there is a possible bimolecular rection for current intermediate
             if len(glo.BiList) > 0 and glo.InitialBi == False:
+                print("looking at list of bimolecular candidates")
                 for i in range(0, len(glo.BiList)):
+                    print("getting chemical symbols")
                     baseXYZ = reacs['reac_0'].CombReac.get_chemical_symbols()
                     if me.time > (1 / float(glo.BiRates[i])):
                         print("assessing whether or not to look for bimolecular channel. Rate = " + str(
-                            float(glo.BiRates[i])) + "Mesmer reaction time = " + str(me.time))
+                            float(glo.BiRates[i])) + " Mesmer reaction time = " + str(me.time))
                         glo.InitialBi = True
                         xyz = CT.get_bi_xyz(reacs['reac_0'].Reac, glo.BiList[i])
                         spec = np.append(baseXYZ, np.array(glo.BiList[i].get_chemical_symbols()))
@@ -350,17 +350,9 @@ def run(glo):
                                 results2 = p.map(runNormal, arguments)
                                 outputs2 = [result for result in results2]
 
-                                for i in range(0, glo.cores):
-                                    name = 'reac_' + str(i)
-                                    reacs[name] = outputs2[i][0]
-                                    sumfile.write(
-                                        str(outputs2[i][0].ProdName) + '_' + str(outputs2[i][0].biProdName) + '\t' +
-                                        str(outputs2[i][0].forwardBarrier) + '\t' + str(outputs2[i][1].numberOfSteps) + '\n')
-                                    sumfile.flush()
                             glo.InitialBi = False
 
-            # Run ME from the given minimum. While loop until species formed is new
-            sumfile.close()
+
             glo.restart = False
         glo.InitialBi = False
         while me.newSpeciesFound == False:

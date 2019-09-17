@@ -430,9 +430,10 @@ class Reaction:
             iMol = tl.setCalc(iMol, self.lowString, self.lowMeth, self.lowLev)
             orriginal.write(str(i) + ' ' + str(iMol.get_potential_energy()) + '\n')
             c = FixAtoms(trans)
+            iMol.set_constraint(c)
             min = BFGS(iMol)
             try:
-                min.run(fmax=0.1, steps=50)
+                min.run(fmax=0.1, steps=150)
             except:
                 min.run(fmax=0.1, steps=1)
             del iMol.constraints
