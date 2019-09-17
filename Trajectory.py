@@ -13,6 +13,7 @@ from time import process_time
 class Trajectory:
 
     def __init__(self, mol, gl, path, i, Bi):
+        self.geom_print = gl.full_geom_print
         self.printSMILES = False
         self.procNum = i
         self.gl = gl
@@ -81,7 +82,7 @@ class Trajectory:
         # Create specific directory
         workingDir = os.getcwd()
         newpath = workingDir + '/traj' + str(self.procNum)
-        namefile = open(("traj.xyz"), "w")
+        namefile = open((newpath+"/totaltraj.xyz"), "a")
 
         if not os.path.exists(newpath):
             os.makedirs(newpath)
@@ -172,6 +173,10 @@ class Trajectory:
             elif eneBXDon and i % self.printFreq == 0:
                 print("Ene = " + str(self.Mol.get_potential_energy()) + ' box = ' + str(eneBXD.box) + ' step = ' + str(i) + ' process = ' + str(self.procNum) + ' time = ' + str(process_time()-t) + ' temperature = ' + str(self.Mol.get_temperature()) + ' Etot ' + str(self.Mol.get_potential_energy() + self.Mol.get_kinetic_energy()))
 
+            if i % self.printFreq == 0 and self.geom_print is True:
+                tl.printTraj(namefile, self.Mol.copy())
+
+
             #  Now check whether to turn BXDE on
             if self.comBXD:
                 if (self.biMolecular or self.comBXD) and comBxd.s[0] < self.minCOM and eneBXDon == False:
@@ -224,7 +229,6 @@ class Trajectory:
             mdInt.md_step_vel(self.forces, timeStep, self.Mol)
 
             self.MolList.append(self.Mol.copy())
-
 
             # Update connectivity map to check for reaction
             if not self.biMolecular or (self.comBXD and comBxd.s[0] < self.minCOM):

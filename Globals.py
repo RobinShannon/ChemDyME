@@ -11,6 +11,7 @@ class Globals:
         self.fixToPath = False
         self.pathDistCutOff = False
         self.BiList = []
+        self.full_geom_print = False
         mpath = path + '/inp.txt'
 
         self.InitialBi = False
@@ -182,6 +183,8 @@ class Globals:
                 self.InitialBi = True
             if re.search("LangFriction", line):
                 self.LFric = float(line.split()[2])
+            if re.search("full_geom_print", line):
+                self.full_geom_print = True
             if re.search("LangTemperature", line):
                 self.LTemp = float(line.split()[2])
             if re.search("BiList", line):
