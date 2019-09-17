@@ -81,13 +81,15 @@ class Trajectory:
     def runTrajectory(self):
         # Create specific directory
         workingDir = os.getcwd()
-        newpath = workingDir + '/traj' + str(self.procNum)
-        namefile = open((newpath+"/totaltraj.xyz"), "a")
+        newpath = workingDir + '/Raw/traj' + str(self.procNum)
+        print("making directory " + newpath)
+
 
         if not os.path.exists(newpath):
             os.makedirs(newpath)
         os.chdir(newpath)
-
+        print("new file for trajectory " + (newpath + "/totaltraj.xyz"))
+        namefile = open((newpath + "/totaltraj.xyz"), "a")
 
         self.numberOfSteps = 0
         consistantChange = 0
@@ -104,9 +106,9 @@ class Trajectory:
 
         # Get potential type
         if (self.method == 'nwchem'):
-            self.Mol =tl.setCalc(self.Mol,'calcMopac' + str(self.procNum) + '/Traj', 'nwchem2', self.level)
+            self.Mol =tl.setCalc(self.Mol,'Traj_' + str(self.procNum), 'nwchem2', self.level)
             self.Mol.get_forces()
-        self.Mol =tl.setCalc(self.Mol,'calcMopac' + str(self.procNum) + '/Traj', self.method, self.level)
+        self.Mol =tl.setCalc(self.Mol, 'Traj_' + str(self.procNum), self.method, self.level)
         print("getting first forces")
         try:
             self.forces = self.Mol.get_forces()
