@@ -51,7 +51,9 @@ class Trajectory:
             self.Mol = tl.setCalc(self.Mol,'calcMopac' + str(self.procNum) + '/Traj', self.method, gl)
         else:
             self.Mol = tl.setCalc(self.Mol,'calcMopac' + str(self.procNum) + '/Traj', self.method, self.level)
-        MaxwellBoltzmannDistribution(self.Mol, self.initialT * units.kB)
+        MaxwellBoltzmannDistribution(self.Mol, self.initialT * units.kB, force_temp=True)
+        Stationary(self.Mol)
+        ZeroRotation(self.Mol)
         self.velocity = self.Mol.get_velocities()
         self.tempReactGeom = mol.copy()
         self.tempProdGeom = mol.copy()
