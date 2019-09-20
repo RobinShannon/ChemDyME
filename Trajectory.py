@@ -50,7 +50,7 @@ class Trajectory:
            data_file = open(temp_dir+'/data.txt', 'w')
            geom_file = open(temp_dir+'/geom.xyz', 'w')
            bound_file = open(temp_dir+'/bound_file.txt', 'w')
-
+           box_geoms = open(temp_dir+'/bound_file.txt', 'w')
 
         if reset:
             self.ase_traj = []
@@ -125,7 +125,12 @@ class Trajectory:
             #check if one full run is complete, if so stop the adaptive search
             if self.bxd.complete_runs == 1 or iterations > max_steps:
                 keep_going = False
-
+                io.write(geom_file, self.mol, format='xyz', append=True)
+                try:
+                    for box in self.bxd.box_list[self.bxd.box]:
+                        io.write(box_geoms, box.geometry, format='xyz', append=True)
+                except:
+                    print("couldnt print individual box geoms. Perhaps this is a converging run")
             iterations += 1
 
     def write_traj_to_file(self, file_name = 'geom.xyz'):

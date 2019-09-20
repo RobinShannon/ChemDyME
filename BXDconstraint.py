@@ -19,6 +19,7 @@ class BXD(metaclass=ABCMeta):
         self.old_s = 0
         self.complete_runs = 0
         self.delta = 0
+        self.new_box = True
 
     def __len__(self):
         return len(self.box_list)
@@ -112,6 +113,11 @@ class Adaptive(BXD):
 
 
     def update(self, mol):
+
+        if self.new_box:
+            self.box_list[self.box].geometry = mol
+        self.new_box = False
+
         # update current and previous s(r) values
         self.s = self.get_s(mol)
         projected_data = self.progress_metric.project_point_on_path(self.s)
@@ -165,6 +171,7 @@ class Adaptive(BXD):
                 top = self.box_list[self.box].top
                 b1 = self.convert_s_to_bound(bottom, top)
                 b2 = self.convert_s_to_bound(bottom, top)
+                self.box_list[self.box].angle_between_bounds = np.arccos(np.dot(b1.n,self.box_list[self.box].lower.n)/(np.linalg.norm(b1.n)*np.linalg.norm(self.box_list[self.box].lower.n)))
                 b3 = BXDBound(self.box_list[self.box].upper.n, self.box_list[self.box].upper.d)
                 b3.invisible = True
                 b3.s_point = self.box_list[self.box].upper.s_point
@@ -172,7 +179,7 @@ class Adaptive(BXD):
                 self.box_list[self.box].upper.transparent = True
                 new_box = self.get_default_box(b2, b3)
                 self.box_list.append(new_box)
-            elif self.reverse:
+            elif self.reverse and self.box_list[self.box].lower.hits < (self.epsilon * self.adaptive_steps):
                 # at this point we partition the box into two and insert a new box at the correct point in the boxList
                 self.box_list[self.box].get_s_extremes_reverse(self.histogram_boxes, self.epsilon)
                 bottom = self.box_list[self.box].bot
@@ -319,15 +326,17 @@ class Adaptive(BXD):
                 self.box_list[self.box].lower.transparent = True
                 self.box_list[self.box].data = []
                 self.box += 1
+                self.new_box = True
                 return False
             else:
                 self.bound_hit = 'upper'
                 self.box_list[self.box].upper.hits += 1
                 return True
         elif self.box_list[self.box].lower.hit(self.s, 'down'):
-            if self.reverse and not self.path_bound_hit:
+            if self.reverse and not self.path_bound_hit and self.box_list[self.box].type == 'adap':
                 self.box_list[self.box].data = []
                 self.box -= 1
+                self.new_box = True
                 if self.box == 0:
                     self.reverse = False
                     self.complete_runs += 1
@@ -422,7 +431,7 @@ class Converging(BXD):
 
     def __init__(self, progress_metric, stuck_limit=20, bound_file="bounds.txt", bound_hits=100,
                  read_from_file=False, convert_fixed_boxes = False, box_width=0, number_of_boxes=0,
-                 decorrelation_limit=1):
+                 decorrelation_limit=1, boxes_to_converge = []):
 
         super(Converging, self).__init__(progress_metric, stuck_limit)
         if read_from_file:
