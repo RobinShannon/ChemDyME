@@ -333,7 +333,7 @@ class Adaptive(BXD):
                 self.box_list[self.box].upper.hits += 1
                 return True
         elif self.box_list[self.box].lower.hit(self.s, 'down'):
-            if self.reverse and not self.path_bound_hit and self.box_list[self.box].type == 'adap':
+            if self.reverse and not self.path_bound_hit and not self.box_list[self.box].type == 'adap':
                 self.box_list[self.box].data = []
                 self.box -= 1
                 self.new_box = True
