@@ -504,7 +504,7 @@ class genBXD(Constraint):
                 b = self.convertStoBoundOnPath(s2vec[1],s2vec[2],s2)
         return b
 
-    def convertStoBoundGeneral(self , s1, s2):
+    def convertStoBoundGeneral(self, s1, s2):
         n2 = (s2 - s1) / np.linalg.norm(s1-s2)
         if self.reverse:
             D2 = -1*np.vdot(n2,s1)
