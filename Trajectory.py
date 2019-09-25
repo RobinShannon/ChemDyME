@@ -56,7 +56,7 @@ class Trajectory:
         ZeroRotation(self.Mol)
         self.velocity = self.Mol.get_velocities()
         print('initialising velocities for process ' + str(i) + '\n')
-        print(self.velocity + '\n')
+        print(str(self.velocity) + '\n')
         self.tempReactGeom = mol.copy()
         self.tempProdGeom = mol.copy()
         self.NEBguess = []
