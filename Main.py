@@ -284,12 +284,16 @@ def run(glo):
                         name2 = 'traj_' + str(i)
                         arguments1.append(reacs[name])
                         arguments2.append(trajs[name2])
-                    arguments = list(
-                        zip(arguments1, arguments2, [minpath] * glo.cores, [MESpath] * glo.cores, range(glo.cores),
-                            [glo] * glo.cores))
-                    p = multiprocessing.Pool(glo.cores)
-                    results2 = p.map(runNormal, arguments)
-                    outputs2 = [result for result in results2]
+                    if glo.cores ==1:
+                        arguments = [arguments1[0], arguments2[0], minpath , MESpath * glo.cores, 0, glo]
+                        results2 = runNormal(arguments)
+                    else:
+                        arguments = list(
+                            zip(arguments1, arguments2, [minpath] * glo.cores, [MESpath] * glo.cores, range(glo.cores),
+                                [glo] * glo.cores))
+                        p = multiprocessing.Pool(glo.cores)
+                        results2 = p.map(runNormal, arguments)
+                        outputs2 = [result for result in results2]
 
 
             # run a master eqution to estimate the lifetime of the current species
@@ -345,10 +349,12 @@ def run(glo):
                                     arguments2.append(biTrajs[name2])
                                 arguments = list(zip(arguments1, arguments2, [minpath] * glo.cores, [MESpath] * glo.cores,
                                                      range(glo.cores), [glo] * glo.cores, [glo.BiList[i]] * glo.cores))
-                                p = multiprocessing.Pool(glo.cores)
-                                p.map(runNormal, arguments)
-                                results2 = p.map(runNormal, arguments)
-                                outputs2 = [result for result in results2]
+                                if glo.cores == 1:
+                                    results2 = runNormal(arguments)
+                                else:
+                                    p = multiprocessing.Pool(glo.cores)
+                                    results2 = p.map(runNormal, arguments)
+                                    outputs2 = [result for result in results2]
 
                             glo.InitialBi = False
 
