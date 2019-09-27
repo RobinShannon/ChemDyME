@@ -2,7 +2,8 @@ from simtk.openmm.app import *
 from simtk.openmm import *
 from simtk.unit import *
 import xml.etree.ElementTree as ET
-
+#import os
+from sys import stdout, exit, stderr
 
 def get_openmm_amber(prmtop_file, crd_file, out_xml):
     prmtop = AmberPrmtopFile(prmtop_file)
@@ -36,5 +37,24 @@ def get_openmm_narupa2(narupa, out_xml, out_pdb):
             pdb_out.write(str(pdb))
 
 
+def get_openmm_charmm(psf_file,crd_file,out_xml,params_dir):
+    psf = CharmmPsfFile(psf_file)
+    crd = CharmmCrdFile(crd_file)
+    params = []
+    for file in os.listdir(params_dir):
+        if not file.startswith('.'):
+          full_path = params_dir+'/'+file
+          params.append(full_path)
+    params = CharmmParameterSet(*params)
+    system = psf.createSystem(params,nonbondedMethod=NoCutoff,nonbondedCutoff=1*nanometer, constraints=None, implicitSolvent=HCT )
+    integrator = LangevinIntegrator(300*kelvin, 1/picosecond, 0.002*picosecond)
+    simulation = Simulation(psf.topology, system,integrator)
+    simulation.context.setPositions(crd.positions)
+    simulation.minimizeEnergy()
+    simulation.step(10000)
+    serialized_system = XmlSerializer.serialize(system)
+    out_file = open(out_xml, 'w')
+    out_file.write(serialized_system)
 
 
+#get_openmm_charmm(/Users/cm14sjm/Documents/BXD/BXD_CHARMM/step1_pdbreader.psf,/Users/cm14sjm/Documents/BXD/BXD_CHARMM/1tit_min_equi_final.crd, params_files = '/Users/cm14sjm/Documents/BXD/BXD_CHARMM/toppar.str', '/Users/cm14sjm/Documents/BXD/BXD_CHARMM/1tit_01_001.vel', '/Users/cm14sjm/Documents/BXD/BXD_CHARMM/1tit_01_001.dcd',/Users/cm14sjm/Documents/BXD/BXD_CHARMM/tit_out.xml)

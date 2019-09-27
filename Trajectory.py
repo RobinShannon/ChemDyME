@@ -50,7 +50,7 @@ class Trajectory:
            data_file = open(temp_dir+'/data.txt', 'w')
            geom_file = open(temp_dir+'/geom.xyz', 'w')
            bound_file = open(temp_dir+'/bound_file.txt', 'w')
-           box_geoms = open(temp_dir+'/bound_file.txt', 'w')
+           box_geoms = open(temp_dir+'/box_geoms.xyz', 'w')
 
         if reset:
             self.ase_traj = []

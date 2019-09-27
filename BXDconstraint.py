@@ -179,7 +179,7 @@ class Adaptive(BXD):
                 self.box_list[self.box].upper.transparent = True
                 new_box = self.get_default_box(b2, b3)
                 self.box_list.append(new_box)
-            elif self.reverse and self.box_list[self.box].lower.hits < (self.epsilon * self.adaptive_steps):
+            elif self.reverse and self.box_list[self.box].lower.hits < ((1-self.epsilon) * self.adaptive_steps):
                 # at this point we partition the box into two and insert a new box at the correct point in the boxList
                 self.box_list[self.box].get_s_extremes_reverse(self.histogram_boxes, self.epsilon)
                 bottom = self.box_list[self.box].bot
