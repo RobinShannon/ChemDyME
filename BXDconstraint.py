@@ -180,6 +180,7 @@ class Adaptive(BXD):
                 new_box = self.get_default_box(b2, b3)
                 self.box_list.append(new_box)
             elif self.reverse and self.box_list[self.box].lower.hits < ((1-self.epsilon) * self.adaptive_steps):
+                print("making new adaptive bound in reverse direction")
                 # at this point we partition the box into two and insert a new box at the correct point in the boxList
                 self.box_list[self.box].get_s_extremes_reverse(self.histogram_boxes, self.epsilon)
                 bottom = self.box_list[self.box].bot
@@ -343,6 +344,7 @@ class Adaptive(BXD):
                 self.box_list[self.box].type = 'adap'
                 return False
             else:
+                print("lower boundary hit in reverse adaptive run for box " + str(self.box))
                 self.bound_hit = 'lower'
                 self.box_list[self.box].lower.hits += 1
                 return True
