@@ -347,6 +347,9 @@ class Adaptive(BXD):
                 print("lower boundary hit in reverse adaptive run for box " + str(self.box))
                 self.bound_hit = 'lower'
                 self.box_list[self.box].lower.hits += 1
+                if self.box_list[self.box].lower.hits > ((1-self.epsilon) * self.adaptive_steps):
+                    self.box_list[self.box].type = 'normal'
+                    print("hit lower bound a sufficient number of times to go straight through without placing new boundary")
                 return True
         else:
             return False
