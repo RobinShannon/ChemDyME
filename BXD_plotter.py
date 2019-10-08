@@ -74,11 +74,14 @@ class bxd_plotter_2d:
         self.bound_lines.append(b1)
         self.bound_lines.append(b2)
         self.path_lines = []
-        colour = plt.cm.copper(np.linspace(0, 1, len(self.path_data)))
-        for i in range(0, len(self.path_data)-1):
-            path = self.ax.plot(np.array([self.path_data[i][0], self.path_data[i + 1][0]]), np.array([self.path_data[i][1], self.path_data[i + 1][1]]),
-                     color=colour[i], alpha=0.5)
-            self.path_lines.append(path)
+        try:
+            colour = plt.cm.copper(np.linspace(0, 1, len(self.path_data)))
+            for i in range(0, len(self.path_data)-1):
+                path = self.ax.plot(np.array([self.path_data[i][0], self.path_data[i + 1][0]]), np.array([self.path_data[i][1], self.path_data[i + 1][1]]),
+                        color=colour[i], alpha=0.5)
+                self.path_lines.append(path)
+        except:
+            print("couldnt print path ")
         self.fig.show()
 
     def plot_bxd_from_file(self, point_file, bound_file):

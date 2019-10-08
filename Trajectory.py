@@ -70,6 +70,14 @@ class Trajectory:
 
             del_phi = []
             self.bxd.update(self.mol)
+            if self.bxd.skip_box:
+                if self.bxd.reverse:
+                    self.mol.set_positions(self.bxd.box_list[self.bxd.box - 1].geometry.get_positions())
+                else:
+                    self.mol.set_positions(self.bxd.box_list[self.bxd.box + 1].geometry.get_positions())
+                vd.MaxwellBoltzmannDistribution(self.mol, self.md_integrator.temperature, force_temp=True)
+                self.md_integrator.current_velocities = self.mol.get_velocities()
+                self.md_integrator.half_step_velocity = self.mol.get_velocities()
             bounded = self.bxd.inversion
             if bounded:
                 if self.bxd.path_bound_hit:
@@ -125,9 +133,8 @@ class Trajectory:
             #check if one full run is complete, if so stop the adaptive search
             if self.bxd.complete_runs == 1 or iterations > max_steps:
                 keep_going = False
-                io.write(geom_file, self.mol, format='xyz', append=True)
                 try:
-                    for box in self.bxd.box_list[self.bxd.box]:
+                    for box in self.bxd.box_list:
                         io.write(box_geoms, box.geometry, format='xyz', append=True)
                 except:
                     print("couldnt print individual box geoms. Perhaps this is a converging run")

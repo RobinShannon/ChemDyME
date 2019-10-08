@@ -188,7 +188,7 @@ class COM(CollectiveVariable):
         self.mass_1 = 0.0
         self.mass_2 = 0.0
         com_1 = np.zeros(3)
-        com_2 = np.zeroes(3)
+        com_2 = np.zeros(3)
         masses = mol.get_masses()
         # First need total mass of each fragment
         for f_1 in self.fragment_1:

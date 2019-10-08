@@ -1,5 +1,7 @@
 from abc import ABCMeta, abstractmethod
 import numpy as np
+from ase.io import read
+import os
 
 
 class BXD(metaclass=ABCMeta):
@@ -110,12 +112,13 @@ class Adaptive(BXD):
         b1, b2 = self.get_starting_bounds(s1, s2)
         box = self.get_default_box(b1, b2)
         self.box_list.append(box)
+        self.skip_box = False
 
 
     def update(self, mol):
 
         if self.new_box:
-            self.box_list[self.box].geometry = mol
+            self.box_list[self.box].geometry = mol.copy()
         self.new_box = False
 
         # update current and previous s(r) values
@@ -304,8 +307,8 @@ class Adaptive(BXD):
               + " bound hit = " + str(self.bound_hit) + " distance from path  = " + str(self.progress_metric.distance_from_path)
         return out
 
-    def get_converging_bxd(self, hits = 10, decorrelation_limit = 1):
-        con = Converging(self.progress_metric, self.stuck_limit, bound_hits=hits, decorrelation_limit = decorrelation_limit)
+    def get_converging_bxd(self, hits = 10, decorrelation_limit = 10, boxes_to_converge = []):
+        con = Converging(self.progress_metric, self.stuck_limit, bound_hits=hits, decorrelation_limit = decorrelation_limit, boxes_to_converge = boxes_to_converge)
         con.box_list = []
         for b in self.box_list:
             n1 = b.lower.n
@@ -313,7 +316,10 @@ class Adaptive(BXD):
             d1 = b.lower.d
             d2 = b.upper.d
             box =BXDBox(BXDBound(n1,d1),BXDBound(n2,d2), 'fixed', True)
+            box.geometry = b.geometry
             con.box_list.append(box)
+        con.generate_output_files()
+
         return con
 
     def boundary_check(self):
@@ -344,10 +350,9 @@ class Adaptive(BXD):
                 self.box_list[self.box].type = 'adap'
                 return False
             else:
-                print("lower boundary hit in reverse adaptive run for box " + str(self.box))
                 self.bound_hit = 'lower'
                 self.box_list[self.box].lower.hits += 1
-                if self.box_list[self.box].lower.hits > ((1-self.epsilon) * self.adaptive_steps):
+                if self.box_list[self.box].lower.hits > ((1-self.epsilon) * self.adaptive_steps) and self.reverse:
                     self.box_list[self.box].type = 'normal'
                     print("hit lower bound a sufficient number of times to go straight through without placing new boundary")
                 return True
@@ -434,20 +439,53 @@ class Shrinking(BXD):
 
 class Converging(BXD):
 
-    def __init__(self, progress_metric, stuck_limit=20, bound_file="bounds.txt", bound_hits=100,
+    def __init__(self, progress_metric, stuck_limit=5, box_skip_limit = 500000, bound_file="bounds.txt", geom_file='box_geoms.xyz', bound_hits=100,
                  read_from_file=False, convert_fixed_boxes = False, box_width=0, number_of_boxes=0,
-                 decorrelation_limit=1, boxes_to_converge = []):
+                 decorrelation_limit=10,  boxes_to_converge = [], print_directory='Converging_Data'):
 
         super(Converging, self).__init__(progress_metric, stuck_limit)
+        self.box_skip_limit = box_skip_limit
+        self.dir = str(print_directory)
         if read_from_file:
             self.box_list = self.read_exsisting_boundaries(bound_file)
+            self.generate_output_files()
+            try:
+                self.get_box_geometries(geom_file)
+            except:
+                print('couldnt read box geometries, turning off box skipping')
+                self.box_skip_limit = np.inf
         elif convert_fixed_boxes:
+            self.generate_output_files()
             self.create_fixed_boxes(box_width, number_of_boxes, progress_metric.start)
         self.old_s = 0
         self.number_of_hits = bound_hits
         self.decorrelation_limit = decorrelation_limit
+        try:
+            self.start_box = boxes_to_converge[0]
+            self.box = self.start_box
+            self.end_box = boxes_to_converge[1]
+        except:
+            self.start_box = 0
+            self.end_box = len(self.box_list)-1
+
+    def get_box_geometries(self, file):
+        for i,box in enumerate(self.box_list):
+            box.geometry = read(file, index=i)
+
+
+    def generate_output_files(self):
+        for i,box in enumerate(self.box_list):
+            temp_dir = self.dir + ("/box_" + str(i))
+            if not os.path.isdir(temp_dir):
+                os.makedirs(temp_dir)
+            box.upper_rates_file = open(temp_dir + '/upper_rates.txt', 'a')
+            box.lower_rates_file = open(temp_dir + '/lower_rates.txt', 'a')
+            box.upper_milestoning_rates_file = open(temp_dir + '/upper_milestoning.txt', 'a')
+            box.lower_milestoning_rates_file = open(temp_dir + '/lower_milestoning.txt', 'a')
 
     def update(self, mol):
+
+        self.skip_box = False
 
         self.update_bounds()
         # update current and previous s(r) values
@@ -463,6 +501,8 @@ class Converging(BXD):
         # Check whether a boundary has been hit and if so update whether the hit boundary
         self.inversion = self.boundary_check() or self.path_bound_hit
 
+
+
         if self.inversion:
             self.stuck_count += 1
             self.steps_since_any_boundary_hit = 0
@@ -477,8 +517,20 @@ class Converging(BXD):
                 self.box_list[self.box].data.append([self.s, projected_data, distance_from_bound])
 
             if self.stuck_count > self.stuck_limit:
-                self.stuck = True
                 self.stuck_count = 0
+                if self.bound_hit == 'upper':
+                    self.box +=1
+                elif self.bound_hit == 'lower':
+                    self.box -= 1
+
+        if self.reverse and self.box_list[self.box].lower.step_since_hit > self.box_skip_limit:
+            self.skip_box = True
+            self.box -= 1
+        if not self.reverse and self.box_list[self.box].upper.step_since_hit > self.box_skip_limit:
+            self.skip_box = True
+            self.box += 1
+
+
 
     def create_fixed_boxes(self, width, number_of_boxes, start_s):
         pass
@@ -506,11 +558,11 @@ class Converging(BXD):
         return box_list
 
     def reached_end(self):
-        if self.box == len(self.box_list)-1 and self.reverse is False:
+        if self.box == self.end_box and self.reverse is False:
             self.reverse = True
             self.progress_metric.set_bxd_reverse(self.reverse)
             print('reversing')
-        elif self.box == 0 and self.reverse is True:
+        elif self.box == self.start_box and self.reverse is True:
             self.reverse = False
             self.progress_metric.set_bxd_reverse(self.reverse)
             self.complete_runs += 1
@@ -576,6 +628,7 @@ class Converging(BXD):
         else:
             self.box_list[self.box].decorrelation_count += 1
         self.box_list[self.box].milestoning_count += 1
+        self.box_list[self.box].non_milestoning_count += 1
 
         #Check for hit against upper boundary
         if self.box_list[self.box].upper.hit(self.s, 'up'):
@@ -585,14 +638,18 @@ class Converging(BXD):
             elif self.box_list[self.box].upper.transparent and not self.path_bound_hit:
                 self.box_list[self.box].upper.transparent = False
                 self.box_list[self.box].milestoning_count = 0
+                self.box_list[self.box].non_milestoning_count = 0
                 self.box += 1
                 self.box_list[self.box].milestoning_count = 0
+                self.box_list[self.box].non_milestoning_count = 0
                 self.box_list[self.box].last_hit = 'lower'
                 return False
             else:
                 self.bound_hit = 'upper'
+                self.box_list[self.box].upper_rates_file.write(str(self.box_list[self.box].non_milestoning_count) + '\n')
+                self.box_list[self.box].non_milestoning_count = 0
                 if self.box_list[self.box].last_hit == 'lower':
-                    self.box_list[self.box].upper.rates.append(self.box_list[self.box].milestoning_count)
+                    self.box_list[self.box].upper_milestoning_rates_file.write(str(self.box_list[self.box].milestoning_count) + '\n')
                     self.box_list[self.box].milestoning_count = 0
                     self.box_list[self.box].last_hit = 'upper'
                 if self.box_list[self.box].decorrelation_count > self.decorrelation_limit:
@@ -606,9 +663,11 @@ class Converging(BXD):
             if self.box_list[self.box].lower.transparent and not self.path_bound_hit:
                 self.box_list[self.box].lower.transparent = False
                 self.box_list[self.box].milestoning_count = 0
+                self.box_list[self.box].non_milestoning_count = 0
                 self.box_list[self.box].decorrelation_count = 0
                 self.box -= 1
                 self.box_list[self.box].milestoning_count = 0
+                self.box_list[self.box].non_milestoning_count = 0
                 self.box_list[self.box].last_hit = 'upper'
                 if self.box == 0:
                     self.reverse = False
@@ -616,8 +675,10 @@ class Converging(BXD):
                 return False
             else:
                 self.bound_hit = 'lower'
+                self.box_list[self.box].lower_rates_file.write(str(self.box_list[self.box].non_milestoning_count) + '\n')
+                self.box_list[self.box].non_milestoning_count = 0
                 if self.box_list[self.box].last_hit == 'upper':
-                    self.box_list[self.box].lower.rates.append(self.box_list[self.box].milestoning_count)
+                    self.box_list[self.box].lower_milestoning_rates_file.write(str(self.box_list[self.box].milestoning_count) + '\n')
                     self.box_list[self.box].milestoning_count = 0
                     self.box_list[self.box].last_hit = 'lower'
                 if self.box_list[self.box].decorrelation_count > self.decorrelation_limit:
@@ -649,6 +710,7 @@ class BXDBox:
         self.gibbs = 0
         self.last_hit = 'lower'
         self.milestoning_count = 0
+        self.non_milestoning_count = 0
         self.decorrelation_count = 0
 
     def reset(self, type, active):
