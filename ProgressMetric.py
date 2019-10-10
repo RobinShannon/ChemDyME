@@ -34,7 +34,6 @@ class ProgressMetric:
             self.end_point = number_of_boxes
         self.path_segment = 0
 
-
     def get_start_s(self):
         return self.start_s, self.target_mol
 
