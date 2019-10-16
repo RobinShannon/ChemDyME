@@ -32,7 +32,7 @@ class OpenMMCalculator(Calculator):
         positions = [x for x in atoms.get_positions()]
         self.integrator = VerletIntegrator(0.001 * picosecond)
         self.platform = Platform.getPlatformByName("CPU")
-        self.context = openmm.Context(self.system, self.integrator)
+        self.context = openmm.Context(self.system, self.integrator, self.platform)
         self.context.setPositions(positions * angstrom)
         state = self.context.getState(getEnergy=True)
         print("Energy: ", state.getPotentialEnergy(), len(positions))

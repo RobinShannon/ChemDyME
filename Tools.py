@@ -624,7 +624,7 @@ def setCalc(mol, lab, method, level):
     if method == 'gaus':
         mol = calc.gaus(mol, lab, level)
     if method =='openMM':
-        mol.set_calculator(OpenMMCalculator(atomTypes=level.atomTypes, input="test.pdb", ASEmol = mol, fileType = level.MMfile))
+        mol.set_calculator(OpenMMCalculator(method, mol))
     return mol
 
 

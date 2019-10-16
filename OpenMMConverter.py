@@ -55,6 +55,8 @@ def get_openmm_charmm(psf_file,crd_file,out_xml,params_dir):
     serialized_system = XmlSerializer.serialize(system)
     out_file = open(out_xml, 'w')
     out_file.write(serialized_system)
+    pdb_file = open('tit.pdb', 'w')
+    PDBFile.writeFile(simulation.topology, crd.positions, pdb_file)
 
 
 #get_openmm_charmm(/Users/cm14sjm/Documents/BXD/BXD_CHARMM/step1_pdbreader.psf,/Users/cm14sjm/Documents/BXD/BXD_CHARMM/1tit_min_equi_final.crd, params_files = '/Users/cm14sjm/Documents/BXD/BXD_CHARMM/toppar.str', '/Users/cm14sjm/Documents/BXD/BXD_CHARMM/1tit_01_001.vel', '/Users/cm14sjm/Documents/BXD/BXD_CHARMM/1tit_01_001.dcd',/Users/cm14sjm/Documents/BXD/BXD_CHARMM/tit_out.xml)

@@ -53,6 +53,9 @@ class BXD(metaclass=ABCMeta):
     def reached_end(self):
         pass
 
+    def initialise_files(self):
+        pass
+
     def getDefaultBox(self,lower, upper):
         b = BXDBox(lower, upper,"fixed",True)
         return b
@@ -193,7 +196,7 @@ class Adaptive(BXD):
             elif self.reverse and self.box_list[self.box].lower.hits < ((1-self.epsilon) * self.adaptive_steps):
                 print("making new adaptive bound in reverse direction")
                 # at this point we partition the box into two and insert a new box at the correct point in the boxList
-                self.box_list[self.box].get_s_extremes_reverse(self.histogram_boxes, self.epsilon)
+                self.box_list[self.box].get_s_extremes(self.histogram_boxes, self.epsilon)
                 bottom = self.box_list[self.box].bot
                 top = self.box_list[self.box].top
                 b1 = self.convert_s_to_bound(bottom, top)
@@ -289,10 +292,11 @@ class Adaptive(BXD):
         return b
 
     def convert_s_to_bound_general(self, s1, s2):
-        n2 = (s2 - s1) / np.linalg.norm(s1 - s2)
         if self.reverse:
+            n2 = (s1 - s2) / np.linalg.norm(s1 - s2)
             d2 = -1 * np.vdot(n2, s1)
         else:
+            n2 = (s2 - s1) / np.linalg.norm(s1 - s2)
             d2 = -1 * np.vdot(n2, s2)
         b2 = BXDBound(n2, d2)
         b2.s_point = s2
@@ -360,7 +364,7 @@ class Adaptive(BXD):
             else:
                 self.bound_hit = 'lower'
                 self.box_list[self.box].lower.hits += 1
-                if self.box_list[self.box].lower.hits > ((1-self.epsilon) * self.adaptive_steps) and self.reverse:
+                if self.box_list[self.box].lower.hits > ((1-self.epsilon) * (self.adaptive_steps / 5)) and self.reverse:
                     self.box_list[self.box].type = 'normal'
                     print("hit lower bound a sufficient number of times to go straight through without placing new boundary")
                 return True
@@ -475,6 +479,8 @@ class Converging(BXD):
         except:
             self.start_box = 0
             self.end_box = len(self.box_list)-1
+
+    def initialise_files(self):
         self.upper_rates_file = open(self.box_list[self.box].upper_rates_path, 'a')
         self.upper_milestoning_rates_file = open(self.box_list[self.box].upper_milestoning_rates_path, 'a')
         self.lower_rates_file = open(self.box_list[self.box].lower_rates_path, 'a')
@@ -624,24 +630,29 @@ class Converging(BXD):
         profile_low_res = []
         total_probability = 0
         for i,box in enumerate(self.box_list):
-            if milestoning:
-                temp_dir = directory + ("/box_" + str(i))
-                box.upper.average_rates()
-            else:
-                box.upper.average_rate = box.upper.hits / len(box.data)
+            temp_dir = directory + ("/box_" + str(i) + '/')
             try:
-                if milestoning:
-                    box.lower.average_rates()
-                else:
-                    box.lower.average_rate = box.lower.hits / len(box.data)
+                box.upper.average_rates(milestoning, 'upper', directory)
             except:
                 box.lower.average_rate = 0
+            try:
+                box.lower.average_rates(milestoning, 'lower', directory)
+            except:
+                box.lower.average_rate = 0
+
         for i in range(0, len(self.box_list) - 1):
             if i == 0:
                 self.box_list[i].gibbs = 0
-            k_eq = self.box_list[i].upper.average_rate / self.box_list[i + 1].lower.average_rate
-            delta_g = -1.0 * np.log(k_eq) * T
-            self.box_list[i + 1].gibbs = delta_g + self.box_list[i].gibbs
+            try:
+                k_eq = self.box_list[i].upper.average_rate / self.box_list[i + 1].lower.average_rate
+                K_eq_err = np.sqrt((self.box_list[i].upper.rate_error/self.box_list[i].upper.average_rate)**2 + (self.box_list[i+1].lower.rate_error/self.box_list[i+1].lower.average_rate)**2)
+                delta_g = -1.0 * np.log(k_eq) * T
+                delta_g_err = (-T * K_eq_err) / k_eq
+                self.box_list[i + 1].gibbs = delta_g + self.box_list[i].gibbs
+                self.box_list[i + 1].gibbs_err = delta_g_err
+            except:
+                self.box_list[i+1].gibbs = 0
+                self.box_list[i+1].gibbs_err = 0
 
         for i in range(0, len(self.box_list)):
             self.box_list[i].eq_population = np.exp(-1.0 * (self.box_list[i].gibbs / T))
@@ -654,7 +665,7 @@ class Converging(BXD):
         for i in range(0, len(self.box_list)):
             s, dens = self.box_list[i].get_full_histogram(boxes)
             width = s[1] - s[0]
-            profile_low_res.append((last_s,self.box_list[i].gibbs))
+            profile_low_res.append((last_s,self.box_list[i].gibbs,self.box_list[i].gibbs_err))
             for j in range(0, len(dens)):
                 d = float(dens[j]) / float(len(self.box_list[i].data))
                 p = d * self.box_list[i].eq_population
@@ -769,6 +780,7 @@ class BXDBox:
         self.bot = 0
         self.eq_population = 0
         self.gibbs = 0
+        self.gibbs_err = 0
         self.last_hit = 'lower'
         self.milestoning_count = 0
         self.non_milestoning_count = 0
@@ -800,10 +812,16 @@ class BXDBox:
         hist, edges = np.histogram(data, bins=b)
         cumulative_probability = 0
         limit = 0
+        limit2 = 0
         for h in range(0, len(hist)):
             cumulative_probability += hist[h] / len(data)
             if cumulative_probability > eps:
                 limit = h
+                break
+        for i,h in enumerate(hist):
+            cumulative_probability += h / len(data)
+            if cumulative_probability > (1 - eps):
+                limit2 = i
                 break
         if limit == 0:
             limit = len(hist) - 2
@@ -812,28 +830,7 @@ class BXDBox:
                 self.top_data.append(d[0])
         self.top = np.mean(self.top_data, axis=0)
         for d in self.data:
-            if d[1] >= edges[0] and d[1] < edges[1]:
-                self.bot_data.append(d[0])
-        self.bot = np.mean(self.bot_data, axis=0)
-
-    def get_s_extremes_reverse(self, b, eps):
-        self.top_data = []
-        self.bot_data = []
-        data = [d[1] for d in self.data]
-        hist, edges = np.histogram(data, bins=b)
-        cumulative_probability = 0
-        limit = 0
-        for i,h in enumerate(hist):
-            cumulative_probability += h / len(data)
-            if cumulative_probability > (1 - eps):
-                limit = i
-                break
-        for d in self.data:
-            if d[1] > edges[-2] and d[1] <= edges[-1]:
-                self.top_data.append(d[0])
-        self.top = np.mean(self.top_data, axis=0)
-        for d in self.data:
-            if d[1] >= edges[limit] and d[1] < edges[limit + 1]:
+            if d[1] >= edges[limit2] and d[1] < edges[limit2 + 1]:
                 self.bot_data.append(d[0])
         self.bot = np.mean(self.bot_data, axis=0)
 
@@ -895,6 +892,18 @@ class BXDBound:
         else:
             return False
 
-    def average_rates(self):
+    def average_rates(self, milestoning, bound, path):
+        if milestoning:
+            if bound == 'upper':
+                path += '/upper_milestoning.txt'
+            else:
+                path += '/lower_milestoning.txt'
+        else:
+            if bound == 'upper':
+                path += '/upper_rates.txt'
+            else:
+                path += '/lower_rates.txt'
+        file = open(path, 'r')
+        self.rates = np.loadtxt(file)
         self.average_rate = np.mean(self.rates)
-        self.rate_error = np.std(self.rates)
+        self.rate_error = np.std(self.rates) / np.sqrt(len(self.rates))

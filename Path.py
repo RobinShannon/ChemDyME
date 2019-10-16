@@ -11,7 +11,7 @@ import os
 
 
 class Path:
-    def __init__(self, trajectory, collective_variable, stride=1, max_distance_from_path=float("inf"), path_file='reducedPath.txt' ):
+    def __init__(self, trajectory, collective_variable, stride=1, max_distance_from_path=float("inf"), path_file='reducedPath.txt'):
         # Apply the defined stride to the path
         self.trajectory = trajectory[0::stride]
         # S stores each path node in the collective Variable representation

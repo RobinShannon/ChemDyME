@@ -232,9 +232,8 @@ class Line(ProgressMetric):
     # "end_type" : Specifies the format of the target geometry. Can be either "geom : ASE object" or
     #              "collective : array of collective variable values"
 
-    def __init__(self, start_mol, collective_variable, end_point, end_type='distance', incorporate_distance_from_path = False, max_distance_from_path=float("inf"), number_of_boxes = 50):
+    def __init__(self, start_mol, collective_variable, end_point, end_type='distance',  max_distance_from_path=float("inf"), number_of_boxes = 50):
         start_s = collective_variable.get_s(start_mol)
-        self.incorporate_distance_from_path = incorporate_distance_from_path
         if isinstance(end_point, list):
             self.path = np.asarray(end_point) - start_s
         else:
