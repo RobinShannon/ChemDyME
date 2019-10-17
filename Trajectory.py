@@ -48,7 +48,6 @@ class Trajectory:
     def run_trajectory(self, max_steps = np.inf, save_ase_traj = False, reset = False, print_to_file = False, print_directory = 'BXD_data'):
 
         self.mol.set_calculator(OpenMMCalculator(self.calcMethod, self.mol))
-
         if print_to_file:
            dir = str(print_directory)
            i=1
@@ -158,12 +157,16 @@ class Trajectory:
         end = self.bxd.end_box
         increment = ( end - start) / processes
         for i in range(0,processes):
-            t = copy.deepcopy(self)
+            t = self.__copy__()
             t.bxd.start_box = int(start + i * increment)
             t.bxd.end_box = int(start + (i+1) * increment)
             t.bxd.box = int(start + i * increment)
-            temp_mol = io.read(box_geometries, index = start)
+            temp_mol = io.read(box_geometries, index = int(start + i * increment))
             t.mol.set_positions(temp_mol.get_positions())
+            vd.MaxwellBoltzmannDistribution(t.mol, t.md_integrator.temperature, force_temp=True)
+            t.md_integrator.current_velocities = t.mol.get_velocities()
+            t.md_integrator.current_positions = t.mol.get_positions()
+            t.md_integrator.half_step_velocity = t.mol.get_velocities()
             self_list.append(t)
         self_list[-1].bxd.end_box = int(end)
         for _ in pool.map(run_pool,self_list):
@@ -174,7 +177,7 @@ class Trajectory:
 
 def run_pool(traj):
     traj.run_trajectory()
-
+    return 1
 
 def run_pool_test(int):
     print(str(int))
