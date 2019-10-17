@@ -13,8 +13,8 @@ class MDIntegrator:
         self.temperature = temperature * units.kB
         self.timestep = timestep * units.fs
         self.masses = mol.get_masses()
-        self.forces = mol.get_forces()
-        self.old_forces = mol.get_forces()
+        self.forces = 0
+        self.old_forces = 0
         self.current_velocities = mol.get_velocities()
         self.half_step_velocity = mol.get_velocities()
         self.old_velocities = mol.get_velocities()
@@ -22,7 +22,7 @@ class MDIntegrator:
         self.old_positions = mol.get_positions()
         self.current_positions = mol.get_positions()
         self.new_positions = mol.get_positions()
-        self.constrained = True
+        self.constrained = False
 
     def constrain(self,del_phi):
         if len(del_phi) > 2:

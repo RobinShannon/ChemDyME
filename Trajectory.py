@@ -42,7 +42,7 @@ class Trajectory:
 
     def __copy__(self):
         mol = self.mol.copy()
-        return Trajectory(mol, copy.deepcopy(self.bxd), copy.deepcopy(self.md_integrator))
+        return Trajectory(mol, copy.deepcopy(self.bxd), copy.deepcopy(self.md_integrator), calcMethod = self.calcMethod)
 
 
     def run_trajectory(self, max_steps = np.inf, save_ase_traj = False, reset = False, print_to_file = False, print_directory = 'BXD_data'):
@@ -96,9 +96,8 @@ class Trajectory:
                     del_phi.append(self.bxd.path_del_constraint(self.mol))
                 if self.bxd.bound_hit != 'none':
                     del_phi.append(self.bxd.del_constraint(self.mol))
-
-            # Perform inversion if required
-            self.md_integrator.constrain(del_phi)
+                # Perform inversion if required
+                self.md_integrator.constrain(del_phi)
             self.md_integrator.md_step_pos(self.forces, self.mol)
             try:
                 self.forces = self.mol.get_forces()
@@ -159,7 +158,7 @@ class Trajectory:
         end = self.bxd.end_box
         increment = ( end - start) / processes
         for i in range(0,processes):
-            t = self.__copy__()
+            t = copy.deepcopy(self)
             t.bxd.start_box = int(start + i * increment)
             t.bxd.end_box = int(start + (i+1) * increment)
             t.bxd.box = int(start + i * increment)
@@ -174,9 +173,8 @@ class Trajectory:
         io.write(file_name,self.ase_traj)
 
 def run_pool(traj):
-    print('hi')
     traj.run_trajectory()
-    return 1
+
 
 def run_pool_test(int):
     print(str(int))
