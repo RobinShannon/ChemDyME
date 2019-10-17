@@ -24,7 +24,7 @@ class OpenMMCalculator(Calculator):
     """
     implemented_properties = ['energy', 'forces']
 
-    def __init__(self, input_xml, atoms: Optional[Atoms] = None, pbc=False, **kwargs):
+    def __init__(self, input_xml, parallel = False, atoms: Optional[Atoms] = None, pbc=False, **kwargs):
         Calculator.__init__(self, **kwargs)
         f = open(input_xml, 'r')
         sys = f.read()
@@ -32,7 +32,10 @@ class OpenMMCalculator(Calculator):
         positions = [x for x in atoms.get_positions()]
         self.integrator = VerletIntegrator(0.001 * picosecond)
         self.platform = Platform.getPlatformByName("CPU")
-        self.context = openmm.Context(self.system, self.integrator, self.platform)
+        if parallel:
+            self.context = openmm.Context(self.system, self.integrator, self.platform)
+        else:
+            self.context = openmm.Context(self.system, self.integrator)
         self.context.setPositions(positions * angstrom)
         state = self.context.getState(getEnergy=True)
         print("Energy: ", state.getPotentialEnergy(), len(positions))

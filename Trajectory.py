@@ -13,6 +13,7 @@ class Trajectory:
                  no_text_output=False, plot_output=False, plotter=None, calc = 'openMM', calcMethod = 'sys.xml'):
 
         self.bxd = bxd
+        self.parallel = parallel
         self.calc = calc
         self.calcMethod = calcMethod
         self.md_integrator = md_integrator
@@ -45,9 +46,13 @@ class Trajectory:
         return Trajectory(mol, copy.deepcopy(self.bxd), copy.deepcopy(self.md_integrator), calcMethod = self.calcMethod)
 
 
-    def run_trajectory(self, max_steps = np.inf, save_ase_traj = False, reset = False, print_to_file = False, print_directory = 'BXD_data'):
+    def run_trajectory(self, max_steps = np.inf, parallel = False, reset = False, print_to_file = False, print_directory = 'BXD_data'):
 
-        self.mol.set_calculator(OpenMMCalculator(self.calcMethod, self.mol))
+        if parallel:
+            self.mol.set_calculator(OpenMMCalculator(self.calcMethod, self.mol, parallel=True))
+        else:
+            self.mol.set_calculator(OpenMMCalculator(self.calcMethod, self.mol))
+
         if print_to_file:
            dir = str(print_directory)
            i=1
