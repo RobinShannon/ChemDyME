@@ -10,10 +10,9 @@ class Trajectory:
 
     def __init__(self, mol, bxd, md_integrator, bimolecular=False, process_number=0, geo_print_frequency=1000,
                  data_print_freqency=100, plot_update_frequency=100, mixed_timestep=False, initial_temperature=np.nan,
-                 no_text_output=False, plot_output=False, plotter=None, calc = 'openMM', calcMethod = 'sys.xml'):
+                 no_text_output=False, plot_output=False, plotter=None, calc = 'openMM', calcMethod = 'sys.xml', parallel = False):
 
         self.bxd = bxd
-        self.parallel = parallel
         self.calc = calc
         self.calcMethod = calcMethod
         self.md_integrator = md_integrator

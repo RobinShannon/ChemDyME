@@ -24,7 +24,7 @@ class OpenMMCalculator(Calculator):
     """
     implemented_properties = ['energy', 'forces']
 
-    def __init__(self, input_xml, parallel = False, atoms: Optional[Atoms] = None, pbc=False, **kwargs):
+    def __init__(self, input_xml, atoms: Optional[Atoms] = None, parallel = False, pbc=False, **kwargs):
         Calculator.__init__(self, **kwargs)
         f = open(input_xml, 'r')
         sys = f.read()
