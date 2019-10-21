@@ -293,7 +293,7 @@ class Adaptive(BXD):
 
     def convert_s_to_bound_general(self, s1, s2):
         if self.reverse:
-            n2 = (s1 - s2) / np.linalg.norm(s1 - s2)
+            n2 = (s2 - s1) / np.linalg.norm(s1 - s2)
             d2 = -1 * np.vdot(n2, s1)
         else:
             n2 = (s2 - s1) / np.linalg.norm(s1 - s2)
@@ -364,7 +364,7 @@ class Adaptive(BXD):
             else:
                 self.bound_hit = 'lower'
                 self.box_list[self.box].lower.hits += 1
-                if self.box_list[self.box].lower.hits > ((1-self.epsilon) * (self.adaptive_steps / 5)) and self.reverse:
+                if self.box_list[self.box].lower.hits > ((1-self.epsilon) * (self.adaptive_steps / 10)) and self.reverse:
                     self.box_list[self.box].type = 'normal'
                     print("hit lower bound a sufficient number of times to go straight through without placing new boundary")
                 return True
