@@ -240,10 +240,7 @@ class Adaptive(BXD):
         fix = self.fix_to_path
         print("re-assigning boundary")
         self.fixToPath = False
-        if self.reverse:
-            self.box_list[self.box].get_s_extremes_reverse(self.histogram_boxes, self.epsilon)
-        else:
-            self.box_list[self.box].get_s_extremes(self.histogram_boxes, self.epsilon)
+        self.box_list[self.box].get_s_extremes(self.histogram_boxes, self.epsilon)
         bottom = self.box_list[self.box].bot
         top = self.box_list[self.box].top
         b = self.convert_s_to_bound(bottom, top)
