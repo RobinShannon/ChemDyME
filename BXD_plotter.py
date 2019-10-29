@@ -46,7 +46,7 @@ class boundary3D:
         # d and we're set
         d = -self.centerPoint.dot([self.n1,self.n2, self.n3])
         # create x,y
-        x, y = np.meshgrid(np.arange((self.centerPoint[0])-size,(self.centerPoint[0])+size, 1), np.arange((self.centerPoint[1])-size,(self.centerPoint[1]), 1))
+        x, y = np.meshgrid(np.arange((self.centerPoint[0])-size,(self.centerPoint[0])+size, 2), np.arange((self.centerPoint[1])-size,(self.centerPoint[1]+size), 2))
         # calculate corresponding z
         z = (-self.n1 * x - self.n2 * y - d) * 1. / self.n3
         return x, y, z
@@ -158,7 +158,7 @@ class bxd_plotter_3d:
         self.path_data = path_data
         self.fig = plt.figure()
         self.ax = self.fig.add_subplot(111, projection='3d')
-        self.scatter = self.ax.scatter([], [], [], s=3, color=self.point_colour, alpha=0.5)
+        self.scatter = self.ax.scatter([], [], [], s=3, color=self.point_colour, alpha=0.25)
         self.bound_lines = []
         for i in range(0, 2):
             path = self.ax.plot([], [], zs=[], color=self.bound_colour, alpha=0.5)
@@ -180,15 +180,48 @@ class bxd_plotter_3d:
 
     def plot_update(self, points, bounds):
         self.scatter._offsets3d = (points[:,0], points[:,1], points[:,2])
-        self.ax.set_xlim([min(points[:,0])-10, max(points[:,0])+10])
-        self.ax.set_ylim([min(points[:,1])-10, max(points[:,1])+10])
-        self.ax.set_zlim([min(points[:,2])-10, max(points[:,2])+10])
+        self.ax.set_xlim([min(points[:,0])-1, max(points[:,0])+1])
+        self.ax.set_ylim([min(points[:,1])-1, max(points[:,1])+1])
+        self.ax.set_zlim([min(points[:,2])-1, max(points[:,2])+1])
         self.bound_lines = []
-        for i in range(0,2):
+        for i in range(0,len(bounds)):
             xx,yy,zz = bounds[i].getPlane(self.bound_size)
             self.ax.plot_surface(xx, yy, zz, color=self.bound_colour, alpha=0.5)
         self.fig.canvas.draw()
         plt.pause(7)
+
+    def plot_bxd_from_file(self, point_file, bound_file):
+        points, bounds = self.read_file(point_file, bound_file)
+        self.plot_update(points, bounds)
+
+    def read_file(self, point, bound):
+        point_file = open(point,'r')
+        bound_file = open(bound, 'r')
+        b = bound_file.readlines()
+        p = point_file.readlines()
+        points = []
+        for p_line in p:
+            p_line = p_line.replace('[', '')
+            p_line = p_line.replace(']', '')
+            words = p_line.split()
+            points.append([float(words[0]),float(words[1]),float(words[2])])
+        bounds = []
+        for b_line in b:
+            b_line = b_line.replace('[', '')
+            b_line = b_line.replace(']', '')
+            b_line = b_line.replace('(', '')
+            b_line = b_line.replace(')', '')
+            b_line = b_line.replace(',', '')
+            words = b_line.split('array')
+            d = float(words[0])
+            n = words[1].replace('array','')
+            n = n.split()
+            s = words[2].replace('array', '')
+            s = s.replace('\n', '')
+            s = s.split()
+            bo = boundary3D(d, float(n[0]), float(n[1]), float(n[2]), float(s[0]), float(s[1]), float(s[2]))
+            bounds.append(bo)
+        return np.array(points), bounds
 
 
 

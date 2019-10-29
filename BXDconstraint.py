@@ -1,7 +1,8 @@
 from abc import ABCMeta, abstractmethod
 import numpy as np
-from ase.io import read
+from ase.io import read, write
 import os
+from copy import deepcopy
 
 
 class BXD(metaclass=ABCMeta):
@@ -22,6 +23,8 @@ class BXD(metaclass=ABCMeta):
         self.complete_runs = 0
         self.delta = 0
         self.new_box = True
+        self.furthest_progress = 0
+        self.geometry_of_furthest_point = 0
 
     def __len__(self):
         return len(self.box_list)
@@ -170,6 +173,9 @@ class Adaptive(BXD):
             self.box_list[self.box].lower.step_since_hit += 1
             if not self.progress_metric.reflect_back_to_path():
                 self.box_list[self.box].data.append((self.s, projected_data))
+                if projected_data > self.furthest_progress:
+                    self.furthest_progress = projected_data
+                    self.geometry_of_furthest_point = mol.copy()
 
         if self.stuck_count > self.stuck_limit:
             self.stuck = True
@@ -184,25 +190,24 @@ class Adaptive(BXD):
                 bottom = self.box_list[self.box].bot
                 top = self.box_list[self.box].top
                 b1 = self.convert_s_to_bound(bottom, top)
-                b2 = self.convert_s_to_bound(bottom, top)
+                b2 = deepcopy(b1)
                 self.box_list[self.box].angle_between_bounds = np.arccos(np.dot(b1.n,self.box_list[self.box].lower.n)/(np.linalg.norm(b1.n)*np.linalg.norm(self.box_list[self.box].lower.n)))
-                b3 = BXDBound(self.box_list[self.box].upper.n, self.box_list[self.box].upper.d)
+                b3 = deepcopy(self.box_list[self.box].upper)
                 b3.invisible = True
                 b3.s_point = self.box_list[self.box].upper.s_point
                 self.box_list[self.box].upper = b1
                 self.box_list[self.box].upper.transparent = True
                 new_box = self.get_default_box(b2, b3)
                 self.box_list.append(new_box)
-            elif self.reverse and self.box_list[self.box].lower.hits < ((1-self.epsilon) * self.adaptive_steps):
+            elif self.reverse:
                 print("making new adaptive bound in reverse direction")
                 # at this point we partition the box into two and insert a new box at the correct point in the boxList
                 self.box_list[self.box].get_s_extremes(self.histogram_boxes, self.epsilon)
                 bottom = self.box_list[self.box].bot
                 top = self.box_list[self.box].top
                 b1 = self.convert_s_to_bound(bottom, top)
-                b2 = self.convert_s_to_bound(bottom, top)
-                b3 = BXDBound(self.box_list[self.box].lower.n, self.box_list[self.box].lower.d)
-                b3.s_point = self.box_list[self.box].lower.s_point
+                b2 = deepcopy(b1)
+                b3 = deepcopy(self.box_list[self.box].lower)
                 self.box_list[self.box].lower = b1
                 new_box = self.get_default_box(b3, b2)
                 self.box_list.insert(self.box, new_box)
@@ -226,9 +231,10 @@ class Adaptive(BXD):
                     self.progress_metric.set_bxd_reverse(self.reverse)
             elif self.progress_metric.end_type == 'boxes':
                 if self.box >= self.progress_metric.end_point and self.box_list[self.box].type != 'adap':
-                    self.reverse = False
+                    self.reverse = True
                     self.box_list[self.box].type = 'adap'
                     self.box_list[self.box].data = []
+                    del self.box_list[-1]
                     self.progress_metric.set_bxd_reverse(self.reverse)
         else:
             if self.box == 0:
@@ -342,6 +348,7 @@ class Adaptive(BXD):
                 self.box_list[self.box].lower.transparent = True
                 self.box_list[self.box].data = []
                 self.box += 1
+                self.box_list[self.box].data = []
                 self.new_box = True
                 return False
             else:
@@ -352,6 +359,7 @@ class Adaptive(BXD):
             if self.reverse and not self.path_bound_hit and not self.box_list[self.box].type == 'adap':
                 self.box_list[self.box].data = []
                 self.box -= 1
+                self.box_list[self.box].data = []
                 self.new_box = True
                 if self.box == 0:
                     self.reverse = False
@@ -367,6 +375,15 @@ class Adaptive(BXD):
                 return True
         else:
             return False
+
+    def final_printing(self, temp_dir, mol):
+        box_geoms = open(temp_dir + '/box_geoms.xyz', 'w')
+        furthest_geom = open(temp_dir + '/furthest_geometry.xyz', 'w')
+        end_geom = open(temp_dir + '/final_geometry.xyz', 'w')
+        for box in self.box_list:
+            write(box_geoms, box.geometry, format='xyz', append=True)
+        write(furthest_geom, self.geometry_of_furthest_point, format='xyz')
+        write(end_geom, mol, format='xyz')
 
 
 class Shrinking(BXD):
@@ -757,6 +774,19 @@ class Converging(BXD):
         else:
             return False
 
+    def final_printing(self, temp_dir, mol):
+        limits = open(temp_dir + '/box_limits', 'w')
+        for box in self.box_list:
+            limits.write('lowest box point = ' + str(min(box.data)) + ' highest box point = ' + str(max(box.data) + '\n'))
+        if self.full_output_printing:
+            for i, box2 in enumerate(self.box_list):
+                temp_dir = self.dir + ("/box_" + str(i))
+                if not os.path.isdir(temp_dir):
+                    os.makedirs(temp_dir)
+                file = open(temp_dir + '/final_geometry.xyz', 'w')
+                file.write(str(box2.data))
+
+
     def output(self):
         out = " box = " + str(self.box) + ' Lower Bound Hits = ' + str(self.box_list[self.box].lower.hits) + \
               ' Upper Bound Hits = ' + str(self.box_list[self.box].upper.hits)
@@ -808,6 +838,7 @@ class BXDBox:
         data = [d[1] for d in self.data]
         hist, edges = np.histogram(data, bins=b)
         cumulative_probability = 0
+        cumulative_probability2 = 0
         limit = 0
         limit2 = 0
         for h in range(0, len(hist)):
@@ -817,7 +848,7 @@ class BXDBox:
                 break
         for i,h in enumerate(hist):
             cumulative_probability += h / len(data)
-            if cumulative_probability > (1 - eps):
+            if cumulative_probability2 > (1 - eps):
                 limit2 = i
                 break
         if limit == 0:
