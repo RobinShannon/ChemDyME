@@ -249,8 +249,7 @@ def run(glo):
 
             reacs['reac_0'].printReac(minpath)
             for r in range(0, glo.ReactIters):
-                tempPaths = dict(
-                    ("tempPath_" + str(i), minpath + '/temp' + str(i) + '_' + str(r)) for i in range(glo.cores))
+                tempPaths = dict(("tempPath_" + str(i), minpath + '/temp' + str(i) + '_' + str(r)) for i in range(glo.cores))
                 # Now set up tmp directory for each thread
                 for i in range(0, glo.cores):
                     if not os.path.exists(tempPaths[('tempPath_' + str(i))]):
@@ -347,11 +346,14 @@ def run(glo):
                                     biTrajs[name2].fragIdx = (len(baseXYZ), len(xyz))
                                     arguments1.append(reacs[name])
                                     arguments2.append(biTrajs[name2])
-                                arguments = list(zip(arguments1, arguments2, [minpath] * glo.cores, [MESpath] * glo.cores,
-                                                     range(glo.cores), [glo] * glo.cores, [glo.BiList[i]] * glo.cores))
+
                                 if glo.cores == 1:
+                                    arguments = [arguments1[0], arguments2[0], minpath, MESpath * glo.cores, 0, glo, glo.BiList[i]]
                                     results2 = runNormal(arguments)
                                 else:
+                                    arguments = list(
+                                        zip(arguments1, arguments2, [minpath] * glo.cores, [MESpath] * glo.cores,
+                                            range(glo.cores), [glo] * glo.cores, [glo.BiList[i]] * glo.cores))
                                     p = multiprocessing.Pool(glo.cores)
                                     results2 = p.map(runNormal, arguments)
                                     outputs2 = [result for result in results2]

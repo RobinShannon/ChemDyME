@@ -436,7 +436,7 @@ class Energy(Constraint):
     
 
     def del_constraint(self, mol):
-        self.del_phi = mol.get_forces()
+        self.del_phi = -1*mol.get_forces()
         return self.del_phi
 
 
