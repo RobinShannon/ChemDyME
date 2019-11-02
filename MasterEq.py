@@ -12,10 +12,7 @@ class MasterEq:
         self.prodName = 'none'
         self.visitedList = []
         self.equilCount = 0
-        try:
-            self.MESCommand = os.environ['CHEMDYME_ME2_PATH']
-        except:
-            self.MESCommand = '/Users/RobinS/Documents/mesmerStoch/bin/mesmer'
+        self.MESCommand = os.environ['CHEMDYME_ME_PATH']
 
     def runTillReac(self, args2):
         p = Popen([self.MESCommand,args2], stdout=PIPE, stderr=PIPE )
