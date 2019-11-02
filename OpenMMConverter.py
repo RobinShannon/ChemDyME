@@ -46,7 +46,7 @@ def get_openmm_charmm(psf_file,crd_file,out_xml,params_dir):
           full_path = params_dir+'/'+file
           params.append(full_path)
     params = CharmmParameterSet(*params)
-    system = psf.createSystem(params,nonbondedMethod=NoCutoff,nonbondedCutoff=1*nanometer, constraints=None, implicitSolvent=HCT )
+    system = psf.createSystem(params,nonbondedMethod=NoCutoff,nonbondedCutoff=1*nanometer, constraints=None, implicitSolvent=None )
     integrator = LangevinIntegrator(300*kelvin, 1/picosecond, 0.002*picosecond)
     simulation = Simulation(psf.topology, system,integrator)
     simulation.context.setPositions(crd.positions)

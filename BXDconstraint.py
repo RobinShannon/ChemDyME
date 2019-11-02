@@ -369,10 +369,8 @@ class Adaptive(BXD):
             else:
                 self.bound_hit = 'lower'
                 self.box_list[self.box].lower.hits += 1
-                if self.box_list[self.box].lower.hits > ((1-self.epsilon) * (self.adaptive_steps / 10)) and self.reverse:
-                    self.box_list[self.box].type = 'normal'
-                    print("hit lower bound a sufficient number of times to go straight through without placing new boundary")
-                return True
+                self.box_list[self.box].type = 'normal'
+            return True
         else:
             return False
 
