@@ -369,7 +369,8 @@ class Adaptive(BXD):
             else:
                 self.bound_hit = 'lower'
                 self.box_list[self.box].lower.hits += 1
-                self.box_list[self.box].type = 'normal'
+                if self.reverse:
+                    self.box_list[self.box].type = 'normal'
             return True
         else:
             return False
