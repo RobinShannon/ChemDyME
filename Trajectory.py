@@ -146,7 +146,10 @@ class Trajectory:
             #check if one full run is complete, if so stop the adaptive search
             if self.bxd.complete_runs == 1 or iterations > max_steps:
                 keep_going = False
-                self.bxd.final_printing(temp_dir,self.mol)
+                try:
+                    self.bxd.final_printing(temp_dir,self.mol)
+                except:
+                    print("couldnt do final BXD priniting")
             iterations += 1
 
     def converging_trajectory_pool(self, box_geometries = 'BXD/box_geoms.xyz', processes=1 ):
