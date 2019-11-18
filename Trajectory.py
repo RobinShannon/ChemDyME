@@ -149,7 +149,7 @@ class Trajectory:
                 try:
                     self.bxd.final_printing(temp_dir,self.mol)
                 except:
-                    print("couldnt do final BXD priniting")
+                    print("couldnt do final BXD printing")
             iterations += 1
 
     def converging_trajectory_pool(self, box_geometries = 'BXD/box_geoms.xyz', processes=1 ):
