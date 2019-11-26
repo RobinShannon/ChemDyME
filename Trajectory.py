@@ -30,8 +30,6 @@ class Trajectory:
         self.md_integrator.current_velocities = self.mol.get_velocities()
         self.md_integrator.half_step_velocity = self.mol.get_velocities()
         self.ReactionCountDown = 0
-        self.ase_traj = []
-        self.points = []
         self.bounds = [None] * 2
         self.no_text_output = no_text_output
         self.plot = False
@@ -63,10 +61,6 @@ class Trajectory:
            data_file = open(temp_dir+'/data.txt', 'w')
            geom_file = open(temp_dir+'/geom.xyz', 'w')
            bound_file = open(temp_dir+'/bound_file.txt', 'w')
-
-        if reset:
-            self.ase_traj = []
-            self.points = []
 
         self.bxd.initialise_files()
 
@@ -108,13 +102,11 @@ class Trajectory:
             self.md_integrator.md_step_vel(self.forces, self.mol)
 
             if iterations % self.geo_print_frequency == 0:
-                self.ase_traj.append(self.mol.copy())
                 if print_to_file:
                     io.write(geom_file,self.mol, format='xyz', append=True)
                     geom_file.flush()
 
             if iterations % 10 == 0:
-                self.points.append(self.bxd.s)
                 if print_to_file:
                     string = str(self.bxd.s)
                     string = string.replace('\n', '')
