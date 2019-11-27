@@ -131,7 +131,8 @@ def runNormal(p):
                         if p[0].is_bimol_prod == True:
                             io.writeMinXML(p[0], p[3], False, True)
                     if not os.path.exists(tmppath + "/" + p[0].ReacName):
-                        io.writeReactionXML(p[0], p[3], printTS2)
+                        if p[0].is_bimol_prod == False:
+                            io.writeReactionXML(p[0], p[3], printTS2)
                         io.writeReactionXML(p[0], p[3].replace('.xml', 'Full.xml'), printTS2)
 
         if (p[5].InitialBi == True):
