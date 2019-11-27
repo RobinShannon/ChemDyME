@@ -38,7 +38,7 @@ class SparrowCalculator(Calculator):
     def _calculate_sparrow(self, atoms: Atoms, properties: Collection[str]):
         positions = atoms.positions
         elements = atoms.get_chemical_symbols()
-        calc = Calculation(method=self.method)
+        calc = Calculation()
         calc.set_elements(elements)
         calc.set_positions(positions)
         kwargs = {property_name: True for property_name in properties}
