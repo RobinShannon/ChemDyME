@@ -5,7 +5,7 @@ from typing import Optional, Collection
 import numpy as np
 from ase import Atoms
 from ase.calculators.calculator import Calculator, all_changes
-from scine_sparrow.Calculation import calculate_gradients, calculate_energy
+from scine_sparrow import Calculation
 
 EV_PER_HARTREE = 27.2114
 ANG_PER_BOHR = 0.529177
@@ -42,11 +42,11 @@ class SparrowCalculator(Calculator):
         kwargs = {property_name: True for property_name in properties}
         # TODO pass these to calculate in wrapper.
         if 'energy' in properties:
-            energy_hartree = calculate_energy(elements, positions, self.method)
+            energy_hartree = Calculation.calculate_energy(elements, positions, self.method)
             self.results['energy'] = energy_hartree * EV_PER_HARTREE
         if 'forces' in properties:
             #TODO make np array come out of wwrapper.
-            gradients_hartree_bohr = np.array(calculate_gradients(elements, positions, self.method))
+            gradients_hartree_bohr = np.array(Calculation.calculate_gradients(elements, positions, self.method))
             self.results['forces'] = - gradients_hartree_bohr * EV_PER_HARTREE / ANG_PER_BOHR
         return
 
