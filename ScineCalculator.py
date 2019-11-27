@@ -38,7 +38,9 @@ class SparrowCalculator(Calculator):
     def _calculate_sparrow(self, atoms: Atoms, properties: Collection[str]):
         positions = atoms.positions
         elements = atoms.get_chemical_symbols()
-        calc = Calculation(elements, positions, self.method)
+        calc = Calculation(method=self.method)
+        calc.set_elements(elements)
+        calc.set_positions(positions)
         kwargs = {property_name: True for property_name in properties}
         # TODO pass these to calculate in wrapper.
         if 'energy' in properties:
