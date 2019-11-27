@@ -5,7 +5,7 @@ from typing import Optional, Collection
 import numpy as np
 from ase import Atoms
 from ase.calculators.calculator import Calculator, all_changes
-from scine_sparrow import calculate_gradients, calculate_energy
+from scine_sparrow.Calculation import calculate_gradients, calculate_energy
 
 EV_PER_HARTREE = 27.2114
 ANG_PER_BOHR = 0.529177
