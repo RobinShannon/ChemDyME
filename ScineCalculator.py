@@ -38,15 +38,15 @@ class SparrowCalculator(Calculator):
     def _calculate_sparrow(self, atoms: Atoms, properties: Collection[str]):
         positions = atoms.positions
         elements = atoms.get_chemical_symbols()
-
+        calc = Calculation(elements, positions, self.method)
         kwargs = {property_name: True for property_name in properties}
         # TODO pass these to calculate in wrapper.
         if 'energy' in properties:
-            energy_hartree = Calculation.calculate_energy(elements, positions, self.method)
+            energy_hartree = calc.calculate_energy()
             self.results['energy'] = energy_hartree * EV_PER_HARTREE
         if 'forces' in properties:
             #TODO make np array come out of wwrapper.
-            gradients_hartree_bohr = np.array(Calculation.calculate_gradients(elements, positions, self.method))
+            gradients_hartree_bohr = np.array(calc.calculate_gradients())
             self.results['forces'] = - gradients_hartree_bohr * EV_PER_HARTREE / ANG_PER_BOHR
         return
 
