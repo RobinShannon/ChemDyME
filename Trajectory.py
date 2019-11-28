@@ -71,7 +71,7 @@ class Trajectory:
             self.forces = self.mol.get_forces()
         except:
             print('forces error')
-
+        first_run = True
         iterations = 0
         # Run MD trajectory for specified number of steps
         while keep_going:
@@ -87,6 +87,9 @@ class Trajectory:
                 self.md_integrator.current_velocities = self.mol.get_velocities()
                 self.md_integrator.half_step_velocity = self.mol.get_velocities()
             bounded = self.bxd.inversion
+            if bounded and first_run:
+                print("BXD bound hit on first step, either there is a small rounding error or there is something wrong with the initial geometry or bound. Proceed with caution")
+                bounded = False
             if bounded:
                 if self.bxd.path_bound_hit:
                     del_phi.append(self.bxd.path_del_constraint(self.mol))
@@ -106,6 +109,7 @@ class Trajectory:
                     io.write(geom_file,self.mol, format='xyz', append=True)
                     geom_file.flush()
 
+            first_run = False
             if iterations % 10 == 0:
                 if print_to_file:
                     string = str(self.bxd.s)
