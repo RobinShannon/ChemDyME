@@ -105,10 +105,11 @@ class BXD(metaclass=ABCMeta):
 class Adaptive(BXD):
 
     def __init__(self, progress_metric, stuck_limit=5,  fix_to_path=False,
-                 adaptive_steps=1000, epsilon=0.9, reassign_rate=2, incorporate_distance_from_bound = False):
+                 adaptive_steps=1000, epsilon=0.9, reassign_rate=2, incorporate_distance_from_bound = False, one_direction = False):
 
         super(Adaptive, self).__init__(progress_metric, stuck_limit)
         self.fix_to_path = fix_to_path
+        self.one_direction = one_direction
         self.adaptive_steps = adaptive_steps
         self.histogram_boxes = int(np.sqrt(adaptive_steps))
         self.epsilon = epsilon
@@ -224,18 +225,26 @@ class Adaptive(BXD):
         if not self.reverse:
             if self.progress_metric.end_type == 'distance':
                 if projected >= self.progress_metric.end_point and self.box_list[self.box].type != 'adap':
-                    self.reverse = True
-                    self.box_list[self.box].type = 'adap'
-                    self.box_list[self.box].data = []
-                    del self.box_list[-1]
-                    self.progress_metric.set_bxd_reverse(self.reverse)
+                    if self.one_direction:
+                        self.completed_runs += 1
+                        del self.box_list[-1]
+                    else:
+                        self.reverse = True
+                        self.box_list[self.box].type = 'adap'
+                        self.box_list[self.box].data = []
+                        del self.box_list[-1]
+                        self.progress_metric.set_bxd_reverse(self.reverse)
             elif self.progress_metric.end_type == 'boxes':
                 if self.box >= self.progress_metric.end_point and self.box_list[self.box].type != 'adap':
-                    self.reverse = True
-                    self.box_list[self.box].type = 'adap'
-                    self.box_list[self.box].data = []
-                    del self.box_list[-1]
-                    self.progress_metric.set_bxd_reverse(self.reverse)
+                    if self.one_direction:
+                        self.completed_runs += 1
+                        del self.box_list[-1]
+                    else:
+                        self.reverse = True
+                        self.box_list[self.box].type = 'adap'
+                        self.box_list[self.box].data = []
+                        del self.box_list[-1]
+                        self.progress_metric.set_bxd_reverse(self.reverse)
         else:
             if self.box == 0:
                 self.completed_runs += 1
@@ -466,11 +475,12 @@ class Converging(BXD):
 
     def __init__(self, progress_metric, stuck_limit=5, box_skip_limit = 500000, bound_file="bounds.txt", geom_file='box_geoms.xyz', bound_hits=100,
                  read_from_file=False, convert_fixed_boxes = False, box_width=0, number_of_boxes=0,
-                 decorrelation_limit=10,  boxes_to_converge = [], print_directory='Converging_Data'):
+                 decorrelation_limit=10,  boxes_to_converge = [], print_directory='Converging_Data', converge_ends = False):
 
         super(Converging, self).__init__(progress_metric, stuck_limit)
         self.box_skip_limit = box_skip_limit
         self.dir = str(print_directory)
+        self.converge_ends = False
         if read_from_file:
             self.box_list = self.read_exsisting_boundaries(bound_file)
             self.generate_output_files()
@@ -634,13 +644,15 @@ class Converging(BXD):
 
     def reached_end(self):
         if self.box == self.end_box and self.reverse is False:
-            self.reverse = True
-            self.progress_metric.set_bxd_reverse(self.reverse)
-            print('reversing')
+            if not self.converge_ends or self.criteria_met(self.box_list[self.box].upper):
+                self.reverse = True
+                self.progress_metric.set_bxd_reverse(self.reverse)
+                print('reversing')
         elif self.box == self.start_box and self.reverse is True:
-            self.reverse = False
-            self.progress_metric.set_bxd_reverse(self.reverse)
-            self.complete_runs += 1
+            if not self.converge_ends or self.criteria_met(self.box_list[self.box].lower):
+                self.reverse = False
+                self.progress_metric.set_bxd_reverse(self.reverse)
+                self.complete_runs += 1
 
     def stuck_fix(self):
         pass
@@ -708,6 +720,73 @@ class Converging(BXD):
                 return profile
             except:
                 print('couldnt find histogram data for high resolution profile')
+
+    def collate_free_energy_data(self, prefix = 'Converging_Data', outfile = 'Combined_converging'):
+        dir_root_list = []
+        number_of_boxes = []
+        for subdir, dirs, files in os.walk(os.getcwd()):
+            for dir in dirs:
+                if prefix in dir:
+                    dir_root_list.append(dir)
+                    number_of_boxes.append(len(next(os.walk(dir))[1]))
+        # Check number of boxes is consistant among directories
+        if number_of_boxes.count(number_of_boxes[0]) == len(number_of_boxes):
+            boxes = number_of_boxes[0]
+        else:
+            boxes = min(number_of_boxes)
+            print('not all directories have the same number of boxes. Check these all correspond to the same system')
+
+        os.mkdir(outfile)
+        for i in range(0, boxes):
+            os.mkdir(outfile+'/box_'+str(i))
+            u_rates = [(root +'/box_'+str(i)+'/upper_rates.txt') for root in dir_root_list]
+            with open(outfile+'/box_'+str(i)+'/upper_rates.txt', 'w') as outfile0:
+                for u in u_rates:
+                    try:
+                        with open(u) as infile:
+                            for line in infile:
+                                outfile0.write(line)
+                    except:
+                        pass
+            u_m = [(root +'/box_'+str(i)+'/upper_milestoning.txt') for root in dir_root_list]
+            with open(outfile +'/box_'+str(i)+'/upper_milestoning.txt', 'w') as outfile1:
+                for um in u_m:
+                    try:
+                        with open(um) as infile:
+                            for line in infile:
+                                outfile1.write(line)
+                    except:
+                        pass
+            l_rates = [(root +'/box_'+str(i)+'/lower_rates.txt') for root in dir_root_list]
+            with open(outfile+'/box_'+str(i)+'/lower_rates.txt', 'w') as outfile2:
+                for l in l_rates:
+                    try:
+                        with open(l) as infile:
+                            for line in infile:
+                                outfile2.write(line)
+                    except:
+                        pass
+            l_m = [(root +'/box_'+str(i)+'/lower_milestoning.txt') for root in dir_root_list]
+            with open(outfile+'/box_'+str(i)+'/lower_milestoning.txt', 'w') as outfile3:
+                for lm in l_m:
+                    try:
+                        with open(lm) as infile:
+                            for line in infile:
+                                outfile3.write(line)
+                    except:
+                        pass
+            data = [(root +'/box_'+str(i)+'/box_data.txt') for root in dir_root_list]
+            with open(outfile+'/box_'+str(i)+'/box_data.txt', 'w') as outfile4:
+                for d in data:
+                    try:
+                        with open(d) as infile:
+                            for line in infile:
+                                outfile4.write(line)
+                    except:
+                        pass
+
+
+
 
     def boundary_check(self):
         self.path_bound_hit = self.progress_metric.reflect_back_to_path()
