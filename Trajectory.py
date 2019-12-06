@@ -140,7 +140,7 @@ class Trajectory:
                     self.bxd_plotter.plot_bxd_from_array(self.points, self.bounds)
 
             #check if one full run is complete, if so stop the adaptive search
-            if self.bxd.complete_runs == 1 or iterations > max_steps:
+            if self.bxd.completed_runs == 1 or iterations > max_steps:
                 keep_going = False
                 try:
                     self.bxd.final_printing(temp_dir,self.mol)

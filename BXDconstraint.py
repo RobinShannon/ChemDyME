@@ -20,7 +20,7 @@ class BXD(metaclass=ABCMeta):
         self.path_bound_hit = False
         self.s = 0
         self.old_s = 0
-        self.complete_runs = 0
+        self.completed_runs = 0
         self.delta = 0
         self.new_box = True
         self.furthest_progress = 0
@@ -142,13 +142,13 @@ class Adaptive(BXD):
         self.inversion = False
         self.bound_hit = "none"
 
-        # Check whether BXD direction should be changed and update accordingly
-        self.reached_end(projected_data)
 
         # Check whether we are in an adaptive sampling regime.
         # If so update_adaptive_bounds checks current number of samples and controls new boundary placement
         if self.box_list[self.box].type == "adap":
             self.update_adaptive_bounds()
+
+        self.reached_end(projected_data)
 
         # If we have sampled for a while and not hot the upper bound then reassign the boundary.
         # Only how often the boundary is reassigned depends upon the reasign_rate parameter
@@ -372,7 +372,7 @@ class Adaptive(BXD):
                 self.new_box = True
                 if self.box == 0:
                     self.reverse = False
-                    self.complete_runs += 1
+                    self.completed_runs += 1
                 self.box_list[self.box].type = 'adap'
                 return False
             else:
@@ -652,7 +652,7 @@ class Converging(BXD):
             if not self.converge_ends or self.criteria_met(self.box_list[self.box].lower):
                 self.reverse = False
                 self.progress_metric.set_bxd_reverse(self.reverse)
-                self.complete_runs += 1
+                self.completed_runs += 1
 
     def stuck_fix(self):
         pass
@@ -683,7 +683,10 @@ class Converging(BXD):
             try:
                 k_eq = self.box_list[i].upper.average_rate / self.box_list[i + 1].lower.average_rate
                 K_eq_err = np.sqrt((self.box_list[i].upper.rate_error/self.box_list[i].upper.average_rate)**2 + (self.box_list[i+1].lower.rate_error/self.box_list[i+1].lower.average_rate)**2)
-                delta_g = -1.0 * np.log(k_eq) * T
+                try:
+                    delta_g = -1.0 * np.log(k_eq) * T
+                except:
+                    delta_g = 0
                 delta_g_err = (-T * K_eq_err) / k_eq
                 self.box_list[i + 1].gibbs = delta_g + self.box_list[i].gibbs
                 self.box_list[i + 1].gibbs_err = delta_g_err
@@ -859,7 +862,7 @@ class Converging(BXD):
                 self.box_list[self.box].last_hit = 'upper'
                 if self.box == 0:
                     self.reverse = False
-                    self.complete_runs += 1
+                    self.completed_runs += 1
                 return False
             else:
                 self.bound_hit = 'lower'
