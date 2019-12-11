@@ -270,5 +270,5 @@ class Langevin(MDIntegrator):
         mol.set_velocities(self.current_velocities)
 
     def output(self, mol):
-        out = " Temperature = " + str(mol.get_temperature())
+        out = " Temperature = " + str(mol.get_temperature()) + ' Total_energy = ' +str(mol.get_potential_energy() + mol.get_kinetic_energy())
         return out

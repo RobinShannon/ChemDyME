@@ -478,30 +478,40 @@ class Converging(BXD):
                  decorrelation_limit=10,  boxes_to_converge = [], print_directory='Converging_Data', converge_ends = False):
 
         super(Converging, self).__init__(progress_metric, stuck_limit)
+        self.bound_file = bound_file
+        self.geom_file = geom_file
         self.box_skip_limit = box_skip_limit
         self.dir = str(print_directory)
-        self.converge_ends = False
-        if read_from_file:
-            self.box_list = self.read_exsisting_boundaries(bound_file)
+        self.read_from_file = read_from_file
+        self.converge_ends = converge_ends
+        self.convert_fixed_boxes = convert_fixed_boxes
+        self.box_width = box_width
+        self.number_of_boxes = number_of_boxes
+        self.boxes_to_converge = boxes_to_converge
+        if self.read_from_file:
+            self.box_list = self.read_exsisting_boundaries(self.bound_file)
             self.generate_output_files()
             try:
-                self.get_box_geometries(geom_file)
+                self.get_box_geometries(self.geom_file)
             except:
                 print('couldnt read box geometries, turning off box skipping')
                 self.box_skip_limit = np.inf
-        elif convert_fixed_boxes:
+        elif self.convert_fixed_boxes:
             self.generate_output_files()
-            self.create_fixed_boxes(box_width, number_of_boxes, progress_metric.start)
+            self.create_fixed_boxes(self.box_width, self.number_of_boxes, progress_metric.start)
         self.old_s = 0
         self.number_of_hits = bound_hits
         self.decorrelation_limit = decorrelation_limit
         try:
-            self.start_box = boxes_to_converge[0]
+            self.start_box = self.boxes_to_converge[0]
             self.box = self.start_box
-            self.end_box = boxes_to_converge[1]
+            self.end_box = self.boxes_to_converge[1]
         except:
             self.start_box = 0
             self.end_box = len(self.box_list)-1
+
+    def reset(self, output_directory):
+        self.__init__(self.progress_metric, self.stuck_limit, self.box_skip_limit, self.bound_file, self.geom_file, self.number_of_hits, self.read_from_file, self.convert_fixed_boxes, self.box_width, self.number_of_boxes, self.decorrelation_limit,  self.boxes_to_converge, output_directory, self.converge_ends)
 
     def initialise_files(self):
         self.upper_rates_file = open(self.box_list[self.box].upper_rates_path, 'a')
@@ -1037,7 +1047,8 @@ class BXDBound:
             else:
                 path += '/lower_rates.txt'
         file = open(path, 'r')
-        self.rates = np.loadtxt(file)
-        self.rates=self.rates[self.rates > decorrelation_limit]
+        rates = np.loadtxt(file)
+        rates=rates[rates > decorrelation_limit]
+        self.rates = 1 / rates
         self.average_rate = np.mean(self.rates)
         self.rate_error = np.std(self.rates) / np.sqrt(len(self.rates))
