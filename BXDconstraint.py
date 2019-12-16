@@ -686,6 +686,10 @@ class Converging(BXD):
                 box.lower.average_rates(milestoning, 'lower', temp_dir, decorrelation_limit)
             except:
                 box.lower.average_rate = 0
+            try:
+                box.read_box_data(temp_dir)
+            except:
+                pass
 
         for i in range(0, len(self.box_list) - 1):
             if i == 0:
@@ -794,7 +798,8 @@ class Converging(BXD):
                     try:
                         with open(d) as infile:
                             for line in infile:
-                                outfile4.write(line)
+                                if line.rstrip():
+                                    outfile4.write(line)
                     except:
                         pass
 
@@ -979,7 +984,7 @@ class BXDBox:
 
     def get_full_histogram(self, boxes=10):
         del self.data[0]
-        data = [d[2] for d in self.data]
+        data = [float(d[2]) for d in self.data]
         top = max(data)
         edges = []
         for i in range(0, boxes + 1):
@@ -993,6 +998,16 @@ class BXDBox:
 
     def convert_s_to_bound(self, lower, upper):
         pass
+
+    def read_box_data(self, path):
+        path += '/box_data.txt'
+        file = open(path, 'r')
+        for line in file.readlines():
+            line = line.rstrip('\n')
+            line = line.split('\t')
+            self.data.append(line)
+
+
 
 
 class BXDBound:

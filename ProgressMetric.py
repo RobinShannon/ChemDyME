@@ -197,7 +197,7 @@ class Curve(ProgressMetric):
     def path_bound_distance_at_point(self):
         try:
             gradient = self.max_distance_from_path[self.path_segment][self.path_segment + 1] - self.max_distance_from_path[self.path_segment]
-            return  self.max_distance_from_path[self.path_segment] + gradient * self.percentage_along_segment
+            return self.max_distance_from_path[self.path_segment] + gradient * self.percentage_along_segment
         except:
             return self.max_distance_from_path[self.path_segment]
 
