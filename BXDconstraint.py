@@ -737,7 +737,7 @@ class Converging(BXD):
                         alt_p_err = (T * p_err) / p
                         s_path = s[j] + last_s
                         profile.append((s_path, alt_p, alt_p_err))
-                        print('density = ' + str(d))
+                        print('density = ' + dens[j])
                     last_s += s[-1]
                 return profile
             except:
@@ -802,8 +802,8 @@ class Converging(BXD):
                 for d in data:
                     try:
                         with open(d) as infile:
-                            for i,line in enumerate(infile):
-                                if line.rstrip() and i > 1:
+                            for line in enumerate(infile):
+                                if line.rstrip():
                                     outfile4.write(line)
                     except:
                         pass
@@ -990,6 +990,9 @@ class BXDBox:
     def get_full_histogram(self, boxes=10):
         del self.data[0]
         data = [float(d[2]) for d in self.data]
+        data = data.sorted()
+        data = data[0:-50]
+        data.append[0]
         top = max(data)
         edges = []
         for i in range(0, boxes + 1):
@@ -1012,7 +1015,6 @@ class BXDBox:
             line = line.split('\t')
             if float(line[2]) >= 0:
                 self.data.append(line)
-        del self.data[0]
 
 
 
