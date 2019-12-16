@@ -725,14 +725,14 @@ class Converging(BXD):
                 last_s = 0
                 for i in range(0, len(self.box_list)):
                     s, dens = self.box_list[i].get_full_histogram(boxes)
-                    width = s[1] - s[0]
+                    width = s[1]
                     for j in range(0, len(dens)):
                         d = float(dens[j]) / float(len(self.box_list[i].data))
                         p = d * self.box_list[i].eq_population
                         main_p = -1.0 * np.log(p / width) * T
                         alt_p = -1.0 * np.log(p) * T
                         s_path = s[j] + last_s - (width / 2.0)
-                        profile.append((s_path, main_p))
+                        profile.append((s_path, main_p, alt_p))
                     last_s += s[-1] - width / 2.0
                 return profile
             except:
@@ -1063,7 +1063,7 @@ class BXDBound:
                 path += '/lower_rates.txt'
         file = open(path, 'r')
         rates = np.loadtxt(file)
-        rates=rates[rates > decorrelation_limit]
+        rates = rates[rates > decorrelation_limit]
         self.rates = 1 / rates
         self.average_rate = np.mean(self.rates)
         self.rate_error = np.std(self.rates) / np.sqrt(len(self.rates))
