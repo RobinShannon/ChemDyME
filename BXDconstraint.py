@@ -802,7 +802,7 @@ class Converging(BXD):
                 for d in data:
                     try:
                         with open(d) as infile:
-                            for line in enumerate(infile):
+                            for line in infile:
                                 if line.rstrip():
                                     outfile4.write(line)
                     except:
@@ -988,7 +988,7 @@ class BXDBox:
         self.bot = np.mean(self.bot_data, axis=0)
 
     def get_full_histogram(self, boxes=10):
-        del self.data[0]
+
         data = [float(d[2]) for d in self.data]
         data = data.sorted()
         data = data[0:-50]
