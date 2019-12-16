@@ -725,15 +725,15 @@ class Converging(BXD):
                 last_s = 0
                 for i in range(0, len(self.box_list)):
                     s, dens = self.box_list[i].get_full_histogram(boxes)
-                    width = s[1]
+                    width = s[1] - s[0]
                     for j in range(0, len(dens)):
                         d = float(dens[j]) / float(len(self.box_list[i].data))
                         p = d * self.box_list[i].eq_population
                         main_p = -1.0 * np.log(p / width) * T
                         alt_p = -1.0 * np.log(p) * T
-                        s_path = s[j] + last_s - (width / 2.0)
+                        s_path = s[j] + last_s
                         profile.append((s_path, main_p, alt_p))
-                    last_s += s[-1] - width / 2.0
+                    last_s += s[-1]
                 return profile
             except:
                 print('couldnt find histogram data for high resolution profile')
@@ -1005,7 +1005,8 @@ class BXDBox:
         for line in file.readlines():
             line = line.rstrip('\n')
             line = line.split('\t')
-            self.data.append(line)
+            if line[2] >= 0:
+                self.data.append(line)
 
 
 
