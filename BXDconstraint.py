@@ -802,8 +802,8 @@ class Converging(BXD):
                 for d in data:
                     try:
                         with open(d) as infile:
-                            for line in infile:
-                                if line.rstrip():
+                            for i,line in enumerate(infile):
+                                if line.rstrip() and i > 1:
                                     outfile4.write(line)
                     except:
                         pass
