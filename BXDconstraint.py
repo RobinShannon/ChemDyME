@@ -719,6 +719,7 @@ class Converging(BXD):
                 profile = []
                 for i in range(0, len(self.box_list)):
                     total_probability += self.box_list[i].k_eq
+                    print('total_probability = ' + str(total_probability))
 
                 for i in range(0, len(self.box_list)):
                     self.box_list[i].k_eq /= total_probability
@@ -728,7 +729,7 @@ class Converging(BXD):
                     s, dens = self.box_list[i].get_full_histogram(boxes)
                     width = s[1] - s[0]
                     for j in range(0, len(dens)):
-                        d_err = 1/np.sqrt(d)
+                        d_err = 1/np.sqrt(float(dens[j]))
                         d = float(dens[j]) / float(len(self.box_list[i].data))
                         p = d * self.box_list[i].k_eq
                         p_err = p * np.sqrt((d_err / d)**2 + (self.box_list[i].K_eq_err / self.box_list[i].eq_population) ** 2)
