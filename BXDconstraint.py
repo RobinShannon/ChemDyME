@@ -695,7 +695,7 @@ class Converging(BXD):
             if i == 0:
                 self.box_list[i].gibbs = 0
                 self.box_list[i].k_eq = 1
-                self.box_list[i + 1].K_eq_err = 0
+                self.box_list[i].K_eq_err = 0
             try:
                 self.box_list[i+1].k_eq = self.box_list[i].upper.average_rate / self.box_list[i + 1].lower.average_rate
                 self.box_list[i+1].K_eq_err = self.box_list[i+1].k_eq * np.sqrt((self.box_list[i].upper.rate_error/self.box_list[i].upper.average_rate)**2 + (self.box_list[i+1].lower.rate_error/self.box_list[i+1].lower.average_rate)**2)
@@ -722,7 +722,7 @@ class Converging(BXD):
 
                 for i in range(0, len(self.box_list)):
                     self.box_list[i].k_eq /= total_probability
-                    self.box_list[i].K_eq_err /=  total_probability
+                    self.box_list[i].K_eq_err /= total_probability
                 last_s = 0
                 for i in range(0, len(self.box_list)):
                     s, dens = self.box_list[i].get_full_histogram(boxes)
