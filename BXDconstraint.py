@@ -730,7 +730,7 @@ class Converging(BXD):
                     for j in range(0, len(dens)):
                         d_err = 1/np.sqrt(d)
                         d = float(dens[j]) / float(len(self.box_list[i].data))
-                        p = d * self.box_list[i].eq_population
+                        p = d * self.box_list[i].k_eq
                         p_err = p * np.sqrt((d_err / d)**2 + (self.box_list[i].K_eq_err / self.box_list[i].eq_population) ** 2)
                         alt_p = -1.0 * np.log(p) * T
                         alt_p_err = (T * p_err) / p
