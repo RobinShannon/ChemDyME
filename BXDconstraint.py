@@ -736,7 +736,7 @@ class Converging(BXD):
                         if self.box_list[i].K_eq_err == 0:
                             p_err = p * np.sqrt((d_err / d) ** 2)
                         else:
-                            p_err = p * np.sqrt((d_err / d) ** 2 + (self.box_list[i].K_eq_err / self.box_list[i].eq_population) ** 2)
+                            p_err = p * np.sqrt((d_err / d) ** 2 + (self.box_list[i].K_eq_err / self.box_list[i].k_eq) ** 2)
                         alt_p = -1.0 * np.log(p) * T
                         alt_p_err = (T * p_err) / p
                         s_path = s[j] + last_s
