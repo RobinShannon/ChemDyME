@@ -989,7 +989,7 @@ class BXDBox:
 
     def get_full_histogram(self, boxes=10):
         data = [float(d[2]) for d in self.data]
-        data = data.sort()
+        data = np.sort(data)
         data = data[0:-50]
         data.append(0)
         top = max(data)
