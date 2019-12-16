@@ -733,6 +733,7 @@ class Converging(BXD):
                         alt_p = -1.0 * np.log(p) * T
                         s_path = s[j] + last_s
                         profile.append((s_path, main_p, alt_p))
+                        print('density = ' + str(d))
                     last_s += s[-1]
                 return profile
             except:
