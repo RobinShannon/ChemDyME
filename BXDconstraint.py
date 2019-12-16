@@ -988,11 +988,10 @@ class BXDBox:
         self.bot = np.mean(self.bot_data, axis=0)
 
     def get_full_histogram(self, boxes=10):
-
         data = [float(d[2]) for d in self.data]
-        data = data.sorted()
+        data = data.sort()
         data = data[0:-50]
-        data.append[0]
+        data.append(0)
         top = max(data)
         edges = []
         for i in range(0, boxes + 1):
