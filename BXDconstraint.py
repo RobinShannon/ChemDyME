@@ -1005,7 +1005,7 @@ class BXDBox:
         for line in file.readlines():
             line = line.rstrip('\n')
             line = line.split('\t')
-            if line[2] >= 0:
+            if float(line[2]) >= 0:
                 self.data.append(line)
 
 
