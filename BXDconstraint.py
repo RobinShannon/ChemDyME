@@ -737,7 +737,7 @@ class Converging(BXD):
                         alt_p_err = (T * p_err) / p
                         s_path = s[j] + last_s
                         profile.append((s_path, alt_p, alt_p_err))
-                        print('density = ' + dens[j])
+                        print('density = ' + str(dens[j]))
                     last_s += s[-1]
                 return profile
             except:
