@@ -991,7 +991,6 @@ class BXDBox:
         data = [float(d[2]) for d in self.data]
         data = np.sort(data)
         data = data[0:-50]
-        data.append(0)
         top = max(data)
         edges = []
         for i in range(0, boxes + 1):
