@@ -1012,6 +1012,7 @@ class BXDBox:
             line = line.split('\t')
             if float(line[2]) >= 0:
                 self.data.append(line)
+            del self.data[0]
 
 
 
