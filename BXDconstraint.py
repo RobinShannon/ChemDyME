@@ -717,14 +717,14 @@ class Converging(BXD):
                 profile = []
                 total_probability =0
                 for i in range(0, len(self.box_list)):
-                    self.boxList[i].eqPopulation = np.exp(-1.0 * (self.boxList[i].gibbs / T))
-                    self.boxList[i].eqPopulation_err = self.boxList[i].eqPopulation * ( 1 / T ) * self.box_list[i].gibbs_err
-                    total_probability += self.boxList[i].eqPopulation
+                    self.box_list[i].eq_population = np.exp(-1.0 * (self.box_list[i].gibbs / T))
+                    self.box_list[i].eq_population_err = self.box_list[i].eq_population * (1 / T) * self.box_list[i].gibbs_err
+                    total_probability += self.box_list[i].eq_population
 
 
                 for i in range(0, len(self.box_list)):
-                    self.boxList[i].eqPopulation /= total_probability
-                    self.boxList[i].eqPopulation_err /= total_probability
+                    self.box_list[i].eq_population /= total_probability
+                    self.box_list[i].eq_population_err /= total_probability
                 last_s = 0
                 high_res_free_energies = []
                 for i in range(0, len(self.box_list)):
@@ -736,8 +736,8 @@ class Converging(BXD):
                         else:
                             d_err = 1/np.sqrt(float(dens[j]))
                             d = float(dens[j]) / float(len(self.box_list[i].data))
-                            p = d * self.box_list[i].eqPopulation
-                            p_err = p * np.sqrt((d_err / d) ** 2 + (self.box_list[i].eqPopulation_err / self.box_list[i].eqPopulation) ** 2)
+                            p = d * self.box_list[i].eq_population
+                            p_err = p * np.sqrt((d_err / d) ** 2 + (self.box_list[i].eq_population_err / self.box_list[i].eq_population) ** 2)
                             p = -1.0 * np.log(p) * T
                             p_err = (T * p_err) / p
                             p = high_res_free_energies[-1] + p
@@ -937,6 +937,7 @@ class BXDBox:
         self.bot_data = []
         self.bot = 0
         self.eq_population = 0
+        self.eq_population_err = 0
         self.gibbs = 0
         self.gibbs_err = 0
         self.last_hit = 'lower'
