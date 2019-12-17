@@ -726,23 +726,24 @@ class Converging(BXD):
                     self.boxList[i].eqPopulation /= total_probability
                     self.boxList[i].eqPopulation_err /= total_probability
                 last_s = 0
+                high_res_free_energies = []
                 for i in range(0, len(self.box_list)):
                     s, dens = self.box_list[i].get_full_histogram(boxes)
-                    width = s[1] - s[0]
                     for j in range(0, len(dens)):
-                        d_err = 1/np.sqrt(float(dens[j]))
-                        d = float(dens[j]) / float(len(self.box_list[i].data))
-                        p = d * self.box_list[i].eqPopulation
-
-                        if self.box_list[i].eqPopulation == 0:
-                            p_err = p * np.sqrt((d_err / d) ** 2)
+                        if i == 0 and j == 0:
+                            p = 0
+                            p_err = 0
                         else:
+                            d_err = 1/np.sqrt(float(dens[j]))
+                            d = float(dens[j]) / float(len(self.box_list[i].data))
+                            p = d * self.box_list[i].eqPopulation
                             p_err = p * np.sqrt((d_err / d) ** 2 + (self.box_list[i].eqPopulation_err / self.box_list[i].eqPopulation) ** 2)
-                        alt_p = -1.0 * np.log(p) * T
-                        alt_p_err = (T * p_err) / p
+                            p = -1.0 * np.log(p) * T
+                            p_err = (T * p_err) / p
+                            p = high_res_free_energies[-1] + p
                         s_path = s[j] + last_s
-                        profile.append((s_path, alt_p, alt_p_err))
-                        print('density = ' + str(dens[j]))
+                        profile.append((s_path, p, p_err))
+                        high_res_free_energies.append(p)
                     last_s += s[-1]
                 return profile
             except:
