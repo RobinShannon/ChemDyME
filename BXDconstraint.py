@@ -720,33 +720,23 @@ class Converging(BXD):
                     self.box_list[i].eq_population = np.exp(-1.0 * (self.box_list[i].gibbs / T))
                     self.box_list[i].eq_population_err = self.box_list[i].eq_population * (1 / T) * self.box_list[i].gibbs_err
                     total_probability += self.box_list[i].eq_population
-                    print(str(self.box_list[i].eq_population))
 
 
                 for i in range(0, len(self.box_list)):
                     self.box_list[i].eq_population /= total_probability
                     self.box_list[i].eq_population_err /= total_probability
-                    print(str(self.box_list[i].eq_population))
                 last_s = 0
-                high_res_free_energies = []
                 for i in range(0, len(self.box_list)):
                     s, dens = self.box_list[i].get_full_histogram(boxes)
                     for j in range(0, len(dens)):
-                        if i == 0 and j == 0:
-                            p = 0
-                            p_err = 0
-                        else:
-                            d_err = 1/np.sqrt(float(dens[j]))
-                            d = float(dens[j]) / float(len(self.box_list[i].data))
-                            print(str(d))
-                            p = d * self.box_list[i].eq_population
-                            p_err = p * np.sqrt((d_err / d) ** 2 + (self.box_list[i].eq_population_err / self.box_list[i].eq_population) ** 2)
-                            p = -1.0 * np.log(p) * T * total_probability
-                            p_err = total_probability * (T * p_err) / p
-                            p = high_res_free_energies[-1] + p
+                        d_err = 1/np.sqrt(float(dens[j]))
+                        d = float(dens[j]) / float(len(self.box_list[i].data))
+                        p = d * self.box_list[i].eq_population
+                        p_err = p * np.sqrt((d_err / d) ** 2 + (self.box_list[i].eq_population_err / self.box_list[i].eq_population) ** 2)
+                        p = -1.0 * np.log(p) * T
+                        p_err = (T * p_err) / p
                         s_path = s[j] + last_s
                         profile.append((s_path, p, p_err))
-                        high_res_free_energies.append(p)
                     last_s += s[-1]
                 return profile
             except:
