@@ -698,7 +698,7 @@ class Converging(BXD):
                 k_eq = self.box_list[i].upper.average_rate / self.box_list[i + 1].lower.average_rate
                 K_eq_err = k_eq * np.sqrt((self.box_list[i].upper.rate_error/self.box_list[i].upper.average_rate)**2 + (self.box_list[i+1].lower.rate_error/self.box_list[i+1].lower.average_rate)**2)
                 try:
-                    delta_g = -1.0 * np.log(self.box_list[i+1].k_eq) * T
+                    delta_g = -1.0 * np.log(k_eq) * T
                 except:
                     delta_g = 0
                 delta_g_err = (T * K_eq_err) / k_eq
