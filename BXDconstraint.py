@@ -694,16 +694,14 @@ class Converging(BXD):
         for i in range(0, len(self.box_list) - 1):
             if i == 0:
                 self.box_list[i].gibbs = 0
-                self.box_list[i].k_eq = 1
-                self.box_list[i].K_eq_err = 0
             try:
-                self.box_list[i+1].k_eq = self.box_list[i].upper.average_rate / self.box_list[i + 1].lower.average_rate
-                self.box_list[i+1].K_eq_err = self.box_list[i+1].k_eq * np.sqrt((self.box_list[i].upper.rate_error/self.box_list[i].upper.average_rate)**2 + (self.box_list[i+1].lower.rate_error/self.box_list[i+1].lower.average_rate)**2)
+                k_eq = self.box_list[i].upper.average_rate / self.box_list[i + 1].lower.average_rate
+                K_eq_err = k_eq * np.sqrt((self.box_list[i].upper.rate_error/self.box_list[i].upper.average_rate)**2 + (self.box_list[i+1].lower.rate_error/self.box_list[i+1].lower.average_rate)**2)
                 try:
                     delta_g = -1.0 * np.log(self.box_list[i+1].k_eq) * T
                 except:
                     delta_g = 0
-                delta_g_err = (T * self.box_list[i+1].K_eq_err) / self.box_list[i+1].k_eq
+                delta_g_err = (T * K_eq_err) / k_eq
                 self.box_list[i + 1].gibbs = delta_g + self.box_list[i].gibbs
                 self.box_list[i + 1].gibbs_err = delta_g_err
             except:
@@ -717,13 +715,16 @@ class Converging(BXD):
         else:
             try:
                 profile = []
+                total_probability =0
                 for i in range(0, len(self.box_list)):
-                    total_probability += self.box_list[i].k_eq
-                    print('total_probability = ' + str(total_probability))
+                    self.boxList[i].eqPopulation = np.exp(-1.0 * (self.boxList[i].gibbs / T))
+                    self.boxList[i].eqPopulation_err = self.boxList[i].eqPopulation * ( 1 / T ) * self.box_list[i].gibbs_err
+                    total_probability += self.boxList[i].eqPopulation
+
 
                 for i in range(0, len(self.box_list)):
-                    self.box_list[i].k_eq /= total_probability
-                    self.box_list[i].K_eq_err /= total_probability
+                    self.boxList[i].eqPopulation /= total_probability
+                    self.boxList[i].eqPopulation_err /= total_probability
                 last_s = 0
                 for i in range(0, len(self.box_list)):
                     s, dens = self.box_list[i].get_full_histogram(boxes)
@@ -731,12 +732,12 @@ class Converging(BXD):
                     for j in range(0, len(dens)):
                         d_err = 1/np.sqrt(float(dens[j]))
                         d = float(dens[j]) / float(len(self.box_list[i].data))
-                        p = d * self.box_list[i].k_eq
+                        p = d * self.box_list[i].eqPopulation
 
-                        if self.box_list[i].K_eq_err == 0:
+                        if self.box_list[i].eqPopulation == 0:
                             p_err = p * np.sqrt((d_err / d) ** 2)
                         else:
-                            p_err = p * np.sqrt((d_err / d) ** 2 + (self.box_list[i].K_eq_err / self.box_list[i].k_eq) ** 2)
+                            p_err = p * np.sqrt((d_err / d) ** 2 + (self.box_list[i].eqPopulation_err / self.box_list[i].eqPopulation) ** 2)
                         alt_p = -1.0 * np.log(p) * T
                         alt_p_err = (T * p_err) / p
                         s_path = s[j] + last_s
