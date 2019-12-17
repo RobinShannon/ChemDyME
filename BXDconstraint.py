@@ -738,8 +738,8 @@ class Converging(BXD):
                             d = float(dens[j]) / float(len(self.box_list[i].data))
                             p = d * self.box_list[i].eq_population
                             p_err = p * np.sqrt((d_err / d) ** 2 + (self.box_list[i].eq_population_err / self.box_list[i].eq_population) ** 2)
-                            p = -1.0 * np.log(p) * T
-                            p_err = (T * p_err) / p
+                            p = -1.0 * np.log(p) * T * total_probability
+                            p_err = total_probability * (T * p_err) / p
                             p = high_res_free_energies[-1] + p
                         s_path = s[j] + last_s
                         profile.append((s_path, p, p_err))
