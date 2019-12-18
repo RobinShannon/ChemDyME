@@ -91,10 +91,10 @@ class Trajectory:
                 print("BXD bound hit on first step, either there is a small rounding error or there is something wrong with the initial geometry or bound. Proceed with caution")
                 bounded = False
             if bounded:
-                if self.bxd.path_bound_hit:
-                    del_phi.append(self.bxd.path_del_constraint(self.mol))
                 if self.bxd.bound_hit != 'none':
                     del_phi.append(self.bxd.del_constraint(self.mol))
+                if self.bxd.path_bound_hit:
+                    del_phi.append(self.bxd.path_del_constraint(self.mol))
                 # Perform inversion if required
                 self.md_integrator.constrain(del_phi)
             self.md_integrator.md_step_pos(self.forces, self.mol)

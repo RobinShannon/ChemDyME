@@ -92,10 +92,11 @@ class VelocityVerlet(MDIntegrator):
         c2 = np.vdot(b, (c * (1 / a)))
         c3 = np.vdot(c, (b * (1 / a)))
         c4 = np.vdot(c, (c * (1 / a)))
+        c5 = np.vdot(b, d)
         c6 = np.vdot(c, d)
 
-        lamb2 = ((c3 * c4) - (c1 * c6))/((c2 * c3) - (c1 * c4))
-        lamb1 = (c3 - lamb2 * c2) / c1
+        lamb2 = (-2*c5*c3 + 2*c1**c6)/(c2*c3-c1*c4)
+        lamb1 = (-2*c5-c2*lamb2)/c1
 
         # Update velocities
         self.current_velocities = self.current_velocities + (lamb1 * del_phi1 * (1 / self.masses[:, None])) + \
@@ -211,10 +212,11 @@ class Langevin(MDIntegrator):
         c2 = np.vdot(b, (c * (1 / a)))
         c3 = np.vdot(c, (b * (1 / a)))
         c4 = np.vdot(c, (c * (1 / a)))
+        c5 = np.vdot(b, d)
         c6 = np.vdot(c, d)
 
-        lamb2 = ((c3 * c4) - (c1 * c6))/((c2 * c3) - (c1 * c4))
-        lamb1 = (c3 - lamb2 * c2) / c1
+        lamb2 = (-2*c5*c3 + 2*c1**c6)/(c2*c3-c1*c4)
+        lamb1 = (-2*c5-c2*lamb2)/c1
 
         # Update velocities
         self.current_velocities = self.current_velocities + (lamb1 * del_phi1 * (1 / self.masses[:, None])) + (lamb2 * del_phi2 * (1 / self.masses[:, None]))

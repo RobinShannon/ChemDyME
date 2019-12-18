@@ -352,7 +352,7 @@ class Adaptive(BXD):
 
         #Check for hit against upper boundary
         if self.box_list[self.box].upper.hit(self.s, 'up'):
-            if not self.reverse and not self.path_bound_hit:
+            if not self.reverse:
                 self.box_list[self.box].upper.transparent = False
                 self.box_list[self.box].lower.transparent = True
                 self.box_list[self.box].data = []
@@ -365,7 +365,7 @@ class Adaptive(BXD):
                 self.box_list[self.box].upper.hits += 1
                 return True
         elif self.box_list[self.box].lower.hit(self.s, 'down'):
-            if self.reverse and not self.path_bound_hit and not self.box_list[self.box].type == 'adap':
+            if self.reverse and not self.box_list[self.box].type == 'adap':
                 self.box_list[self.box].data = []
                 self.box -= 1
                 self.box_list[self.box].data = []
