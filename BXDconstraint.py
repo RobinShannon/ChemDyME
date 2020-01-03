@@ -105,7 +105,7 @@ class BXD(metaclass=ABCMeta):
 class Adaptive(BXD):
 
     def __init__(self, progress_metric, stuck_limit=5,  fix_to_path=False,
-                 adaptive_steps=1000, epsilon=0.9, reassign_rate=2, incorporate_distance_from_bound = False, one_direction = False):
+                 adaptive_steps=1000, epsilon=0.9, reassign_rate=2, incorporate_distance_from_bound = False, one_direction = False, decorellation_limit = 0):
 
         super(Adaptive, self).__init__(progress_metric, stuck_limit)
         self.fix_to_path = fix_to_path
@@ -121,6 +121,8 @@ class Adaptive(BXD):
         self.box_list.append(box)
         self.skip_box = False
         self.incorporate_distance_from_bound = False
+        self.steps_since_any_boundary_hit = 0
+        self.decorellation_limit = decorellation_limit
 
 
     def update(self, mol):
@@ -161,6 +163,9 @@ class Adaptive(BXD):
             self.inversion = False
             self.stuck = False
         self.inversion = self.boundary_check() or self.path_bound_hit
+        self.steps_since_any_boundary_hit += 1
+        if self.inversion:
+            self.steps_since_any_boundary_hit = 0
 
         if self.inversion:
             self.stuck_count += 1
@@ -352,7 +357,7 @@ class Adaptive(BXD):
 
         #Check for hit against upper boundary
         if self.box_list[self.box].upper.hit(self.s, 'up'):
-            if not self.reverse:
+            if not self.reverse and self.steps_since_any_boundary_hit > self.decorellation_limit:
                 self.box_list[self.box].upper.transparent = False
                 self.box_list[self.box].lower.transparent = True
                 self.box_list[self.box].data = []
@@ -365,7 +370,7 @@ class Adaptive(BXD):
                 self.box_list[self.box].upper.hits += 1
                 return True
         elif self.box_list[self.box].lower.hit(self.s, 'down'):
-            if self.reverse and not self.box_list[self.box].type == 'adap':
+            if self.reverse and not self.box_list[self.box].type == 'adap' and self.steps_since_any_boundary_hit > self.decorellation_limit:
                 self.box_list[self.box].data = []
                 self.box -= 1
                 self.box_list[self.box].data = []
@@ -474,11 +479,12 @@ class Shrinking(BXD):
 class Converging(BXD):
 
     def __init__(self, progress_metric, stuck_limit=5, box_skip_limit = 500000, bound_file="bounds.txt", geom_file='box_geoms.xyz', bound_hits=100,
-                 read_from_file=False, convert_fixed_boxes = False, box_width=0, number_of_boxes=0,
-                 decorrelation_limit=10,  boxes_to_converge = [], print_directory='Converging_Data', converge_ends = False):
+                 read_from_file=False, convert_fixed_boxes = False, box_width=0, number_of_boxes=0, decorrelation_limit=10,  boxes_to_converge = [],
+                 print_directory='Converging_Data', converge_ends = False, box_data_print_freqency = 10):
 
         super(Converging, self).__init__(progress_metric, stuck_limit)
         self.bound_file = bound_file
+        self.box_data_print_freqency = box_data_print_freqency
         self.geom_file = geom_file
         self.box_skip_limit = box_skip_limit
         self.dir = str(print_directory)
@@ -567,7 +573,8 @@ class Converging(BXD):
             self.box_list[self.box].upper.step_since_hit += 1
             self.box_list[self.box].lower.step_since_hit += 1
             if not self.progress_metric.reflect_back_to_path():
-                self.data_file.write(str(self.s) + '\t' + str(projected_data) + '\t' + str(distance_from_bound) + '\n')
+                if len(self.box_list[self.box].data % self.box_data_print_freqency == 0):
+                    self.data_file.write(str(self.s) + '\t' + str(projected_data) + '\t' + str(distance_from_bound) + + '\t' + str(mol.get_potential_energy()) + '\n')
 
         if self.stuck_count > self.stuck_limit:
             self.stuck_count = 0
