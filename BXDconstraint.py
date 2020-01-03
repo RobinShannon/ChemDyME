@@ -573,7 +573,7 @@ class Converging(BXD):
             self.box_list[self.box].upper.step_since_hit += 1
             self.box_list[self.box].lower.step_since_hit += 1
             if not self.progress_metric.reflect_back_to_path():
-                if len(self.box_list[self.box].data % self.box_data_print_freqency == 0):
+                if len(self.box_list[self.box].data) % self.box_data_print_freqency == 0:
                     self.data_file.write(str(self.s) + '\t' + str(projected_data) + '\t' + str(distance_from_bound) + + '\t' + str(mol.get_potential_energy()) + '\n')
 
         if self.stuck_count > self.stuck_limit:
