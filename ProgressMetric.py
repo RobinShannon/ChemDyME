@@ -179,6 +179,27 @@ class Curve(ProgressMetric):
         p += self.path.total_distance[closest_segment]
         return p
 
+    def get_node(self, s):
+        # Set up tracking variables to log the closest segment and the distance to it
+        minim = float("inf")
+        closest_segment = 0
+        dist = 0
+        p = 0
+        # Use self.max_nodes_skipped to track set up the start and end points for looping over path segments.
+        start = 0
+        end =len(self.path.s) - 1
+        # Now loop over all segments considered and get the distance from S to that segment and the projected distance
+        # of S along that segment
+        for i in range(start, end):
+            dist, projection, percent = self.distance_to_segment(s, self.path.s[i+1], self.path.s[i])
+            if dist < minim:
+                percentage = percent
+                closest_segment = i
+                minim = dist
+                p = projection
+        return closest_segment
+
+
     def reflect_back_to_path(self):
         if self.distance_from_path > self.path_bound_distance_at_point():
             if self.distance_from_path > self.old_distance_from_path:
@@ -217,9 +238,10 @@ class Curve(ProgressMetric):
         norm = self.vector_to_segment(s,seg_end,seg_start)
         return self.collective_variable.get_delta(mol, norm)
 
-    def get_norm_to_path(self):
-        seg_start = self.path.s[self.path_segment]
-        seg_end = self.path.s[self.path_segment+1]
+    def get_norm_to_path(self, s):
+        seg = self.get_node(s)
+        seg_start = self.path.s[seg]
+        seg_end = self.path.s[seg+1]
         n = (seg_end - seg_start) / np.linalg.norm(seg_end - seg_start)
         return n
 

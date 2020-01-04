@@ -160,6 +160,7 @@ class Adaptive(BXD):
 
         # Check whether a boundary has been hit and if so update whether the hit boundary
         if self.stuck:
+            self.stuck_fix()
             self.inversion = False
             self.stuck = False
         self.inversion = self.boundary_check() or self.path_bound_hit
@@ -320,7 +321,7 @@ class Adaptive(BXD):
         return b2
 
     def convert_s_to_bound_on_path(self, s):
-        n = self.progress_metric.get_norm_to_path()
+        n = self.progress_metric.get_norm_to_path(s)
         d = -1 * np.vdot(n, s)
         b = BXDBound(n, d)
         b.s_point=s
@@ -574,7 +575,7 @@ class Converging(BXD):
             self.box_list[self.box].lower.step_since_hit += 1
             if not self.progress_metric.reflect_back_to_path():
                 if len(self.box_list[self.box].data) % self.box_data_print_freqency == 0:
-                    self.data_file.write(str(self.s) + '\t' + str(projected_data) + '\t' + str(distance_from_bound) + + '\t' + str(mol.get_potential_energy()) + '\n')
+                    self.data_file.write(str(self.s) + '\t' + str(projected_data) + '\t' + str(distance_from_bound) + '\t' + str(mol.get_potential_energy()) + '\n')
 
         if self.stuck_count > self.stuck_limit:
             self.stuck_count = 0
