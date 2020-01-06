@@ -158,13 +158,15 @@ class Adaptive(BXD):
                 self.reassign_rate * self.adaptive_steps:
             self.reassign_boundary()
 
-        # Check whether a boundary has been hit and if so update whether the hit boundary
-        if self.stuck:
-            self.stuck_fix()
-            self.inversion = False
-            self.stuck = False
         self.inversion = self.boundary_check() or self.path_bound_hit
         self.steps_since_any_boundary_hit += 1
+
+        # Check whether a boundary has been hit and if so update whether the hit boundary
+        if self.stuck_count > self.stuck_limit:
+            self.stuck_fix()
+            self.inversion = False
+            self.stuck_count = 0
+
         if self.inversion:
             self.steps_since_any_boundary_hit = 0
 
@@ -174,7 +176,6 @@ class Adaptive(BXD):
         else:
             self.steps_since_any_boundary_hit += 1
             self.stuck_count = 0
-            self.stuck = False
             self.old_s = self.s
             self.box_list[self.box].upper.step_since_hit += 1
             self.box_list[self.box].lower.step_since_hit += 1
@@ -184,8 +185,7 @@ class Adaptive(BXD):
                     self.furthest_progress = projected_data
                     self.geometry_of_furthest_point = mol.copy()
 
-        if self.stuck_count > self.stuck_limit:
-            self.stuck = True
+
 
 
     def update_adaptive_bounds(self):
@@ -611,7 +611,7 @@ class Converging(BXD):
             self.lower_rates_file.close()
             self.lower_milestoning_rates_file.close()
             self.data_file.close()
-            self.box_list[self.box].lower.step_since_hit
+            self.box_list[self.box].lower.step_since_hit = 0
             self.box -= 1
             self.upper_rates_file = open(self.box_list[self.box].upper_rates_path, 'a')
             self.upper_milestoning_rates_file = open(self.box_list[self.box].upper_milestoning_rates_path, 'a')
@@ -681,9 +681,6 @@ class Converging(BXD):
     def get_free_energy(self,T, boxes=1, milestoning = False, directory = 'Converging_Data', decorrelation_limit = 1):
         # Multiply T by the gas constant in kJ/mol
         T *= (8.314 / 1000)
-        profile_high_res = []
-        profile_low_res = []
-        total_probability = 0
         for i,box in enumerate(self.box_list):
             temp_dir = directory + ("/box_" + str(i) + '/')
             try:
@@ -718,7 +715,9 @@ class Converging(BXD):
         if boxes == 1:
             profile = []
             for i in range(0, len(self.box_list)):
-                profile.append((str(i), self.box_list[i].gibbs, self.box_list[i].gibbs_err))
+                enedata = [float(d[4]) for d in self.box_list[i].data]
+                ave_ene = np.mean(np.asarray(enedata))
+                profile.append((str(i), self.box_list[i].gibbs, self.box_list[i].gibbs_err, ave_ene))
             return profile
         else:
             try:
@@ -735,7 +734,7 @@ class Converging(BXD):
                     self.box_list[i].eq_population_err /= total_probability
                 last_s = 0
                 for i in range(0, len(self.box_list)):
-                    s, dens = self.box_list[i].get_full_histogram(boxes)
+                    s, dens,ene= self.box_list[i].get_full_histogram(boxes)
                     for j in range(0, len(dens)):
                         d_err = 1/np.sqrt(float(dens[j]))
                         d = float(dens[j]) / float(len(self.box_list[i].data))
@@ -744,7 +743,7 @@ class Converging(BXD):
                         p = -1.0 * np.log(p) * T
                         p_err = (T * p_err) / p
                         s_path = s[j] + last_s
-                        profile.append((s_path, p, p_err))
+                        profile.append((s_path, p, p_err, ene[j]))
                     last_s += s[-1]
                 return profile
             except:
@@ -996,19 +995,25 @@ class BXDBox:
         self.bot = np.mean(self.bot_data, axis=0)
 
     def get_full_histogram(self, boxes=10):
-        data = [float(d[2]) for d in self.data]
+        data = [(float(d[2]),float(d[4])) for d in self.data]
         data = np.sort(data)
         data = data[0:-50]
         top = max(data)
         edges = []
+        energies = []
         for i in range(0, boxes + 1):
             edges.append(i * (top / boxes))
         hist = np.zeros(boxes)
-        for d in data:
-            for j in range(0, boxes):
-                if d > edges[j] and d <= edges[j + 1]:
+
+        for j in range(0, boxes):
+            for d in data:
+                temp_ene = []
+                if d[0] > edges[j] and d[1] <= edges[j + 1]:
                     hist[j] += 1
-        return edges, hist
+                    temp_ene.append(d[1])
+                temp_ene = np.asarray(temp_ene)
+                energies.append(np.mean(temp_ene))
+        return edges, hist, energies
 
     def convert_s_to_bound(self, lower, upper):
         pass
