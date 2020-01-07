@@ -996,6 +996,8 @@ class BXDBox:
 
     def get_full_histogram(self, boxes=10):
         data = [float(d[2]) for d in self.data]
+        np.sort(data)
+        data = data[:-50]
         top = max(data)
         edges = []
         energies = []
