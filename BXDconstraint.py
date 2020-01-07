@@ -715,7 +715,7 @@ class Converging(BXD):
         if boxes == 1:
             profile = []
             for i in range(0, len(self.box_list)):
-                enedata = [float(d[4]) for d in self.box_list[i].data]
+                enedata = [float(d[3]) for d in self.box_list[i].data]
                 ave_ene = np.mean(np.asarray(enedata))
                 profile.append((str(i), self.box_list[i].gibbs, self.box_list[i].gibbs_err, ave_ene))
             return profile
@@ -995,9 +995,7 @@ class BXDBox:
         self.bot = np.mean(self.bot_data, axis=0)
 
     def get_full_histogram(self, boxes=10):
-        data = [(float(d[2]),float(d[4])) for d in self.data]
-        data = np.sort(data)
-        data = data[0:-50]
+        data = [float(d[2]) for d in self.data]
         top = max(data)
         edges = []
         energies = []
@@ -1006,13 +1004,13 @@ class BXDBox:
         hist = np.zeros(boxes)
 
         for j in range(0, boxes):
-            for d in data:
-                temp_ene = []
-                if d[0] > edges[j] and d[1] <= edges[j + 1]:
+            temp_ene = []
+            for d in self.data:
+                if float(d[2]) > edges[j] and float(d[2]) <= edges[j + 1]:
                     hist[j] += 1
-                    temp_ene.append(d[1])
-                temp_ene = np.asarray(temp_ene)
-                energies.append(np.mean(temp_ene))
+                    temp_ene.append(float(d[3]))
+            temp_ene = np.asarray(temp_ene)
+            energies.append(np.mean(temp_ene))
         return edges, hist, energies
 
     def convert_s_to_bound(self, lower, upper):
