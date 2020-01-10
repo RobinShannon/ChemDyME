@@ -2,10 +2,18 @@ from abc import abstractmethod
 import numpy as np
 from ChemDyME import util
 
-# Abstract base class for collective  variable types
-
 
 class CollectiveVariable:
+    """
+    Abstract base class for collective variable types:
+    The Collective variable describes some reduced dimesnional property of the molecular structure which BXD will act upon.
+    All instances of this class must implement the folowing two functions;
+
+    get_s : Returns the value of the collective variable for a particular set of cartesian coordinates
+
+    get_delta : Returns the derivate of s (the colective variable) with respect to the cartesian coordinates
+
+    """
     @abstractmethod
     def __init__(self):
         pass
@@ -23,16 +31,19 @@ class CollectiveVariable:
 
 class PrincipalCoordinates(CollectiveVariable):
 
-    # Collective variable is a linear combinations of interatomic distances.
-    # "pc_files" : List of files defining principal coordinates. One PC per file
-    # 'number_of_elements' : Point at which to truncate linear combination in each PC
-    # 'highest_index_considered" : If PC's only refer to a subset of the atoms this variable give the highest atom index
-    #                            needed
     def __init__(self, pc_array, number_of_elements, highest_index_considered=float("inf")):
+        """
+        Collective variable consists of a linear combination of interatomic distances of the form PC = c1 * r1 + ... + cn * rn
+        where r is an interatomic discatnce and c is some coefficient. This class can hold an arbitray number of PC's.
+        "pc_files" : List of files defining principal coordinates. One PC per file. These file can be produced by the pathreducer code
+                     through the  DimensionalityReduction class in the ChemDyME package. Each file constain data in three collumns,
+                     the first collumn giving a coefficient and the next two giving the atom indicies of the
+        'number_of_elements' : Point at which to truncate linear combination in each PC
+        'highest_index_considered" : If PC's only refer to a subset of the atoms this variable give the highest atom index
+                                     needed
+        """
         self.number_of_elements = number_of_elements
         self.highest_index_considered = highest_index_considered
-        # Seperate arrays for indices and coefficients
-        # Create list of arrays, one array for each PC file
         self.indicies = []
         self.coefficients = []
         for f in pc_array:

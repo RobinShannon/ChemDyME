@@ -104,6 +104,7 @@ class BXD(metaclass=ABCMeta):
 
 class Adaptive(BXD):
 
+
     def __init__(self, progress_metric, stuck_limit=5,  fix_to_path=False,
                  adaptive_steps=1000, epsilon=0.9, reassign_rate=2, incorporate_distance_from_bound = False, one_direction = False, decorellation_limit = 0):
 
@@ -739,6 +740,8 @@ class Converging(BXD):
                 last_s = 0
                 for i in range(0, len(self.box_list)):
                     s, dens,ene= self.box_list[i].get_full_histogram(boxes)
+                    for sj in s:
+                        sj -= s[0]
                     for j in range(0, len(dens)):
                         d_err = 1/np.sqrt(float(dens[j]))
                         d = float(dens[j]) / float(len(self.box_list[i].data))
@@ -1001,9 +1004,7 @@ class BXDBox:
         self.bot = np.mean(self.bot_data, axis=0)
 
     def get_full_histogram(self, boxes=10):
-        data = [float(d[2]) for d in self.data]
-        np.sort(data)
-        data = data[:-50]
+        data = [float(d[1]) for d in self.data]
         top = max(data)
         edges = []
         energies = []
