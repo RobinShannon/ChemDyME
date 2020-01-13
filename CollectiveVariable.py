@@ -18,12 +18,11 @@ class CollectiveVariable:
     def __init__(self):
         pass
 
-    # Update the distance from the current point to the lower boundary
+
     @abstractmethod
     def get_s(self, mol):
         pass
 
-    # Update the distance from the current point to the lower boundary
     @abstractmethod
     def get_delta(self, mol):
         pass
@@ -33,75 +32,62 @@ class PrincipalCoordinates(CollectiveVariable):
 
     def __init__(self, pc_array, number_of_elements, highest_index_considered=float("inf")):
         """
-        Collective variable consists of a linear combination of interatomic distances of the form PC = c1 * r1 + ... + cn * rn
-        where r is an interatomic discatnce and c is some coefficient. This class can hold an arbitray number of PC's.
-        "pc_files" : List of files defining principal coordinates. One PC per file. These file can be produced by the pathreducer code
-                     through the  DimensionalityReduction class in the ChemDyME package. Each file constain data in three collumns,
-                     the first collumn giving a coefficient and the next two giving the atom indicies of the
-        'number_of_elements' : Point at which to truncate linear combination in each PC
-        'highest_index_considered" : If PC's only refer to a subset of the atoms this variable give the highest atom index
-                                     needed
+        Collective variable consists of a linear combination of interatomic distances of the form
+        PC = c1 * r1 + ... + cn * rn where r is an interatomic discatnce and c is some coefficient. This class can hold
+        an arbitray number of PC's.
+        :param pc_array: List of arrays containing the coefficient (dimension 0) and corresponding atom indicies
+                        (dimensions 1 and 2). There is one array for each PC considered. This list of array is generated
+                        by the DimensionalityReduction class
+        :param number_of_elements: Point at which to truncate linear combination in each PC
         """
         self.number_of_elements = number_of_elements
-        self.highest_index_considered = highest_index_considered
         self.indicies = []
         self.coefficients = []
+        # for each PC in the list seperate out the 3D array into coefficients and the corresponding atom indicies
         for f in pc_array:
             c, i = self.read_principal_components(f)
+            # c and i are arrays and self.indicies and self.coefficients are lists containing an array for each PC
             self.indicies.append(i)
             self.coefficients.append(c)
+        # Store the number of PC's considered
         self.number_of_pcs = len(self.coefficients)
 
     def __len__(self):
         return len(self.indicies)
 
-    # Function to return n dimesnional vector of PC's
-    # util contains Cythonized function for calculating the value of each PC at the geometry given by mol
+
     def get_s(self, mol):
+        """
+        Function to return n dimesnional vector of PC's. Util contains a Cythonized function for calculating the value of
+        each PC at the geometry given by mol
+        :param mol: ASE atoms object with current cartesian coordinates
+        :return: list of floats corresponding to the value of each PC at the current geometry
+        """
         d = util.getPC(self.indicies, self.coefficients, mol.get_positions())
         return d
 
-    # Read principal coordijnates from array
     def read_principal_components(self, arr):
+        """
+        Seperates out the coefficients and atom indicies from an array
+        :param arr: 3D array containing coefficients and followed by atom indicies
+        :return: two arrays: "coefficients" with the coefficients for each interatomic distance in a given PC
+                             "indicies" 2D array with the 2 atom indicies
+        """
         coefficients = arr[:self.number_of_elements, 0]
         indicies = arr[:self.number_of_elements,1:].astype(int)
         return coefficients, indicies
 
-    # Vectorised function to quickly get array of euclidean distances between atoms
-    def get_distance_vector(self, mol, highest_index_considered):
-        xyz = mol.get_positions()
-        if highest_index_considered < len(xyz):
-            xyz = xyz[0:highest_index_considered, :]
-        d = np.sqrt(np.sum(np.square(xyz[:, np.newaxis, :] - xyz), axis=2))
-        return d
 
-    # Function to return a BXD constrain at a given geometry (mol) having hit a given boundary (n)
     def get_delta(self, mol, n):
+        """
+        Function to return the derivative of the each collective variable (PC) with respect to the atom cartesian
+        coordinates (dphi/dr see DOI: 10.1039/c6fd00138f) at a particular BXD boundary.
+        :param mol: ASE atoms object containing current cartesian coordinates
+        :param n: list of norms to the the BXD boundary. One norm for each collective variable
+        :return: 3N-6
+        """
         return util.get_delta(mol, n, self.indicies, self.coefficients)
 
-    def get_delta2(self, mol, n):
-        constraint_final = np.zeros(mol.get_positions().shape)
-        pos = mol.get_positions()
-        # First loop over all atoms
-        for j in range(0, len(self.indicies)):
-            constraint = np.zeros(mol.get_positions().shape)
-            for k in range(0, self.indicies[j].shape[0]):
-                # need a check here in case the collective variable is zero since nan would be returned
-                i1 = int(self.indicies[j][k][0])
-                i2 = int(self.indicies[j][k][1])
-                distance = np.sqrt((pos[i1][0] - pos[i2][0]) ** 2 + (pos[i1][1] - pos[i2][1]) ** 2
-                                   + (pos[i1][2] - pos[i2][2]) ** 2)
-                first_term = (1 / (2 * distance))
-                constraint[i1][0] += first_term * 2 * (pos[i1][0] - pos[i2][0]) * self.coefficients[j][k]
-                constraint[i1][1] += first_term * 2 * (pos[i1][1] - pos[i2][1]) * self.coefficients[j][k]
-                constraint[i1][2] += first_term * 2 * (pos[i1][2] - pos[i2][2]) * self.coefficients[j][k]
-                # alternate formula for case where i is the seccond atom
-                constraint[i2][0] += first_term * 2 * (pos[i1][0] - pos[i2][0]) * -self.coefficients[j][k]
-                constraint[i2][1] += first_term * 2 * (pos[i1][1] - pos[i2][1]) * -self.coefficients[j][k]
-                constraint[i2][2] += first_term * 2 * (pos[i1][2] - pos[i2][2]) * -self.coefficients[j][k]
-            constraint *= n[j]
-            constraint_final += constraint
-        return constraint_final
 
 class CartesianPrincipalCoordinates(CollectiveVariable):
 
