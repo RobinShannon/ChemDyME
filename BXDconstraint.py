@@ -1,11 +1,30 @@
-from abc import ABCMeta, abstractmethod
+from abc import abstractmethod
 import numpy as np
 from ase.io import read, write
 import os
 from copy import deepcopy
 
 
-class BXD(metaclass=ABCMeta):
+class BXD:
+    """
+    BXD base class, there are currently three derived versions of BXD:
+    1. Adaptive BXD, controlling the placement of BXD boundaries.
+    2. Shrinking BXD, WIP, reintoduce a BXD class to gradually decrease a progress_metric until a particular value
+       is reached. This class can be used to bring to seperate molecular fragments together and hold them in close
+       proximity for example if you are running automated mechanism generation starting from a bimolecular reactant
+    3. Converging BXD, uses a set of BXD boundaries generated from an adaptive BXD object and controls a converging
+       run where each boundary is hit a specified number of times. This derived class also implements the free
+       energy analysis methods.
+    All members of this class must implement a number of abstract methods:
+    update: This method takes the current geometry, and stores collective variable and progress metric data. This method
+            does most of the bookeeping and calls other methods to place new boundaries and determine boundary hits
+    stuck_fix: method to alter the geometry if a BXD run gets stuck at a particular boundary
+    boundary_check: Checks whether a BXD boundary has been hit at the current geometry
+    criteria_met: Checks whether the current bounds have been hit sufficiently to become transparent and allow BXD into
+                  the next box
+    reached_end: Checks the progress metric to see whether the BXD run needs to be reversed or whether it is complete
+
+    """
     def __init__(self, progress_metric, stuck_limit=20):
         self.progress_metric = progress_metric
         self.steps_since_any_boundary_hit = 0
@@ -59,12 +78,12 @@ class BXD(metaclass=ABCMeta):
     def initialise_files(self):
         pass
 
-    def getDefaultBox(self,lower, upper):
-        b = BXDBox(lower, upper,"fixed",True)
-        return b
 
     # Determine whether boundary should be transparent or reflective
     def update_bounds(self):
+        """
+        Utilises the abstract class' criteria_met method to manage whether or not a boundary should be transparent
+        """
         if self.reverse:
             self.box_list[self.box].upper.transparent = False
         else:
@@ -76,6 +95,11 @@ class BXD(metaclass=ABCMeta):
             self.box_list[self.box].upper.transparent = True
 
     def del_constraint(self, mol):
+        """
+        interfaces with the progress metric to return the delta_phi for the constraint at whichever boundary is hit
+        :param mol: ASE atoms object with the current geometry
+        :return:
+        """
         if self.bound_hit == 'upper':
             norm = self.box_list[self.box].upper.n
         if self.bound_hit == 'lower':
@@ -84,12 +108,28 @@ class BXD(metaclass=ABCMeta):
         return self.delta
 
     def path_del_constraint(self, mol):
+        """
+        Interfaces with the progress metric to return the del_phi for the path constraint parallel to the current path
+        segment
+        :param mol: ASE atoms object with the current geometry
+        :return:
+        """
         return self.progress_metric.get_path_delta(mol)
 
     def get_s(self, mol):
+        """
+        Get the current value of the collective variable
+        :param mol: ASE atoms object with the current geometry
+        :return:
+        """
         return self.progress_metric.get_s(mol)
 
     def print_bounds(self, file="bounds.txt"):
+        """
+        Prints the BXD boundaries to file.
+        :param file:
+        :return:
+        """
         f = open(file,'w')
         f.write("BXD boundary list \n\n")
         string = ("Boundary\t" + str(0) + "\tD\t=\t" + str(self.box_list[0].lower.d) + "\tn\t=\t" + str(self.box_list[0].lower.n) + "\n" )
@@ -103,11 +143,39 @@ class BXD(metaclass=ABCMeta):
 
 
 class Adaptive(BXD):
+    """
+    Derived BXD class controlling and Adaptive BXD run. This class controls the adaptive placing of boundaries and
+    determines whether or not a boundary has been hit and whether an inversion is required.
+    :param progress_metric: ProgressMetric object which manages the CollectiveVariable representation, transforms
+                            the current MD geometry into "progess" between the BXD start and end points and
+                            optionally contains a path object if BXD is following a guess path
+    :param stuck_limit: Integer, DEFAULT = 5.
+                        Controls the number of subsequent hits at a boundary before BXD is considered stuck and the
+                        stuck fix method is called to remedy the situation
+    :param fix_to_path: Boolean, DEFAULT = False.
+                        If True all boundaries will be alligned such that they are perpendicular to the path. Should
+                        only be used for a curve progress_metric
+    :param adaptive_steps: Integer, DEFAULT = 1000
+                           Number of MD steps sampled before placing a new boundary in the direction of BXD progress
+    :param epsilon: Float. DEFAULT = 0.9
+                           Used in histograming to determine the proportion of the adaptive sampling points which
+                           should be outside the new adaptive boundary. The cumulative probability of points outside
+                           the new boundary should be ( 1.0 - epsilon)
+    :param reassign_rate: DEFAULT = 2.
+                          If an adaptive bound has not been hit after adaptive_steps * reassign_rate then the
+                          boundary will be moved based on new sampling
+    :param one_direction: Boolean, DEFAULT = False,
+                          If True, then the adaptive BXD run will be considerd complete once it reached the
+                          progress_metric end_point and will not attempt to place extra boundaries in the reverse
+                          direction
+    :param decorellation_limit: Integer, DEFAULT = 0
+                                A boundary hit / passage is only counted if it occurs decorellation_limit steps
+                                after the previous hit.
+    """
 
-
-    def __init__(self, progress_metric, stuck_limit=5,  fix_to_path=False,
-                 adaptive_steps=1000, epsilon=0.9, reassign_rate=2, incorporate_distance_from_bound = False, one_direction = False, decorellation_limit = 0):
-
+    def __init__(self, progress_metric, stuck_limit=5,  fix_to_path=False, adaptive_steps=1000, epsilon=0.9,
+                 reassign_rate=2, one_direction = False, decorellation_limit = 0):
+        # call the base class init function to set up general parameters
         super(Adaptive, self).__init__(progress_metric, stuck_limit)
         self.fix_to_path = fix_to_path
         self.one_direction = one_direction
@@ -116,30 +184,36 @@ class Adaptive(BXD):
         self.epsilon = epsilon
         self.reassign_rate = reassign_rate
         self.completed_runs = 0
+        # set up the first box based upon the start and end points of the progress metric, other will be added as BXD
+        # progresses
         s1, s2 = self.progress_metric.get_start_s()
         b1, b2 = self.get_starting_bounds(s1, s2)
         box = self.get_default_box(b1, b2)
+        # List of box objects this list along with the self.box parameter keeps track of which box we are in and the
+        # associated data for that particular box
         self.box_list.append(box)
         self.skip_box = False
-        self.incorporate_distance_from_bound = False
         self.steps_since_any_boundary_hit = 0
         self.decorellation_limit = decorellation_limit
 
 
     def update(self, mol):
+        """
+        General bookeeping method. Takes an ASE atoms object, stores data from progress_metric at the current geometry,
+        and calls the update_adaptive_bounds and boundary_check methods to add new boundaries and to keep track of which
+        box we are in and whether and inversion is neccessary
+        :param mol: ASE atoms object
+        :return:
+        """
 
+        # If this is the first step in a new box then store its geometry in the box object, then set new_box to False
         if self.new_box:
             self.box_list[self.box].geometry = mol.copy()
         self.new_box = False
 
-        # update current and previous s(r) values
+        # get the current value of the collective variable and the progress data
         self.s = self.get_s(mol)
         projected_data = self.progress_metric.project_point_on_path(self.s)
-        if self.incorporate_distance_from_bound:
-            if not self.reverse:
-                projected_data += self.progress_metric.get_dist_from_bound(self.s,self.box_list[self.box].lower)
-            else:
-                projected_data += self.progress_metric.get_dist_from_bound(self.s, self.box_list[self.box].upper)
 
 
         self.inversion = False
@@ -154,23 +228,22 @@ class Adaptive(BXD):
         self.reached_end(projected_data)
 
         # If we have sampled for a while and not hot the upper bound then reassign the boundary.
-        # Only how often the boundary is reassigned depends upon the reasign_rate parameter
+        # How often the boundary is reassigned depends upon the reasign_rate parameter
         if self.box_list[self.box].type == "normal" and len(self.box_list[self.box].data) > \
                 self.reassign_rate * self.adaptive_steps:
             self.reassign_boundary()
 
+        # Check whether a velocity inversion is needed, either at the boundary or back towards the path
         self.inversion = self.boundary_check() or self.path_bound_hit
         self.steps_since_any_boundary_hit += 1
 
-        # Check whether a boundary has been hit and if so update whether the hit boundary
+        # If we are stuck at a boundary call the apropriate stuck_fix method
         if self.stuck_count > self.stuck_limit:
             self.stuck_fix()
             self.inversion = False
             self.stuck_count = 0
 
-        if self.inversion:
-            self.steps_since_any_boundary_hit = 0
-
+        # update counters depending upon whether a boundary has been hit
         if self.inversion:
             self.stuck_count += 1
             self.steps_since_any_boundary_hit = 0
@@ -180,8 +253,11 @@ class Adaptive(BXD):
             self.old_s = self.s
             self.box_list[self.box].upper.step_since_hit += 1
             self.box_list[self.box].lower.step_since_hit += 1
+            # Provided we are close enough to the path, store the data of the current point
             if not self.progress_metric.reflect_back_to_path():
                 self.box_list[self.box].data.append((self.s, projected_data))
+                # If this is point is the largest progress metric so far then store its geometry.
+                # At the end of the run this will store the geometry of the furthest point along the BXD path
                 if projected_data > self.furthest_progress:
                     self.furthest_progress = projected_data
                     self.geometry_of_furthest_point = mol.copy()
@@ -190,26 +266,39 @@ class Adaptive(BXD):
 
 
     def update_adaptive_bounds(self):
+        """
+        If a box is in an adaptive sampling regime, this method checks the number of data points and determines whether
+        or not to add a new adaptive bound. If BXD is in the reverse direction the new a new box is created between the
+        current box and the previous one the self.box_list.
+        :return:
+        """
+        # If adaptive sampling has ended then add a boundary based on sampled data
         if len(self.box_list[self.box].data) > self.adaptive_steps:
-            # If adaptive sampling has ended then add a boundary based up sampled data
+            # Fist indicate the box no longer needs adaptive sampling
             self.box_list[self.box].type = "normal"
+            # If not reversing then update the upper boundary and add a new adaptive box on the end of the list
             if not self.reverse:
+                # Histogram the box data to get the averaged top and bottom values of s based on the assigned epsilon
                 self.box_list[self.box].get_s_extremes(self.histogram_boxes, self.epsilon)
                 bottom = self.box_list[self.box].bot
                 top = self.box_list[self.box].top
+                # use the bottom and top s to generate a new upper bound
                 b1 = self.convert_s_to_bound(bottom, top)
+                # copy this bound as it will form the lower bound of the next box
                 b2 = deepcopy(b1)
-                self.box_list[self.box].angle_between_bounds = np.arccos(np.dot(b1.n,self.box_list[self.box].lower.n)/(np.linalg.norm(b1.n)*np.linalg.norm(self.box_list[self.box].lower.n)))
+                # copy the current upper bound which will be used for the new box, this upper bound is a dummy bound
+                # which can never be hit
                 b3 = deepcopy(self.box_list[self.box].upper)
                 b3.invisible = True
                 b3.s_point = self.box_list[self.box].upper.s_point
+                # assign b1 to the current upper bound and create a new box which is added to the end of the list
                 self.box_list[self.box].upper = b1
                 self.box_list[self.box].upper.transparent = True
                 new_box = self.get_default_box(b2, b3)
                 self.box_list.append(new_box)
             elif self.reverse:
                 print("making new adaptive bound in reverse direction")
-                # at this point we partition the box into two and insert a new box at the correct point in the boxList
+                # same histogramming procedure as above but this time it is the lower bound which is updated
                 self.box_list[self.box].get_s_extremes(self.histogram_boxes, self.epsilon)
                 bottom = self.box_list[self.box].bot
                 top = self.box_list[self.box].top
@@ -218,6 +307,7 @@ class Adaptive(BXD):
                 b3 = deepcopy(self.box_list[self.box].lower)
                 self.box_list[self.box].lower = b1
                 new_box = self.get_default_box(b3, b2)
+                # at this point we partition the  current box into two by inserting a new box at the correct point in the box_list
                 self.box_list.insert(self.box, new_box)
                 self.box_list[self.box].active = True
                 self.box_list[self.box].upper.transparent = False
@@ -225,10 +315,22 @@ class Adaptive(BXD):
                 self.box_list[self.box].lower.transparent = True
 
     def get_default_box(self, lower, upper):
+        """
+        method returns a default adaptive box object from the given upper and lower bounds
+        :param lower: BXDbound object represnting the lower bound
+        :param upper: BXDbound object represnting the upper bound
+        :return:
+        """
         b = BXDBox(lower, upper, "adap", True)
         return b
 
     def reached_end(self, projected):
+        """
+        Method to check whether bxd has either reached the end point and needs reversing. This method also checks
+        whether the bxd run should be considered finished
+        :param projected:
+        :return:
+        """
         if not self.reverse:
             if self.progress_metric.end_type == 'distance':
                 if projected >= self.progress_metric.end_point and self.box_list[self.box].type != 'adap':
@@ -259,6 +361,11 @@ class Adaptive(BXD):
                 self.progress_metric.set_bxd_reverse(self.reverse)
 
     def reassign_boundary(self):
+        """
+        repeates the procedure of producing an adaptive bound and replaces the exsisting upper or lower bound
+         depending whether self.reverse is true or false respectively
+        :return:
+        """
         fix = self.fix_to_path
         print("re-assigning boundary")
         self.fixToPath = False
@@ -278,6 +385,12 @@ class Adaptive(BXD):
         self.box_list[self.box].data = []
 
     def stuck_fix(self):
+        """
+        If the fixed (non-adaptive) bound has been hit repeatedly then this method allows BXD to go back (or forward in
+        the case of self.reverse = True) to the previous visited box to try and fix the stuck issue
+
+        :return:
+        """
         if self.bound_hit == 'lower' and self.reverse is False:
             self.box -= 1
             self.box_list[self.box].upper.transparent = True
@@ -326,10 +439,6 @@ class Adaptive(BXD):
         d = -1 * np.vdot(n, s)
         b = BXDBound(n, d)
         b.s_point=s
-        return b
-
-    def getDefaultBox(self, lower, upper):
-        b = BXDBox(lower, upper, 'adap', False)
         return b
 
     def output(self):
@@ -479,11 +588,69 @@ class Shrinking(BXD):
 
 
 class Converging(BXD):
-
+    """
+    Derived BXD class controlling and Adaptive BXD run. This class controls the adaptive placing of boundaries and
+    determines whether or not a boundary has been hit and whether an inversion is required.
+    :param progress_metric: ProgressMetric object which manages the CollectiveVariable representation, transforms
+                            the current MD geometry into "progess" between the BXD start and end points and
+                            optionally contains a path object if BXD is following a guess path
+    :param stuck_limit: Integer, DEFAULT = 5.
+                        Controls the number of subsequent hits at a boundary before BXD is considered stuck and the
+                        stuck fix method is called to remedy the situation
+    :param fix_to_path: Boolean, DEFAULT = False.
+                        If True all boundaries will be alligned such that they are perpendicular to the path. Should
+                        only be used for a curve progress_metric
+    :param adaptive_steps: Integer, DEFAULT = 1000
+                           Number of MD steps sampled before placing a new boundary in the direction of BXD progress
+    :param epsilon: Float. DEFAULT = 0.9
+                           Used in histograming to determine the proportion of the adaptive sampling points which
+                           should be outside the new adaptive boundary. The cumulative probability of points outside
+                           the new boundary should be ( 1.0 - epsilon)
+    :param reassign_rate: DEFAULT = 2.
+                          If an adaptive bound has not been hit after adaptive_steps * reassign_rate then the
+                          boundary will be moved based on new sampling
+    :param one_direction: Boolean, DEFAULT = False,
+                          If True, then the adaptive BXD run will be considerd complete once it reached the
+                          progress_metric end_point and will not attempt to place extra boundaries in the reverse
+                          direction
+    :param decorellation_limit: Integer, DEFAULT = 0
+                                A boundary hit / passage is only counted if it occurs decorellation_limit steps
+                                after the previous hit.
+    """
     def __init__(self, progress_metric, stuck_limit=5, box_skip_limit = 500000, bound_file="bounds.txt", geom_file='box_geoms.xyz', bound_hits=100,
                  read_from_file=False, convert_fixed_boxes = False, box_width=0, number_of_boxes=0, decorrelation_limit=10,  boxes_to_converge = [],
                  print_directory='Converging_Data', converge_ends = False, box_data_print_freqency = 10):
-
+        """
+        Derived BXD class controlling a Converging BXD run. This class keeps track of the number of hits on each
+        boundary and stores data such as mean first passage times. It also determines when sufficient boundary hits have
+        occured to move to the next box. One all the data has been collected, this class also contains methods for
+        generating a free energy profile
+        :param progress_metric: ProgressMetric object which manages the CollectiveVariable representation, transforms
+                                the current MD geometry into "progess" between the BXD start and end points and
+                                optionally contains a path object if BXD is following a guess path
+        :param stuck_limit: Integer, DEFAULT = 5.
+                            Controls the number of subsequent hits at a boundary before BXD is considered stuck and the
+                            stuck fix method is called to remedy the situation
+        :param box_skip_limit: Integer DEFAULT = 500000
+                               Max number of steps without a boundary hit before attempting to move to a the next box
+        :param bound_file: String DEFAULT = "bounds.txt"
+                           Filename containing a list of BXD boundaries from an adaptive run.
+        :param geom_file: String DEFAULT = 'box_geoms.xyz'
+                          Filename containing represntative geometries for each box. If this is not present, it will not
+                          be possible to skip between boxes
+        :param bound_hits: Integer DEFAULT = 100
+                           Number of boundary hits before moving to the next box
+        :param read_from_file: Boolean DEFAULT = False,
+                               If True this tries to read BXD boundaries from the bound_file
+        :param convert_fixed_boxes: 
+        :param box_width:
+        :param number_of_boxes:
+        :param decorrelation_limit:
+        :param boxes_to_converge:
+        :param print_directory:
+        :param converge_ends:
+        :param box_data_print_freqency:
+        """
         super(Converging, self).__init__(progress_metric, stuck_limit)
         self.bound_file = bound_file
         self.box_data_print_freqency = box_data_print_freqency

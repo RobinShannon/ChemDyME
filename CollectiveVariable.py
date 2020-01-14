@@ -6,7 +6,8 @@ from ChemDyME import util
 class CollectiveVariable:
     """
     Abstract base class for collective variable types:
-    The Collective variable describes some reduced dimesnional property of the molecular structure which BXD will act upon.
+    A collective variable describes some reduced dimensional property of the molecular structure which BXD will act
+    upon. The CollectiveVariable class controls a collective variable s of arbitrary dimension.
     All instances of this class must implement the folowing two functions;
 
     get_s : Returns the value of the collective variable for a particular set of cartesian coordinates
@@ -24,22 +25,23 @@ class CollectiveVariable:
         pass
 
     @abstractmethod
-    def get_delta(self, mol):
+    def get_delta(self, mol, n):
         pass
 
 
 class PrincipalCoordinates(CollectiveVariable):
+    """
+    Collective variable consists of an arbitary number of principal coordiantes, each of which  is a linear
+    combination of interatomic distances of the form PC = c1 * r1 + ... + cn * rn where r is an interatomic
+    distances and c is some coefficient.
+    :param pc_array: List of arrays containing the coefficient (dimension 0) and corresponding atom indicies
+                    (dimensions 1 and 2). There is one array for each PC considered. This list of array is generated
+                    by the DimensionalityReduction class
+    :param number_of_elements: Point at which to truncate linear combination in each PC
+    """
 
     def __init__(self, pc_array, number_of_elements, highest_index_considered=float("inf")):
-        """
-        Collective variable consists of a linear combination of interatomic distances of the form
-        PC = c1 * r1 + ... + cn * rn where r is an interatomic discatnce and c is some coefficient. This class can hold
-        an arbitray number of PC's.
-        :param pc_array: List of arrays containing the coefficient (dimension 0) and corresponding atom indicies
-                        (dimensions 1 and 2). There is one array for each PC considered. This list of array is generated
-                        by the DimensionalityReduction class
-        :param number_of_elements: Point at which to truncate linear combination in each PC
-        """
+
         self.number_of_elements = number_of_elements
         self.indicies = []
         self.coefficients = []
@@ -58,17 +60,17 @@ class PrincipalCoordinates(CollectiveVariable):
 
     def get_s(self, mol):
         """
-        Function to return n dimesnional vector of PC's. Util contains a Cythonized function for calculating the value of
+        Evaluate the n dimesnional vector of PC's. Util contains a Cythonized function for calculating the value of
         each PC at the geometry given by mol
         :param mol: ASE atoms object with current cartesian coordinates
-        :return: list of floats corresponding to the value of each PC at the current geometry
+        :return: Numpy array of floats corresponding to the value of each PC at the current geometry
         """
         d = util.getPC(self.indicies, self.coefficients, mol.get_positions())
         return d
 
     def read_principal_components(self, arr):
         """
-        Seperates out the coefficients and atom indicies from an array
+        Separates out the coefficients and atom indicies from an array
         :param arr: 3D array containing coefficients and followed by atom indicies
         :return: two arrays: "coefficients" with the coefficients for each interatomic distance in a given PC
                              "indicies" 2D array with the 2 atom indicies
@@ -80,11 +82,11 @@ class PrincipalCoordinates(CollectiveVariable):
 
     def get_delta(self, mol, n):
         """
-        Function to return the derivative of the each collective variable (PC) with respect to the atom cartesian
-        coordinates (dphi/dr see DOI: 10.1039/c6fd00138f) at a particular BXD boundary.
+        Evaluate the derivative of the each collective variable with respect to the atom cartesian
+        coordinates (del_phi see DOI: 10.1039/c6fd00138f) at a particular BXD boundary.
         :param mol: ASE atoms object containing current cartesian coordinates
-        :param n: list of norms to the the BXD boundary. One norm for each collective variable
-        :return: 3N-6
+        :param n: norm to the the BXD boundary.
+        :return: 3N by 3 array with the derivative del_phi
         """
         return util.get_delta(mol, n, self.indicies, self.coefficients)
 
@@ -122,37 +124,71 @@ class CartesianPrincipalCoordinates(CollectiveVariable):
         return constraint
 
 class Energy(CollectiveVariable):
-    # Collective variable is a list of interatomic distances
-    # "indicies" : n by 2 array of atom indicies. Each row defines an internuclear distance
+    """
+    Collective variable consisting of the potential energy of the system.
+    :param mol: ASE atoms object. This object must have a calculator atatched.
+    """
+
     def __init__(self, mol):
         self.mol = mol
 
-    # Function to return n dimensional vector of interatomic distances corresponding
+
     def get_s(self, mol):
+        """
+        Function to return the potential energy of the system as a numpy array
+        :param mol: ASE atoms object
+        :return: The potential energy of the system
+        """
         return np.asarray(mol.get_potential_energy())
 
-    # Function to return a BXD constrain at a given geometry (mol) having hit a given boundary (n)
     def get_delta(self, mol, bound):
+        """
+        Evaluate del_phi which in this case is given by the molecular forces
+        :param mol: ASE atoms object
+        :param bound: norm of BXD boundary hit, not needed in this case since for BXD in energy the norm is alway 1,
+                      but included for consistency with the base class
+        :return: The forces of the system
+        """
         return mol.get_forces()
 
 class Distances(CollectiveVariable):
+    """
+    Collective variable consisting of an arbitrary number of interatomic distances
+    :param mol: ASE atoms object
+    :param distances: 2D array of atom indicies for defining a an arbitrary number of interatomic distances within the
+           system
+    """
 
     def __init__(self, mol, distances):
         self.mol = mol
         self.distances = distances
 
     def get_s(self, mol):
+        """
+        Evaluate the interatomic distances at the given geometry
+        :param mol: ASE atoms object
+        :return: Numpy array of inter-atomic distances
+        """
+        # Create a numpy array of the correct size to hold all the interatomic distances in the variable
         d = np.zeros(len(self.distances))
+        # Iterate over the distances list and evaluate the interatomic distance corresponding to each pair of atom
+        # indices
         for i,dis in enumerate(self.distances):
             d[i] = mol.get_distance(int(dis[0]), int(dis[1]))
         return d
 
     def get_delta(self, mol, n):
+        """
+        Evaluate del_phi at the given geometry.
+        :param mol: ASE atoms object
+        :param n: norm to the BXD boundary hit. The norm has the same dimensionality as the collective variable
+        :return: array corresponding to del_phi
+        """
         constraint = np.zeros(mol.get_positions().shape)
         pos = mol.get_positions()
         # First loop over all atoms
         for i in range(0, len(mol)):
-            # Then check wether that atom contributes to a collective variable
+            # Then check whether that atom contributes to a collective variable
             for j,d in enumerate(self.distances):
                 # need a check here in case the collective variable is zero since nan would be returned
                 if mol.get_distance(int(d[0]), int(d[1])) != 0:
@@ -175,6 +211,13 @@ class Distances(CollectiveVariable):
         return constraint
 
 class COM(CollectiveVariable):
+    """
+    Collective variable consisting a the distance between the centers of mass of two groups of atoms within the
+    system
+    :param mol: Ase atoms object
+    :param fragment_1: List of atom indices in first group
+    :param fragment_2: List of atom indices in second group
+    """
 
     def __init__(self, mol, fragment_1, fragment_2):
         self.mol = mol
@@ -182,8 +225,14 @@ class COM(CollectiveVariable):
         self.fragment_2 = fragment_2
 
     def get_s(self, mol):
+        """
+        Get the distance between the centers of mass of the two groups at the current geometry
+        :param mol: ASE atoms type
+        :return: COM separation
+        """
         self.mass_1 = 0.0
         self.mass_2 = 0.0
+        # Set up numpy arrays to hold the x,y and z coordinates of the two COM's
         com_1 = np.zeros(3)
         com_2 = np.zeros(3)
         masses = mol.get_masses()
@@ -207,11 +256,18 @@ class COM(CollectiveVariable):
         self.com_1 = com_1
         self.com_2 = com_2
 
-        #Finally get distance between the two centers of mass
+        # Finally get distance between the two centers of mass
         com_dist = np.sqrt(((com_1[0]-com_2[0])**2)+((com_1[1]-com_2[1])**2)+((com_1[2]-com_2[2])**2))
         return com_dist
 
     def get_delta(self, mol, n):
+        """
+        Evaluate the derivative of the collective variable with respect to the atom cartesian
+        coordinates (del_phi see DOI: 10.1039/c6fd00138f) at a particular BXD boundary.
+        :param mol: ASE atoms object containing current cartesian coordinates
+        :param n: norm to the the BXD boundary.
+        :return: 3N by 3 array with the derivative del_phi
+        """
         constraint = np.zeros(mol.get_positions().shape)
         masses = mol.get_masses()
         com_dist = self.get_s(mol)

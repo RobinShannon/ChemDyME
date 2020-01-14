@@ -2,12 +2,17 @@ from abc import abstractmethod
 import numpy as np
 from numpy.random import standard_normal
 from ase import units
-import collections
 import warnings
 
-# Class to track constraints and calculate required derivatives
-# Inversion procedure occurs in MDintegrator class
 class MDIntegrator:
+    """
+    Base class defining the integrator used to propagate the molecular dynamics. Currently there are two derived
+    classes VelocityVerlet or Langevin. Each derived class must implement the following methods:
+    constrain1: Perform a BXD velocity inversion at a single boundary
+    constrain2: Perform a BXD velocity inversion when two boundaries are hit simultaneously
+    md_step_pos: Update the atom positions.
+    md_step_vel: Update the atom velocities.
+    """
 
     def __init__(self, mol, temperature=298, timestep=0.5):
         self.temperature = temperature * units.kB
@@ -25,6 +30,12 @@ class MDIntegrator:
         self.constrained = False
 
     def constrain(self,del_phi):
+        """
+        Determines whether one or two BXD boundaries have been hit depending upon the length of the del_phi argument and
+        calls the appropriate constrain function.
+        :param del_phi: List containing one or more values for del_phi, the derivative of a given BXD constraint
+        :return:
+        """
         if len(del_phi) > 2:
             warnings.warn('three or more BXD constraints have been hit simultaneously, currently only a maximum of two '
                           'can be dealt with')
@@ -51,9 +62,19 @@ class MDIntegrator:
 
 
 class VelocityVerlet(MDIntegrator):
+    """
+    Sets up an MD integrator for performing Velocity Verlet dynamics
+    :param mol: ASE atoms object
+    :param temperature: Starting temperature in Kelvin for the MD used to initialise random velocities
+    :param timestep: Timestep for use in the MD integration in femtoseconds
+    """
 
-    # Modify the stored velocities to satisfy a single BXD constraint
     def constrain1(self, del_phi):
+        """
+        Modify the stored velocities to satisfy a single BXD constraint
+        :param del_phi: derivative of the constraint with respect to the cartesian coordinates
+        :return:
+        """
 
         # Revert positions and forces to time prior to BXD inversion
         self.current_positions = self.old_positions
@@ -73,6 +94,12 @@ class VelocityVerlet(MDIntegrator):
         self.constrained = True
 
     def constrain2(self, del_phi1, del_phi2):
+        """
+        Modify the stored velocities to satisfy two BXD constraints
+        :param del_phi1: derivative of the first constraint with respect to the cartesian coordinates
+        :param del_phi2: derivative of the seccond constraint with respect to the cartesian coordinates
+        :return:
+        """
 
         # Revert positions and forces to time prior to BXD inversion
         self.current_positions = self.old_positions
@@ -103,8 +130,13 @@ class VelocityVerlet(MDIntegrator):
                                   (lamb2 * del_phi2 * (1 / self.masses[:, None]))
         self.constrained = True
 
-    # This method returns the new positions after a single md timestep
     def md_step_pos(self, forces, mol):
+        """
+        This method returns the new positions after a single md timestep
+        :param forces: array containing the forces at the current geometry
+        :param mol: ASE atoms object
+        :return:
+        """
 
         # If we have been constrained then forces have already been reset
         # Otherwise store forces provided to function
@@ -126,11 +158,18 @@ class VelocityVerlet(MDIntegrator):
 
         # Return positions
         mol.set_positions(self.current_positions)
+
+        # If we have periodic boundary conditions then make sure the new positions respect these
         if mol.pbc.any():
             mol.wrap()
 
     def md_step_vel(self, forces, mol):
-
+        """
+        This method returns the new velocities
+        :param forces: array containing the forces at the current geometry
+        :param mol: ASE atoms object
+        :return:
+        """
         # Store forces from previous step and then update
         self.old_forces = self.forces
         self.forces = forces
@@ -148,12 +187,24 @@ class VelocityVerlet(MDIntegrator):
         mol.set_velocities(self.current_velocities)
 
     def output(self, mol):
+        """
+        Generates string of output text appropriate to the velocity verlet case
+        :param mol: ASE atoms object
+        :return: output string
+        """
         out = " total energy = " + str(mol.get_potential_energy() + mol.get_kinetic_energy())
         return out
 
 class Langevin(MDIntegrator):
 
     def __init__(self, mol, temperature=298, friction=1.0, timestep=0.5):
+        """
+        Set up an instance of a Langevin MD integrator.
+        :param mol: ASE atoms object
+        :param temperature: Temperature the MD should be run at in Kelvin
+        :param friction: Langevin friction parameter
+        :param timestep: MD timestep in femtosecconds
+        """
         self.friction = friction
         # Get coefficients
         super(Langevin, self).__init__(mol, temperature=temperature, timestep=timestep)
@@ -175,7 +226,11 @@ class Langevin(MDIntegrator):
 
     # Modify the stored velocities to satisfy a single BXD constraint
     def constrain1(self, del_phi):
-
+        """
+        Modify the stored velocities to satisfy a single BXD constraint
+        :param del_phi: derivative of the constraint with respect to the cartesian coordinates
+        :return:
+        """
         # Revert positions and forces to time prior to BXD inversion
         self.current_positions = self.old_positions
         self.current_velocities = self.old_velocities
@@ -194,6 +249,12 @@ class Langevin(MDIntegrator):
         self.constrained = True
 
     def constrain2(self, del_phi1, del_phi2):
+        """
+        Modify the stored velocities to satisfy two BXD constraints
+        :param del_phi1: derivative of the first constraint with respect to the cartesian coordinates
+        :param del_phi2: derivative of the seccond constraint with respect to the cartesian coordinates
+        :return:
+        """
         # Revert positions and forces to time prior to BXD inversion
         self.current_positions = self.old_positions
         self.current_velocities = self.old_velocities
@@ -226,6 +287,12 @@ class Langevin(MDIntegrator):
 
     # This method returns the new positions after a single md timestep
     def md_step_pos(self, forces, mol):
+        """
+        This method returns the new positions after a single md timestep
+        :param forces: array containing the forces at the current geometry
+        :param mol: ASE atoms object
+        :return:
+        """
 
         # If we have been constrined then forces have already been reset
         # Otherwise store foces provided to function
@@ -253,6 +320,12 @@ class Langevin(MDIntegrator):
         mol.set_positions(self.current_positions)
 
     def md_step_vel(self, forces, mol):
+        """
+        This method returns the new velocities
+        :param forces: array containing the forces at the current geometry
+        :param mol: ASE atoms object
+        :return:
+        """
 
         # Store forces from previous step and then update
         self.old_forces = self.forces
@@ -272,5 +345,10 @@ class Langevin(MDIntegrator):
         mol.set_velocities(self.current_velocities)
 
     def output(self, mol):
+        """
+        Generates string of output text appropriate to the Langevin case
+        :param mol: ASE atoms object
+        :return: output string
+        """
         out = " Temperature = " + str(mol.get_temperature()) + ' Total_energy = ' +str(mol.get_potential_energy() + mol.get_kinetic_energy())
         return out
