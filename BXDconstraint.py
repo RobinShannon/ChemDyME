@@ -589,68 +589,54 @@ class Shrinking(BXD):
 
 class Converging(BXD):
     """
-    Derived BXD class controlling and Adaptive BXD run. This class controls the adaptive placing of boundaries and
-    determines whether or not a boundary has been hit and whether an inversion is required.
+    Derived BXD class controlling a Converging BXD run. This class keeps track of the number of hits on each
+    boundary and stores data such as mean first passage times. It also determines when sufficient boundary hits have
+    occured to move to the next box. One all the data has been collected, this class also contains methods for
+    generating a free energy profile
     :param progress_metric: ProgressMetric object which manages the CollectiveVariable representation, transforms
                             the current MD geometry into "progess" between the BXD start and end points and
                             optionally contains a path object if BXD is following a guess path
     :param stuck_limit: Integer, DEFAULT = 5.
                         Controls the number of subsequent hits at a boundary before BXD is considered stuck and the
                         stuck fix method is called to remedy the situation
-    :param fix_to_path: Boolean, DEFAULT = False.
-                        If True all boundaries will be alligned such that they are perpendicular to the path. Should
-                        only be used for a curve progress_metric
-    :param adaptive_steps: Integer, DEFAULT = 1000
-                           Number of MD steps sampled before placing a new boundary in the direction of BXD progress
-    :param epsilon: Float. DEFAULT = 0.9
-                           Used in histograming to determine the proportion of the adaptive sampling points which
-                           should be outside the new adaptive boundary. The cumulative probability of points outside
-                           the new boundary should be ( 1.0 - epsilon)
-    :param reassign_rate: DEFAULT = 2.
-                          If an adaptive bound has not been hit after adaptive_steps * reassign_rate then the
-                          boundary will be moved based on new sampling
-    :param one_direction: Boolean, DEFAULT = False,
-                          If True, then the adaptive BXD run will be considerd complete once it reached the
-                          progress_metric end_point and will not attempt to place extra boundaries in the reverse
-                          direction
-    :param decorellation_limit: Integer, DEFAULT = 0
+    :param box_skip_limit: Integer DEFAULT = 500000
+                           Max number of steps without a boundary hit before attempting to move to a the next box
+    :param bound_file: String DEFAULT = "bounds.txt"
+                       Filename containing a list of BXD boundaries from an adaptive run.
+    :param geom_file: String DEFAULT = 'box_geoms.xyz'
+                      Filename containing represntative geometries for each box. If this is not present, it will not
+                      be possible to skip between boxes
+    :param bound_hits: Integer DEFAULT = 100
+                       Number of boundary hits before moving to the next box
+    :param read_from_file: Boolean DEFAULT = False,
+                           If True this tries to read BXD boundaries from the bound_file
+    :param convert_fixed_boxes: Boolean DEFAULT = False
+                                Niche case where you dont have a bounds file to read from and want to create boxes
+                                of a fixed size. NOT TESTED
+    :param box_width: If convert_fixed_boxes = True then this defines the width of the box.
+    :param number_of_boxes: If convert_fixed_boxes = True then this defines the number of boxes
+    :param decorrelation_limit: Integer, DEFAULT = 0
                                 A boundary hit / passage is only counted if it occurs decorellation_limit steps
                                 after the previous hit.
+    :param boxes_to_converge: List.
+                              Specifies a subset of the total boxes which to converge.
+                              e.g if boxes_to_converge = [3,6] then only boxes 3 to 6 inclusive will be converged
+    :param print_directory: String, DEFAULT="Converging_Data"
+                            Directory name for printing converging data. If this directory already exsist the new
+                            data will be appended to the exsisting
+    :param converge_ends: Boolean DEFAULT = False
+                          If True then the start and end boxes will be fully converged. This means that the start
+                          box will aim for "bound_hits" at the lower boundary and the top box will aim for
+                          "bound_hits" at the top boundary
+    :param box_data_print_freqency: Integer, DEFAULT = 10
+                                    Frequency at which collective variable and progress metric data for a box is
+                                    printed to file. Larger values help prevent files becoming too large for long
+                                    BXD runs.
     """
     def __init__(self, progress_metric, stuck_limit=5, box_skip_limit = 500000, bound_file="bounds.txt", geom_file='box_geoms.xyz', bound_hits=100,
-                 read_from_file=False, convert_fixed_boxes = False, box_width=0, number_of_boxes=0, decorrelation_limit=10,  boxes_to_converge = [],
+                 read_from_file=False, convert_fixed_boxes = False, box_width=0, number_of_boxes=0, decorrelation_limit=0,  boxes_to_converge = [],
                  print_directory='Converging_Data', converge_ends = False, box_data_print_freqency = 10):
-        """
-        Derived BXD class controlling a Converging BXD run. This class keeps track of the number of hits on each
-        boundary and stores data such as mean first passage times. It also determines when sufficient boundary hits have
-        occured to move to the next box. One all the data has been collected, this class also contains methods for
-        generating a free energy profile
-        :param progress_metric: ProgressMetric object which manages the CollectiveVariable representation, transforms
-                                the current MD geometry into "progess" between the BXD start and end points and
-                                optionally contains a path object if BXD is following a guess path
-        :param stuck_limit: Integer, DEFAULT = 5.
-                            Controls the number of subsequent hits at a boundary before BXD is considered stuck and the
-                            stuck fix method is called to remedy the situation
-        :param box_skip_limit: Integer DEFAULT = 500000
-                               Max number of steps without a boundary hit before attempting to move to a the next box
-        :param bound_file: String DEFAULT = "bounds.txt"
-                           Filename containing a list of BXD boundaries from an adaptive run.
-        :param geom_file: String DEFAULT = 'box_geoms.xyz'
-                          Filename containing represntative geometries for each box. If this is not present, it will not
-                          be possible to skip between boxes
-        :param bound_hits: Integer DEFAULT = 100
-                           Number of boundary hits before moving to the next box
-        :param read_from_file: Boolean DEFAULT = False,
-                               If True this tries to read BXD boundaries from the bound_file
-        :param convert_fixed_boxes: 
-        :param box_width:
-        :param number_of_boxes:
-        :param decorrelation_limit:
-        :param boxes_to_converge:
-        :param print_directory:
-        :param converge_ends:
-        :param box_data_print_freqency:
-        """
+
         super(Converging, self).__init__(progress_metric, stuck_limit)
         self.bound_file = bound_file
         self.box_data_print_freqency = box_data_print_freqency
@@ -686,9 +672,18 @@ class Converging(BXD):
             self.end_box = len(self.box_list)-1
 
     def reset(self, output_directory):
+        """
+        Function reseting a converging BXD object to its orriginal state but with a different output directory
+        :param output_directory:
+        :return:
+        """
         self.__init__(self.progress_metric, self.stuck_limit, self.box_skip_limit, self.bound_file, self.geom_file, self.number_of_hits, self.read_from_file, self.convert_fixed_boxes, self.box_width, self.number_of_boxes, self.decorrelation_limit,  self.boxes_to_converge, output_directory, self.converge_ends)
 
     def initialise_files(self):
+        """
+        Open all the output files for the current box
+        :return:
+        """
         self.upper_rates_file = open(self.box_list[self.box].upper_rates_path, 'a')
         self.upper_milestoning_rates_file = open(self.box_list[self.box].upper_milestoning_rates_path, 'a')
         self.lower_rates_file = open(self.box_list[self.box].lower_rates_path, 'a')
@@ -696,11 +691,21 @@ class Converging(BXD):
         self.data_file = open(self.box_list[self.box].data_path, 'a')
 
     def get_box_geometries(self, file):
+        """
+        Read a box geometries file generated from an adaptive run and associate each frame with a box.
+        :param file:
+        :return:
+        """
         for i,box in enumerate(self.box_list):
             box.geometry = read(file, index=i)
 
 
     def generate_output_files(self):
+        """
+        Assigns the correct file paths for the output from different boxes. The root output directory is given by
+        self.dir and a subdirectory is created for each box.
+        :return:
+        """
         for i,box in enumerate(self.box_list):
             temp_dir = self.dir + ("/box_" + str(i))
             if not os.path.isdir(temp_dir):
@@ -712,14 +717,24 @@ class Converging(BXD):
             box.data_path = temp_dir + '/box_data.txt'
 
     def update(self, mol):
+        """
+        Does the general BXD bookkeeping and management. Firsts gets the progress_metric data from the mol object and
+        then calls functions to check whether a BXD inversion is required and whether we need to move to the next box.
+        :param mol: ASE atoms object
+        :return:
+        """
 
         self.skip_box = False
 
+        # Check the upper and lower bounds to see whether either has had sufficient hits to be made transparent
         self.update_bounds()
+
         # update current and previous s(r) values
         self.s = self.get_s(mol)
         projected_data = self.progress_metric.project_point_on_path(self.s)
         distance_from_bound = self.progress_metric.get_dist_from_bound(self.s, self.box_list[self.box].lower)
+
+        # make sure to reset the inversion and bound_hit flags to False / none
         self.inversion = False
         self.bound_hit = "none"
 
@@ -727,13 +742,15 @@ class Converging(BXD):
         self.reached_end()
 
 
-        # Check whether a boundary has been hit and if so update whether the hit boundary
+        # Check whether a boundary has been hit and if so update the hit boundary
         self.path_bound_hit = self.progress_metric.reflect_back_to_path()
         self.inversion = self.boundary_check() or self.path_bound_hit
 
+        # If there is a BXD inversion increment the stuck counter and set the steps_since_any_boundary_hit counter to 0
         if self.inversion:
             self.stuck_count += 1
             self.steps_since_any_boundary_hit = 0
+        # Otherwise increment the appropriate counters
         else:
             self.steps_since_any_boundary_hit += 1
             self.stuck_count = 0
@@ -741,10 +758,11 @@ class Converging(BXD):
             self.old_s = self.s
             self.box_list[self.box].upper.step_since_hit += 1
             self.box_list[self.box].lower.step_since_hit += 1
-            if not self.progress_metric.reflect_back_to_path() and not self.inversion:
-                if self.box_list[self.box].points_in_box != 0 and self.box_list[self.box].points_in_box % self.box_data_print_freqency == 0:
-                    self.data_file.write(str(self.s) + '\t' + str(projected_data) + '\t' + str(distance_from_bound) + '\t' + str(mol.get_potential_energy()) + '\n')
-                self.box_list[self.box].points_in_box += 1
+            # Consult box_data_print_freqency to determine whether or not print the data to a file
+            if self.box_list[self.box].points_in_box != 0 and self.box_list[self.box].points_in_box % self.box_data_print_freqency == 0:
+                self.data_file.write(str(self.s) + '\t' + str(projected_data) + '\t' + str(distance_from_bound) + '\t' + str(mol.get_potential_energy()) + '\n')
+            self.box_list[self.box].points_in_box += 1
+        # Check whether we are stuck in a loop of inversions. If stuck, make the boundary we are stuck at transparent to move to then next box
         if self.stuck_count > self.stuck_limit:
             self.stuck_count = 0
             if self.bound_hit == 'upper':
@@ -773,7 +791,7 @@ class Converging(BXD):
                 self.lower_rates_file = open(self.box_list[self.box].lower_rates_path, 'a')
                 self.lower_milestoning_rates_file = open(self.box_list[self.box].lower_milestoning_rates_path, 'a')
                 self.data_file = open(self.box_list[self.box].data_path, 'a')
-
+        # Check whether we have reach the box_skip_limit and alter the box accordingly.
         if self.reverse and self.box_list[self.box].lower.step_since_hit > self.box_skip_limit:
             self.skip_box = True
             self.upper_rates_file.close()
@@ -811,6 +829,11 @@ class Converging(BXD):
         pass
 
     def read_exsisting_boundaries(self,file):
+        """
+        Read BXD boundaries from a file
+        :param file: string giving the filename of the bounds file
+        :return:
+        """
         box_list = []
         lines = open(file,"r").readlines()
         for i in range(2, len(lines)-1):
@@ -833,12 +856,21 @@ class Converging(BXD):
         return box_list
 
     def reached_end(self):
+        """
+        Checks whether the converging run either needs to be reversed or whether it is complete
+        :return:
+        """
+        # First if we are not currently reversing check whether or not we have reached the end box and reversing should
+        # be turned on.
         if self.box == self.end_box and self.reverse is False:
+            # If converge_ends then make sure the final bound meets the bound_hits criteria before reversing
             if not self.converge_ends or self.criteria_met(self.box_list[self.box].upper):
                 self.reverse = True
                 self.progress_metric.set_bxd_reverse(self.reverse)
                 print('reversing')
+        # If we are reversing then check whether we are back in box 0 and the run is complete
         elif self.box == self.start_box and self.reverse is True:
+            # If converge_ends then make sure the first bound meets the bound_hits criteria
             if not self.converge_ends or self.criteria_met(self.box_list[self.box].lower):
                 self.reverse = False
                 self.progress_metric.set_bxd_reverse(self.reverse)
@@ -848,9 +880,28 @@ class Converging(BXD):
         pass
 
     def criteria_met(self, boundary):
+        """
+        Check whether a boundary has exceeded the specified number of hits
+        :param boundary: BXDbound object
+        :return:
+        """
         return boundary.hits >= self.number_of_hits
 
     def get_free_energy(self,T, boxes=1, milestoning = False, directory = 'Converging_Data', decorrelation_limit = 1):
+        """
+        Reads the data in the output directory to calculate the free_energy profile
+        :param T: Temperature MD was run at in K
+        :param boxes: Integer DEFAULT = 1
+                      NB needs renaming. Controls the resolution of the free energy profile. Each bxd box with be
+                      histogrammed into "boxes" subboxes
+        :param milestoning: Boolean DEFAULT = False
+                            If True the milestoning rates files will be used, otherwise normal rates files will be used
+        :param directory: String DEFAULT = 'Converging_Data"
+                          Name of output directory to be read
+        :param decorrelation_limit: Integer DEFAULT = 1
+                                    Only rates in excess of decorrelation_limit will be read
+        :return:
+        """
         # Multiply T by the gas constant in kJ/mol
         T *= (8.314 / 1000)
         for i,box in enumerate(self.box_list):
@@ -924,6 +975,14 @@ class Converging(BXD):
                 print('couldnt find histogram data for high resolution profile')
 
     def collate_free_energy_data(self, prefix = 'Converging_Data', outfile = 'Combined_converging'):
+        """
+        Collates data from a number of different output directories with the same prefix into a new directory
+        :param prefix: String DEFAULT = 'Converging_Data'
+                       Prefix of input directories to be read
+        :param outfile: String DEFAULT = 'Combined_converging'
+                        Filename for output directory
+        :return:
+        """
         dir_root_list = []
         number_of_boxes = []
         for subdir, dirs, files in os.walk(os.getcwd()):
@@ -992,6 +1051,11 @@ class Converging(BXD):
 
 
     def boundary_check(self):
+        """
+        Check upper and lower boundaries for hits and return True if an inversion is required. Also determines the mean
+        first passage times for hits against each bound.
+        :return: Boolean indicating whether or not a BXD inversion should be performed
+        """
         self.bound_hit = 'none'
         if self.path_bound_hit:
             self.box_list[self.box].decorrelation_count = 0
