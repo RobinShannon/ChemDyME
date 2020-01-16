@@ -1061,11 +1061,13 @@ class Converging(BXD):
         for h in hist:
             cumulative_probability += h
 
+        hist_array = []
         for h in hist:
-            h /= cumulative_probability
-            h = -1.0 * np.log(h) * T
+            his = h / cumulative_probability
+            his = -1.0 * np.log(his) * T
+            hist_array.append(his)
 
-        return edges, hist, energies
+        return edges, hist_array, energies
 
 
     def collate_free_energy_data(self, prefix = 'Converging_Data', outfile = 'Combined_converging'):
@@ -1339,7 +1341,7 @@ class BXDBox:
     def get_modified_box_data(self):
         modified_data = []
         for d in self.data:
-            ar = [d[1], self.eq_population, d[3]]
+            ar = [d[1] / len(self.data), self.eq_population / len(self.data), d[3]]
             modified_data.append(ar)
         return modified_data
 
