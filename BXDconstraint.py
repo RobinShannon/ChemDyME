@@ -974,6 +974,100 @@ class Converging(BXD):
             except:
                 print('couldnt find histogram data for high resolution profile')
 
+    def get_alternate_free_energy(self,T, boxes=15, milestoning = False, directory = 'Converging_Data', decorrelation_limit = 1):
+        """
+        Reads the data in the output directory to calculate the free_energy profile. This is an experimental variation
+        on the standard function.
+        :param T: Temperature MD was run at in K
+        :param boxes: Integer DEFAULT = 1
+                      NB needs renaming. Controls the resolution of the free energy profile. Each bxd box with be
+                      histogrammed into "boxes" subboxes
+        :param milestoning: Boolean DEFAULT = False
+                            If True the milestoning rates files will be used, otherwise normal rates files will be used
+        :param directory: String DEFAULT = 'Converging_Data"
+                          Name of output directory to be read
+        :param decorrelation_limit: Integer DEFAULT = 1
+                                    Only rates in excess of decorrelation_limit will be read
+        :return:
+        """
+        # Multiply T by the gas constant in kJ/mol
+        T *= (8.314 / 1000)
+        for i,box in enumerate(self.box_list):
+            temp_dir = directory + ("/box_" + str(i) + '/')
+            try:
+                box.upper.average_rates(milestoning, 'upper', temp_dir, decorrelation_limit)
+            except:
+                box.lower.average_rate = 0
+            try:
+                box.lower.average_rates(milestoning, 'lower', temp_dir, decorrelation_limit)
+            except:
+                box.lower.average_rate = 0
+            try:
+                box.read_box_data(temp_dir)
+            except:
+                pass
+
+        for i in range(0, len(self.box_list) - 1):
+            if i == 0:
+                self.box_list[i].gibbs = 0
+            try:
+                k_eq = self.box_list[i].upper.average_rate / self.box_list[i + 1].lower.average_rate
+                K_eq_err = k_eq * np.sqrt((self.box_list[i].upper.rate_error/self.box_list[i].upper.average_rate)**2 + (self.box_list[i+1].lower.rate_error/self.box_list[i+1].lower.average_rate)**2)
+                try:
+                    delta_g = -1.0 * np.log(k_eq) * T
+                except:
+                    delta_g = 0
+                delta_g_err = (T * K_eq_err) / k_eq
+                self.box_list[i + 1].gibbs = delta_g + self.box_list[i].gibbs
+                self.box_list[i + 1].gibbs_err = delta_g_err
+            except:
+                self.box_list[i+1].gibbs = 0
+                self.box_list[i+1].gibbs_err = 0
+
+            total_probability =0
+            for i in range(0, len(self.box_list)):
+                self.box_list[i].eq_population = np.exp(-1.0 * (self.box_list[i].gibbs / T))
+                self.box_list[i].eq_population_err = self.box_list[i].eq_population * (1 / T) * self.box_list[i].gibbs_err
+                total_probability += self.box_list[i].eq_population
+
+            all_data = []
+            for i in range(0, len(self.box_list)):
+                self.box_list[i].eq_population /= total_probability
+                self.box_list[i].eq_population_err /= total_probability
+                all_data.append(self.box_list[i].get_modified_box_data())
+
+            profile = self.histogram_full_profile(all_data, T, boxes)
+            return profile
+
+    def histogram_full_profile(self, data, T, boxes):
+        data = [float(d[0]) for d in data]
+        top = max(data)
+        edges = []
+        energies = []
+        for i in range(0, boxes + 1):
+            edges.append(i * (top / boxes))
+        hist = np.zeros(boxes)
+
+        for j in range(0, boxes):
+            temp_ene = []
+            for d in self.data:
+                if float(d[0]) > edges[j] and float(d[0]) <= edges[j + 1]:
+                    hist[j] += d[1]
+                    temp_ene.append(float(d[2]))
+            temp_ene = np.asarray(temp_ene)
+            energies.append(np.mean(temp_ene))
+
+        cumulative_probability = 0
+        for h in hist:
+            cumulative_probability += h
+
+        for h in hist:
+            h /= cumulative_probability
+            h = -1.0 * np.log(h) * T
+
+        return edges, hist, energies
+
+
     def collate_free_energy_data(self, prefix = 'Converging_Data', outfile = 'Combined_converging'):
         """
         Collates data from a number of different output directories with the same prefix into a new directory
@@ -1241,6 +1335,13 @@ class BXDBox:
             if d[1] >= edges[limit2] and d[1] < edges[limit2 + 1]:
                 self.bot_data.append(d[0])
         self.bot = np.mean(self.bot_data, axis=0)
+
+    def get_modified_box_data(self):
+        modified_data = []
+        for d in self.data:
+            tup = (d[1], self.eq_population, d[3])
+            modified_data.append(tup)
+        return modified_data
 
     def get_full_histogram(self, boxes=10):
         data = [float(d[2]) for d in self.data]
