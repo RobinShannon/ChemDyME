@@ -1067,7 +1067,11 @@ class Converging(BXD):
             his = -1.0 * np.log(his) * T
             hist_array.append(his)
 
-        return edges, hist_array, energies
+        profile = []
+        for e,h,ene in zip(edges,hist_array,energies):
+            profile.append(e,h,ene)
+
+        return profile
 
 
     def collate_free_energy_data(self, prefix = 'Converging_Data', outfile = 'Combined_converging'):
