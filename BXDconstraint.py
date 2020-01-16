@@ -1050,7 +1050,7 @@ class Converging(BXD):
 
         for j in range(0, boxes):
             temp_ene = []
-            for d in self.data:
+            for d in data:
                 if float(d[0]) > edges[j] and float(d[0]) <= edges[j + 1]:
                     hist[j] += d[1]
                     temp_ene.append(float(d[2]))
