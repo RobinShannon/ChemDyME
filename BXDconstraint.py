@@ -1345,7 +1345,8 @@ class BXDBox:
     def get_modified_box_data(self):
         modified_data = []
         for d in self.data:
-            ar = [d[1] / len(self.data), (float(self.eq_population) / float(len(self.data))), d[3]]
+            normalisation_factor = (float(self.eq_population) / float(len(self.data)))
+            ar = [d[1] / len(self.data), normalisation_factor, d[3]]
             modified_data.append(ar)
         return modified_data
 
