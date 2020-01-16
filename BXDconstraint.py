@@ -1069,7 +1069,7 @@ class Converging(BXD):
 
         profile = []
         for e,h,ene in zip(edges,hist_array,energies):
-            profile.append(e,h,ene)
+            profile.append([e,h,ene])
 
         return profile
 
