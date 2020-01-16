@@ -1040,8 +1040,8 @@ class Converging(BXD):
             return profile
 
     def histogram_full_profile(self, data, T, boxes):
-        data = [float(d[0]) for d in data]
-        top = max(data)
+        data2 = [float(d[0]) for d in data]
+        top = max(data2)
         edges = []
         energies = []
         for i in range(0, boxes + 1):
