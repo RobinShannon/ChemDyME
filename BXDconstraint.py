@@ -887,7 +887,7 @@ class Converging(BXD):
         """
         return boundary.hits >= self.number_of_hits
 
-    def get_free_energy(self,T, boxes=1, milestoning = False, directory = 'Converging_Data', decorrelation_limit = 1):
+    def get_free_energy(self, T, boxes=1, milestoning = False, directory = 'Converging_Data', decorrelation_limit = 1):
         """
         Reads the data in the output directory to calculate the free_energy profile
         :param T: Temperature MD was run at in K
@@ -974,7 +974,7 @@ class Converging(BXD):
             except:
                 print('couldnt find histogram data for high resolution profile')
 
-    def get_alternate_free_energy(self,T, boxes=15, milestoning = False, directory = 'Converging_Data', decorrelation_limit = 1):
+    def get_alternate_free_energy(self, T, boxes=15, milestoning = False, directory = 'Converging_Data', decorrelation_limit = 1):
         """
         Reads the data in the output directory to calculate the free_energy profile. This is an experimental variation
         on the standard function.
@@ -1024,7 +1024,7 @@ class Converging(BXD):
                 self.box_list[i+1].gibbs = 0
                 self.box_list[i+1].gibbs_err = 0
 
-            total_probability =0
+            total_probability = 0
             for i in range(0, len(self.box_list)):
                 self.box_list[i].eq_population = np.exp(-1.0 * (self.box_list[i].gibbs / T))
                 self.box_list[i].eq_population_err = self.box_list[i].eq_population * (1 / T) * self.box_list[i].gibbs_err
@@ -1034,7 +1034,7 @@ class Converging(BXD):
             for i in range(0, len(self.box_list)):
                 self.box_list[i].eq_population /= total_probability
                 self.box_list[i].eq_population_err /= total_probability
-                all_data.append(self.box_list[i].get_modified_box_data())
+                all_data += self.box_list[i].get_modified_box_data()
 
             profile = self.histogram_full_profile(all_data, T, boxes)
             return profile
@@ -1339,8 +1339,8 @@ class BXDBox:
     def get_modified_box_data(self):
         modified_data = []
         for d in self.data:
-            tup = (d[1], self.eq_population, d[3])
-            modified_data.append(tup)
+            ar = [d[1], self.eq_population, d[3]]
+            modified_data.append(ar)
         return modified_data
 
     def get_full_histogram(self, boxes=10):
