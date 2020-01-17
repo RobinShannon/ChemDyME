@@ -255,7 +255,8 @@ class Adaptive(BXD):
             self.box_list[self.box].lower.step_since_hit += 1
             # Provided we are close enough to the path, store the data of the current point
             if not self.progress_metric.reflect_back_to_path():
-                self.box_list[self.box].data.append((self.s, projected_data))
+                if self.steps_since_any_boundary_hit > self.decorellation_limit:
+                    self.box_list[self.box].data.append((self.s, projected_data))
                 # If this is point is the largest progress metric so far then store its geometry.
                 # At the end of the run this will store the geometry of the furthest point along the BXD path
                 if projected_data > self.furthest_progress:
@@ -758,10 +759,11 @@ class Converging(BXD):
             self.old_s = self.s
             self.box_list[self.box].upper.step_since_hit += 1
             self.box_list[self.box].lower.step_since_hit += 1
-            # Consult box_data_print_freqency to determine whether or not print the data to a file
-            if self.box_list[self.box].points_in_box != 0 and self.box_list[self.box].points_in_box % self.box_data_print_freqency == 0:
-                self.data_file.write(str(self.s) + '\t' + str(projected_data) + '\t' + str(distance_from_bound) + '\t' + str(mol.get_potential_energy()) + '\n')
-            self.box_list[self.box].points_in_box += 1
+            if self.steps_since_any_boundary_hit > self.decorrelation_limit:
+                # Consult box_data_print_freqency to determine whether or not print the data to a file
+                if self.box_list[self.box].points_in_box != 0 and self.box_list[self.box].points_in_box % self.box_data_print_freqency == 0:
+                    self.data_file.write(str(self.s) + '\t' + str(projected_data) + '\t' + str(distance_from_bound) + '\t' + str(mol.get_potential_energy()) + '\n')
+                self.box_list[self.box].points_in_box += 1
         # Check whether we are stuck in a loop of inversions. If stuck, make the boundary we are stuck at transparent to move to then next box
         if self.stuck_count > self.stuck_limit:
             self.stuck_count = 0
