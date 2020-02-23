@@ -445,7 +445,8 @@ class Adaptive(BXD):
     def output(self):
         out = " box = " + str(self.box) + ' path segment = ' + str(self.progress_metric.path_segment) +\
               ' % progress = ' + str(self.progress_metric.project_point_on_path(self.s) / self.progress_metric.end_point)\
-              + " bound hit = " + str(self.bound_hit) + " distance from path  = " + str(self.progress_metric.distance_from_path)
+              + " bound hit = " + str(self.bound_hit) + " distance from path  = " + str(self.progress_metric.distance_from_path) \
+              + ' Sampled points = ' + str(len(self.box_list[self.box].data))
         return out
 
     def get_converging_bxd(self, hits = 10, decorrelation_limit = 10, boxes_to_converge = []):
@@ -1269,7 +1270,7 @@ class Converging(BXD):
 
     def output(self):
         out = " box = " + str(self.box) + ' Lower Bound Hits = ' + str(self.box_list[self.box].lower.hits) + \
-              ' Upper Bound Hits = ' + str(self.box_list[self.box].upper.hits)
+              ' Upper Bound Hits = ' + str(self.box_list[self.box].upper.hits) + ' Sampled points = ' + str(len(self.box_list[self.box].data))
         return out
 
 class BXDBox:
@@ -1353,7 +1354,9 @@ class BXDBox:
         return modified_data
 
     def get_full_histogram(self, boxes=10):
-        data = [float(d[2]) for d in self.data]
+        d = [float(d[1]) for d in self.data]
+        min = min(d)
+        data = [x - min for x in d]
         top = max(data)
         edges = []
         energies = []

@@ -163,14 +163,14 @@ class Trajectory:
 
             # Now determine what to print at the current MD step. TODO improve data writing / reporting mechanism
             # First check if we are due to print the geometry
-            if iterations % self.geo_print_frequency == 0:
+            if iterations % self.geo_print_frequency == 0 and self.bxd.steps_since_any_boundary_hit > self.bxd.decorellation_limit:
                 if print_to_file:
                     io.write(geom_file,self.mol, format='xyz', append=True)
                     geom_file.flush()
 
 
             # Now see if we are due to print the BXD current value of the collective variable to file.
-            if iterations % 10 == 0:
+            if iterations % 10 == 0 and self.bxd.steps_since_any_boundary_hit > self.bxd.decorellation_limit:
                 if print_to_file:
                     string = str(self.bxd.s)
                     # remove all newline and tab characters
