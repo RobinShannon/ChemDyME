@@ -1367,7 +1367,7 @@ class BXDBox:
         for j in range(0, boxes):
             temp_ene = []
             for d in self.data:
-                if float(d[2]) > edges[j] and float(d[2]) <= edges[j + 1]:
+                if float(d[1]) - min  > edges[j] and float(d[1]) - min <= edges[j + 1]:
                     hist[j] += 1
                     temp_ene.append(float(d[3]))
             temp_ene = np.asarray(temp_ene)
