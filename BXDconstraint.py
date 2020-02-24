@@ -1355,6 +1355,7 @@ class BXDBox:
 
     def get_full_histogram(self, boxes=10):
         d = [float(d[1]) for d in self.data]
+        print('getting min')
         min = float(min(d))
         print(min)
         data = [float(x) - min for x in d]
