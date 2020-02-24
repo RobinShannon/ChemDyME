@@ -1360,7 +1360,7 @@ class BXDBox:
         print(min)
         data = [float(x) - min for x in d]
         top = max(data)
-        print(max)
+        print(top)
         edges = []
         energies = []
         for i in range(0, boxes + 1):
