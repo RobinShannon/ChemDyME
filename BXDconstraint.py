@@ -1355,8 +1355,8 @@ class BXDBox:
 
     def get_full_histogram(self, boxes=10):
         d = [float(d[1]) for d in self.data]
-        min = min(d)
-        data = [x - min for x in d]
+        min = float(min(d))
+        data = [float(x) - min for x in d]
         top = max(data)
         edges = []
         energies = []
