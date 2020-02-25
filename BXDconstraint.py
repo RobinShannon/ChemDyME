@@ -735,6 +735,7 @@ class Converging(BXD):
         self.s = self.get_s(mol)
         projected_data = self.progress_metric.project_point_on_path(self.s)
         distance_from_bound = self.progress_metric.get_dist_from_bound(self.s, self.box_list[self.box].lower)
+        distance_from_upper = self.progress_metric.get_dist_from_bound(self.s, self.box_list[self.box].upper)
 
         # make sure to reset the inversion and bound_hit flags to False / none
         self.inversion = False
@@ -763,7 +764,7 @@ class Converging(BXD):
             if self.steps_since_any_boundary_hit > self.decorrelation_limit:
                 # Consult box_data_print_freqency to determine whether or not print the data to a file
                 if self.box_list[self.box].points_in_box != 0 and self.box_list[self.box].points_in_box % self.box_data_print_freqency == 0:
-                    self.data_file.write(str(self.s) + '\t' + str(projected_data) + '\t' + str(distance_from_bound) + '\t' + str(mol.get_potential_energy()) + '\n')
+                    self.data_file.write(str(self.s) + '\t' + str(projected_data) + '\t' + str(distance_from_bound) + '\t' + str(mol.get_potential_energy()) + + '\t' + str(distance_from_upper) +'\n')
                 self.box_list[self.box].points_in_box += 1
         # Check whether we are stuck in a loop of inversions. If stuck, make the boundary we are stuck at transparent to move to then next box
         if self.stuck_count > self.stuck_limit:
@@ -1354,25 +1355,22 @@ class BXDBox:
         return modified_data
 
     def get_full_histogram(self, boxes=10):
-        d = [float(d[1]) for d in self.data]
-        print('getting min')
-        min = np.min(d)
-        print(min)
-        data = [float(x) - min for x in d]
-        top = max(data)
-        print(top)
+        d = [float(d[2]) for d in self.data]
+        d2 = [float(d[4]) for d2 in self.data]
+        d3 = d + d2
+        d3 /= d
         edges = []
         energies = []
         for i in range(0, boxes + 1):
-            edges.append(i * (top / boxes))
+            edges.append(i * (1 / boxes))
         hist = np.zeros(boxes)
 
         for j in range(0, boxes):
             temp_ene = []
-            for da in self.data:
-                if float(da[1]) - min  > edges[j] and float(da[1]) - min <= edges[j + 1]:
+            for ene,da in zip(self.data,d3):
+                if float(da) - min  > edges[j] and float(da) - min <= edges[j + 1]:
                     hist[j] += 1
-                    temp_ene.append(float(da[3]))
+                    temp_ene.append(float(ene[3]))
             temp_ene = np.asarray(temp_ene)
             energies.append(np.mean(temp_ene))
         return edges, hist, energies
