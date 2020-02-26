@@ -1359,6 +1359,7 @@ class BXDBox:
         d2 = np.asarray([abs(float(d2[4])) for d2 in self.data])
         d3 = d + d2
         d3 /= d
+        d3 = d3.tolist()
         edges = []
         energies = []
         for i in range(0, boxes + 1):
