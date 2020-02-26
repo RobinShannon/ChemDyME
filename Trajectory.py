@@ -170,7 +170,7 @@ class Trajectory:
 
 
             # Now see if we are due to print the BXD current value of the collective variable to file.
-            if iterations % 10 == 0 and self.bxd.steps_since_any_boundary_hit > self.bxd.decorellation_limit:
+            if iterations % 10 == 0 and self.bxd.steps_since_any_boundary_hit > self.bxd.decorrelation_limit:
                 if print_to_file:
                     string = str(self.bxd.s)
                     # remove all newline and tab characters
