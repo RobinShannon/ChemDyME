@@ -1357,9 +1357,11 @@ class BXDBox:
     def get_full_histogram(self, boxes=10):
         d = np.asarray([float(d[2]) for d in self.data])
         d2 = np.asarray([abs(float(d2[4])) for d2 in self.data])
+        print('get arrays')
         d3 = d + d2
         d3  = d3 / d
         d3 = d3.tolist()
+        print('back to list')
         energy = ([float(d[3]) for d in self.data])
         edges = []
         energies = []
@@ -1370,6 +1372,7 @@ class BXDBox:
         for j in range(0, boxes):
             temp_ene = []
             for ene,da in zip(energy,d3):
+                print('zip bit')
                 if float(da) - min  > edges[j] and float(da) - min <= edges[j + 1]:
                     hist[j] += 1
                     temp_ene.append(float(ene))
