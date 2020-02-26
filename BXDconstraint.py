@@ -1360,6 +1360,9 @@ class BXDBox:
         d3 = d + d2
         d3 /= d
         d3 = d3.tolist()
+        print(len(d3))
+        energy = ([float(d[3]) for d in self.data])
+        print(len(energy))
         edges = []
         energies = []
         for i in range(0, boxes + 1):
@@ -1368,10 +1371,10 @@ class BXDBox:
 
         for j in range(0, boxes):
             temp_ene = []
-            for ene,da in zip(self.data,d3):
+            for ene,da in zip(energy,d3):
                 if float(da) - min  > edges[j] and float(da) - min <= edges[j + 1]:
                     hist[j] += 1
-                    temp_ene.append(float(ene[3]))
+                    temp_ene.append(float(ene))
             temp_ene = np.asarray(temp_ene)
             energies.append(np.mean(temp_ene))
         return edges, hist, energies
