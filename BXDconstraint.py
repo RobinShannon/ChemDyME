@@ -1374,7 +1374,7 @@ class BXDBox:
             temp_ene = []
             for ene,da in zip(energy,d3):
                 print('zip bit')
-                if float(da) - min  > edges[j] and float(da) - min <= edges[j + 1]:
+                if float(da) > edges[j] and float(da) <= edges[j + 1]:
                     hist[j] += 1
                     temp_ene.append(float(ene))
             temp_ene = np.asarray(temp_ene)
