@@ -1356,6 +1356,7 @@ class BXDBox:
 
     def get_full_histogram(self, boxes=10):
         d = np.asarray([float(d[2]) for d in self.data])
+        print('get arrays')
         d2 = np.asarray([abs(float(d2[4])) for d2 in self.data])
         print('get arrays')
         d3 = d + d2
