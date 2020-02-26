@@ -764,7 +764,7 @@ class Converging(BXD):
             if self.steps_since_any_boundary_hit > self.decorrelation_limit:
                 # Consult box_data_print_freqency to determine whether or not print the data to a file
                 if self.box_list[self.box].points_in_box != 0 and self.box_list[self.box].points_in_box % self.box_data_print_freqency == 0:
-                    self.data_file.write(str(self.s) + '\t' + str(projected_data) + '\t' + str(distance_from_bound) + '\t' + str(mol.get_potential_energy()) + + '\t' + str(distance_from_upper) +'\n')
+                    self.data_file.write(str(self.s) + '\t' + str(projected_data) + '\t' + str(distance_from_bound) + '\t' + str(mol.get_potential_energy()) + '\t' + str(distance_from_upper) +'\n')
                 self.box_list[self.box].points_in_box += 1
         # Check whether we are stuck in a loop of inversions. If stuck, make the boundary we are stuck at transparent to move to then next box
         if self.stuck_count > self.stuck_limit:
