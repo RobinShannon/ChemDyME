@@ -1357,9 +1357,12 @@ class BXDBox:
     def get_full_histogram(self, boxes=10):
         d = np.asarray([float(d[2]) for d in self.data])
         d2 = np.asarray([-float(d2[4]) for d2 in self.data])
+        max_s = max(d)
         d3 = d + d2
         d3  = d / d3
         d3 = d3.tolist()
+        d = d.tolist()
+        correction = max(d)
         energy = ([float(d[3]) for d in self.data])
         edges = []
         energies = []
@@ -1375,7 +1378,8 @@ class BXDBox:
                     temp_ene.append(float(ene))
             temp_ene = np.asarray(temp_ene)
             energies.append(np.mean(temp_ene))
-        return edges, hist, energies
+            ed = [e*correction for e in edges]
+        return ed, hist, energies
 
     def convert_s_to_bound(self, lower, upper):
         pass
