@@ -1356,7 +1356,7 @@ class BXDBox:
 
     def get_full_histogram(self, boxes=10):
         d = [float(d[2]) for d in self.data]
-        d2 = [float(d[4]) for d2 in self.data]
+        d2 = [abs(float(d2[4])) for d2 in self.data]
         d3 = d + d2
         d3 /= d
         edges = []
