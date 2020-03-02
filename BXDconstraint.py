@@ -169,12 +169,12 @@ class Adaptive(BXD):
                           progress_metric end_point and will not attempt to place extra boundaries in the reverse
                           direction
     :param decorellation_limit: Integer, DEFAULT = 0
-                                A boundary hit / passage is only counted if it occurs decorellation_limit steps
+                                A boundary hit / passage is only counted if it occurs decorrelation_limit steps
                                 after the previous hit.
     """
 
     def __init__(self, progress_metric, stuck_limit=5,  fix_to_path=False, adaptive_steps=1000, epsilon=0.9,
-                 reassign_rate=2, one_direction = False, decorellation_limit = 0):
+                 reassign_rate=2, one_direction = False, decorrelation_limit = 0):
         # call the base class init function to set up general parameters
         super(Adaptive, self).__init__(progress_metric, stuck_limit)
         self.fix_to_path = fix_to_path
@@ -194,7 +194,7 @@ class Adaptive(BXD):
         self.box_list.append(box)
         self.skip_box = False
         self.steps_since_any_boundary_hit = 0
-        self.decorellation_limit = decorellation_limit
+        self.decorrelation_limit = decorrelation_limit
 
 
     def update(self, mol):
@@ -255,7 +255,7 @@ class Adaptive(BXD):
             self.box_list[self.box].lower.step_since_hit += 1
             # Provided we are close enough to the path, store the data of the current point
             if not self.progress_metric.reflect_back_to_path():
-                if self.steps_since_any_boundary_hit > self.decorellation_limit:
+                if self.steps_since_any_boundary_hit > self.decorrelation_limit:
                     self.box_list[self.box].data.append((self.s, projected_data))
                 # If this is point is the largest progress metric so far then store its geometry.
                 # At the end of the run this will store the geometry of the furthest point along the BXD path
@@ -470,7 +470,7 @@ class Adaptive(BXD):
 
         #Check for hit against upper boundary
         if self.box_list[self.box].upper.hit(self.s, 'up'):
-            if not self.reverse and self.steps_since_any_boundary_hit > self.decorellation_limit:
+            if not self.reverse and self.steps_since_any_boundary_hit > self.decorrelation_limit:
                 self.box_list[self.box].upper.transparent = False
                 self.box_list[self.box].lower.transparent = True
                 self.box_list[self.box].data = []
@@ -483,7 +483,7 @@ class Adaptive(BXD):
                 self.box_list[self.box].upper.hits += 1
                 return True
         elif self.box_list[self.box].lower.hit(self.s, 'down'):
-            if self.reverse and not self.box_list[self.box].type == 'adap' and self.steps_since_any_boundary_hit > self.decorellation_limit:
+            if self.reverse and not self.box_list[self.box].type == 'adap' and self.steps_since_any_boundary_hit > self.decorrelation_limit:
                 self.box_list[self.box].data = []
                 self.box -= 1
                 self.box_list[self.box].data = []
@@ -618,7 +618,7 @@ class Converging(BXD):
     :param box_width: If convert_fixed_boxes = True then this defines the width of the box.
     :param number_of_boxes: If convert_fixed_boxes = True then this defines the number of boxes
     :param decorrelation_limit: Integer, DEFAULT = 0
-                                A boundary hit / passage is only counted if it occurs decorellation_limit steps
+                                A boundary hit / passage is only counted if it occurs decorrelation_limit steps
                                 after the previous hit.
     :param boxes_to_converge: List.
                               Specifies a subset of the total boxes which to converge.
