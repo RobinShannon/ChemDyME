@@ -943,7 +943,7 @@ class Converging(BXD):
             profile = []
             for i in range(0, len(self.box_list)):
                 enedata = [float(d[3]) for d in self.box_list[i].data]
-                ave_ene = np.mean(np.asarray(enedata))
+                ave_ene = min(np.asarray(enedata))
                 profile.append((str(i), self.box_list[i].gibbs, self.box_list[i].gibbs_err, ave_ene))
             return profile
         else:
@@ -1377,7 +1377,7 @@ class BXDBox:
                     hist[j] += 1
                     temp_ene.append(float(ene))
             temp_ene = np.asarray(temp_ene)
-            energies.append(np.mean(temp_ene))
+            energies.append(min(temp_ene))
             ed = [e*correction for e in edges]
         return ed, hist, energies
 
