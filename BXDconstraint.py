@@ -1355,31 +1355,43 @@ class BXDBox:
         return modified_data
 
     def get_full_histogram(self, boxes=10):
-        d = np.asarray([float(d[2]) for d in self.data])
-        d2 = np.asarray([-float(d2[4]) for d2 in self.data])
-        max_s = max(d)
-        d3 = d + d2
-        d3  = d / d3
-        d3 = d3.tolist()
-        d = d.tolist()
-        correction = max(d)
-        energy = ([float(d[3]) for d in self.data])
-        edges = []
+        d = np.asarray([np.fromstring(d[0].strip('[()]')) for d in self.data])
+        proj = np.asarray([float(d[1]) for d in self.data])
+        edge = (max(proj) - min(proj)) / boxes
+        edges = np.arrange(min(proj, max(proj),edge).tolist())
+        energy = np.asarray([float(d[3]) for d in self.data])
+        sub_bound_list = self.get_sub_bounds(boxes)
+        hist = [0] * boxes
         energies = []
-        for i in range(0, boxes + 1):
-            edges.append(i * (1 / boxes))
-        hist = np.zeros(boxes)
-
         for j in range(0, boxes):
             temp_ene = []
-            for ene,da in zip(energy,d3):
-                if float(da) > edges[j] and float(da) <= edges[j + 1]:
+            for ene,da in zip(energy,d):
+                if not (sub_bound_list[j].hit(da,"upper")) and not (sub_bound_list[j].hit(da,"lower")):
                     hist[j] += 1
                     temp_ene.append(float(ene))
             temp_ene = np.asarray(temp_ene)
             energies.append(min(temp_ene))
-            ed = [e*correction for e in edges]
-        return ed, hist, energies
+        return edges, hist, energies
+
+    def get_sub_bounds(self, boxes):
+        # Get difference between upper and lower boundaries
+        n_diff = self.upper.n - self.lower.n
+        d_diff = self.upper.d - self.lower.d
+
+        # now divide this difference by the number of boxes
+        n_increment = n_diff / boxes
+        d_increment = d_diff / boxes
+
+        # create a set of "boxes" new bounds divide the space between the upper and lower bounds,
+        # these bounds all intersect at the same point in space
+
+        bounds = []
+        for i in range(0,boxes):
+            new_n = self.lower.n + i * n_increment
+            new_d = self.lower.d + i * d_increment
+            b = BXDBound(new_n,new_d)
+            bounds.append(b)
+        return bounds
 
     def convert_s_to_bound(self, lower, upper):
         pass
