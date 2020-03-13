@@ -1355,10 +1355,10 @@ class BXDBox:
         return modified_data
 
     def get_full_histogram(self, boxes=10):
-        d = np.asarray([np.fromstring(d[0].strip('[()]')) for d in self.data])
+        d = np.asarray([np.fromstring(d[0].replace('[', '').replace(']', ''), dtype=float, sep=' ') for d in self.data])
         proj = np.asarray([float(d[1]) for d in self.data])
         edge = (max(proj) - min(proj)) / boxes
-        edges = np.arrange(min(proj, max(proj),edge).tolist())
+        edges = np.arange(min(proj), max(proj),edge).tolist()
         energy = np.asarray([float(d[3]) for d in self.data])
         sub_bound_list = self.get_sub_bounds(boxes)
         hist = [0] * boxes
@@ -1366,20 +1366,23 @@ class BXDBox:
         for j in range(0, boxes):
             temp_ene = []
             for ene,da in zip(energy,d):
-                if not (sub_bound_list[j].hit(da,"upper")) and not (sub_bound_list[j].hit(da,"lower")):
+                if not (sub_bound_list[j+1].hit(da,"up")) and not (sub_bound_list[j].hit(da,"down")):
                     hist[j] += 1
                     temp_ene.append(float(ene))
-            temp_ene = np.asarray(temp_ene)
-            energies.append(min(temp_ene))
+            try:
+                temp_ene = np.asarray(temp_ene)
+                energies.append(min(temp_ene))
+            except:
+                energies.append(0)
         return edges, hist, energies
 
     def get_sub_bounds(self, boxes):
         # Get difference between upper and lower boundaries
-        n_diff = self.upper.n - self.lower.n
+        n_diff = np.subtract(self.upper.n,self.lower.n)
         d_diff = self.upper.d - self.lower.d
 
         # now divide this difference by the number of boxes
-        n_increment = n_diff / boxes
+        n_increment = np.true_divide(n_diff, boxes)
         d_increment = d_diff / boxes
 
         # create a set of "boxes" new bounds divide the space between the upper and lower bounds,
@@ -1391,6 +1394,7 @@ class BXDBox:
             new_d = self.lower.d + i * d_increment
             b = BXDBound(new_n,new_d)
             bounds.append(b)
+        bounds.append(deepcopy(self.upper))
         return bounds
 
     def convert_s_to_bound(self, lower, upper):
