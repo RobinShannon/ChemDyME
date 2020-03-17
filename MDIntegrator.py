@@ -192,7 +192,7 @@ class VelocityVerlet(MDIntegrator):
         :param mol: ASE atoms object
         :return: output string
         """
-        out = " total energy = " + str(mol.get_potential_energy() + mol.get_kinetic_energy())
+        out = " total energy = " + str(mol.get_potential_energy()) +'\t' +str(mol.get_kinetic_energy())
         return out
 
 class Langevin(MDIntegrator):

@@ -28,7 +28,7 @@ class Trajectory:
 
     def __init__(self, mol, bxd, md_integrator, geo_print_frequency=1000, data_print_freqency=100,
                  plot_update_frequency=100, no_text_output=False, plot_output=False, plotter=None, calc = 'openMM',
-                 calcMethod = 'sys.xml'):
+                 calcMethod = 'sys.xml', initialise_velocities = True):
 
         self.bxd = bxd
         self.calc = calc
@@ -39,8 +39,9 @@ class Trajectory:
         self.forces = np.zeros(mol.get_positions().shape)
         self.mol = mol.copy()
         self.mol._calc = mol.get_calculator()
-        initial_temperature = md_integrator.temperature
-        vd.MaxwellBoltzmannDistribution(self.mol, initial_temperature, force_temp=True)
+        if initialise_velocities == True:
+            initial_temperature = md_integrator.temperature
+            vd.MaxwellBoltzmannDistribution(self.mol, initial_temperature, force_temp=True)
         self.md_integrator.current_velocities = self.mol.get_velocities()
         self.md_integrator.half_step_velocity = self.mol.get_velocities()
         self.ReactionCountDown = 0
@@ -83,6 +84,7 @@ class Trajectory:
         else:
             self.mol.set_calculator(OpenMMCalculator(self.calcMethod, self.mol))
 
+        print(str(self.mol.get_potential_energy))
         # If print_to_file = True then setup an output directory. If the print_directory already exists then append
         # consecutive numbers to the "print_directory" prefix until a the name does not correspond to an exsisting
         # directory.
@@ -183,8 +185,19 @@ class Trajectory:
             # Check if we are due to print to stdout
             if iterations % self.data_print_freqency == 0:
                 if not self.no_text_output:
+                    px = 0
+                    py = 0
+                    pz = 0
+                    for atom in self.mol:
+                        px += atom.momentum[0]
+                        py += atom.momentum[1]
+                        pz += atom.momentum[2]
                     # Call md integrator and BXD to get the apropriate output string
-                    print(self.md_integrator.output(self.mol) + self.bxd.output())
+                    if bounded == False:
+                        print(self.md_integrator.output(self.mol) + self.bxd.output() + '\tMomenta\t' + str(px) + '\t' + str(py) +'\t' + str(pz))
+                    else:
+                        print('HIT\t' + self.md_integrator.output(self.mol) + self.bxd.output() + '\tMomenta\t' + str(
+                            px) + '\t' + str(py) + '\t' + str(pz))
 
             # TODO this is confusing and need re-writing.
             # This section writes the boundary data to file but in a convoluted way
