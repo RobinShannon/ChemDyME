@@ -103,6 +103,8 @@ class Trajectory:
         # depending upon the type of BXD object this function does some initial setup
         self.bxd.initialise_files()
 
+
+
         # Set up boolean for while loop to determine whether the trajectory loop should keep going
         keep_going = True
 
