@@ -787,7 +787,6 @@ class Converging(BXD):
                 self.data_file.close()
                 self.hit_file.close()
                 self.box += 1
-                self.box_list[self.box].points_in_box = 0
                 self.upper_rates_file = open(self.box_list[self.box].upper_rates_path, 'a')
                 self.upper_milestoning_rates_file = open(self.box_list[self.box].upper_milestoning_rates_path, 'a')
                 self.lower_rates_file = open(self.box_list[self.box].lower_rates_path, 'a')
@@ -802,7 +801,6 @@ class Converging(BXD):
                 self.data_file.close()
                 self.hit_file.close()
                 self.box -= 1
-                self.box_list[self.box].points_in_box = 0
                 self.upper_rates_file = open(self.box_list[self.box].upper_rates_path, 'a')
                 self.upper_milestoning_rates_file = open(self.box_list[self.box].upper_milestoning_rates_path, 'a')
                 self.lower_rates_file = open(self.box_list[self.box].lower_rates_path, 'a')
@@ -1247,7 +1245,6 @@ class Converging(BXD):
                 self.data_file.close()
                 self.hit_file.close()
                 self.box -= 1
-                self.box_list[self.box].points_in_box = 0
                 self.upper_rates_file = open(self.box_list[self.box].upper_rates_path, 'a')
                 self.upper_milestoning_rates_file = open(self.box_list[self.box].upper_milestoning_rates_path, 'a')
                 self.lower_rates_file = open(self.box_list[self.box].lower_rates_path, 'a')
