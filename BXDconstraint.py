@@ -1191,13 +1191,13 @@ class Converging(BXD):
                 self.box_list[self.box].milestoning_count = 0
                 self.box_list[self.box].upper_non_milestoning_count = 0
                 self.box_list[self.box].lower_non_milestoning_count = 0
+                self.hit_file.write("PASS\tUPPER\tStep\t=\t" + str(self.box_list[self.box].points_in_box) + "HITS LOWER UPPER" + "\t" + str(self.box_list[self.box].upper.hits ) + "\t" + str(self.box_list[self.box].lower.hits) +  "\n")
                 self.upper_rates_file.close()
                 self.upper_milestoning_rates_file.close()
                 self.lower_rates_file.close()
                 self.lower_milestoning_rates_file.close()
                 self.data_file.close()
                 self.hit_file.close()
-                self.hit_file.write("PASS\tUPPER\tStep\t=\t" + str(self.box_list[self.box].points_in_box) + "HITS LOWER UPPER" + "\t" + str(self.box_list[self.box].upper.hits ) + "\t" + str(self.box_list[self.box].lower.hits) +  "\n")
                 self.box += 1
                 self.upper_rates_file = open(self.box_list[self.box].upper_rates_path, 'a')
                 self.upper_milestoning_rates_file = open(self.box_list[self.box].upper_milestoning_rates_path, 'a')
@@ -1237,13 +1237,13 @@ class Converging(BXD):
                 self.box_list[self.box].upper_non_milestoning_count = 0
                 self.box_list[self.box].lower_non_milestoning_count = 0
                 self.box_list[self.box].decorrelation_count = 0
+                self.hit_file.write("PASS\tLOWER\tStep\t=\t" + str(self.box_list[self.box].points_in_box) + "HITS LOWER UPPER" + "\t" + str(self.box_list[self.box].upper.hits) + "\t" + str(self.box_list[self.box].lower.hits) + "\n")
                 self.upper_rates_file.close()
                 self.upper_milestoning_rates_file.close()
                 self.lower_rates_file.close()
                 self.lower_milestoning_rates_file.close()
                 self.data_file.close()
                 self.hit_file.close()
-                self.hit_file.write("PASS\tLOWER\tStep\t=\t" + str(self.box_list[self.box].points_in_box) + "HITS LOWER UPPER" + "\t" + str(self.box_list[self.box].upper.hits) + "\t" + str(self.box_list[self.box].lower.hits) + "\n")
                 self.box -= 1
                 self.upper_rates_file = open(self.box_list[self.box].upper_rates_path, 'a')
                 self.upper_milestoning_rates_file = open(self.box_list[self.box].upper_milestoning_rates_path, 'a')
