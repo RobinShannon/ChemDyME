@@ -65,7 +65,10 @@ class PrincipalCoordinates(CollectiveVariable):
         :param mol: ASE atoms object with current cartesian coordinates
         :return: Numpy array of floats corresponding to the value of each PC at the current geometry
         """
-        d = util.getPC(self.indicies, self.coefficients, mol.get_positions())
+        try:
+            d = util.getPC(self.indicies, self.coefficients, mol.get_positions())
+        except:
+            d = util.getPC(self.indicies, self.coefficients, mol)
         return d
 
     def read_principal_components(self, arr):

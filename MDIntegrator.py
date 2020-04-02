@@ -244,6 +244,8 @@ class Langevin(MDIntegrator):
         # Get Lagrangian constraint
         lagrangian = (-2.0 * np.vdot(b, c)) / np.vdot(b, (b * (1 / a)))
 
+        self.discarded_velocities = self.current_velocities
+
         # Update velocities
         self.current_velocities = self.current_velocities + (lagrangian * del_phi * (1/self.masses)[:, None])
         self.constrained = True
@@ -301,11 +303,13 @@ class Langevin(MDIntegrator):
         else:
             self.forces = forces
 
+        # keep track of position prior to update in case we need to revert
+        self.very_old_positions = self.old_positions
+        self.old_positions = self.current_positions
+        self.old_forces = self.forces
+
         # Get Acceleration from masses and forces
         accel = self.forces[:] / self.masses[:, None]
-
-        # keep track of position prior to update in case we need to revert
-        self.old_positions = self.current_positions
 
         # Get two normally distributed variables
         self.xi = standard_normal(size=(len(self.masses), 3))
@@ -328,7 +332,7 @@ class Langevin(MDIntegrator):
         """
 
         # Store forces from previous step and then update
-        self.old_forces = self.forces
+
         self.forces = forces
 
         # Store old velocities
@@ -343,6 +347,35 @@ class Langevin(MDIntegrator):
 
         # Return positions
         mol.set_velocities(self.current_velocities)
+
+    def retry_pos(self, mol):
+            """
+            This method returns the new positions after a single md timestep
+            :param forces: array containing the forces at the current geometry
+            :param mol: ASE atoms object
+            :return:
+            """
+
+            self.current_positions = self.very_old_positions
+
+            # Get Acceleration from masses and forces
+            accel = self.forces[:] / self.masses[:, None]
+
+
+            # Get two normally distributed variables
+            self.xi = standard_normal(size=(len(self.masses), 3))
+            self.eta = standard_normal(size=(len(self.masses), 3))
+
+            # Then get the next half step velocity and update the position.
+            # NB currentVel is one full MD step behind currentPos
+            self.half_step_velocity = self.current_velocities + (
+                        self.c1 * accel - self.c2 * self.half_step_velocity + self.c3[:, None] * self.xi - self.c4[:,
+                                                                                                           None] * self.eta)
+            self.current_positions = self.current_positions + self.timestep * self.half_step_velocity + self.c5[:,
+                                                                                                        None] * self.eta
+
+            # Return positions
+            mol.set_positions(self.current_positions)
 
     def output(self, mol):
         """

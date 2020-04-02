@@ -78,7 +78,7 @@ class Trajectory:
                                 Prefix for output directory for printing data
         :return:
         """
-
+        hit = False
         if parallel:
             self.mol.set_calculator(OpenMMCalculator(self.calcMethod, self.mol, parallel=True))
         else:
@@ -148,7 +148,7 @@ class Trajectory:
                     del_phi.append(self.bxd.path_del_constraint(self.mol))
                 # If we have hit a bound get the md object to modify the velocities / positions appropriately.
                 self.md_integrator.constrain(del_phi)
-
+                hit = True
             # Now we have gone through the first inversion section we can set first_run to false
             first_run = False
 
@@ -158,13 +158,37 @@ class Trajectory:
             # 2. Get forces at new positions
             # 3. md_step_vel : Get the  new velocities v(t + delta_t)
             self.md_integrator.md_step_pos(self.forces, self.mol)
+            # new_hit = self.bxd.box_list[self.bxd.box].lower.hit(self.bxd.get_s(self.mol), 'down') or self.bxd.box_list[
+            #     self.bxd.box].upper.hit(self.bxd.get_s(self.mol), 'up')
+            # while hit and new_hit:
+            #     self.md_integrator.retry_pos(self.mol)
+            #     new_hit = self.bxd.box_list[self.bxd.box].lower.hit(self.bxd.get_s(self.mol), 'down') or \
+            #               self.bxd.box_list[
+            #                   self.bxd.box].upper.hit(self.bxd.get_s(self.mol), 'up')
             try:
                 self.forces = self.mol.get_forces()
             except:
                 print('forces error')
             self.md_integrator.md_step_vel(self.forces, self.mol)
+            #if hit:
+                # #print("hit!\tOld/New s\t=\t" +str(self.bxd.get_s(self.md_integrator.old_positions)) +'\t' +  str(self.bxd.get_s(self.md_integrator.current_positions)) + "Old/New vel\t=\t"+str(self.bxd.get_s(self.md_integrator.discarded_velocities)) +'\t' +str(self.bxd.get_s(self.md_integrator.old_velocities)) +'\t' +  str(self.bxd.get_s(self.md_integrator.current_velocities)))
+                #
+                # if self.bxd.bound_hit=='upper':
+                #     if self.bxd.box_list[self.bxd.box].upper.hit(self.bxd.get_s(self.mol), 'up'):
+                #         print("upper still hit after inversion!")
+                #         print("hit!\tOld/New s\t=\t" +str(self.bxd.get_s(self.md_integrator.old_positions)) +'\t' +  str(self.bxd.get_s(self.md_integrator.current_positions)) + "Old/New vel\t=\t"+str(self.bxd.get_s(self.md_integrator.discarded_velocities)) +'\t' +str(self.bxd.get_s(self.md_integrator.old_velocities)) +'\t' +  str(self.bxd.get_s(self.md_integrator.current_velocities)))
+                #         print(str(self.bxd.box_list[self.bxd.box].upper.n) + '\t' + str(
+                #             self.bxd.box_list[self.bxd.box].upper.d))
+                # elif self.bxd.bound_hit=='lower':
+                #     if self.bxd.box_list[self.bxd.box].lower.hit(self.bxd.get_s(self.mol), 'down'):
+                #         print("lower still hit after inversion!")
+                #         print("hit!\tOld/New s\t=\t" +str(self.bxd.get_s(self.md_integrator.old_positions)) +'\t' +  str(self.bxd.get_s(self.md_integrator.current_positions)) + "Old/New vel\t=\t"+str(self.bxd.get_s(self.md_integrator.discarded_velocities)) +'\t' +str(self.bxd.get_s(self.md_integrator.old_velocities)) +'\t' +  str(self.bxd.get_s(self.md_integrator.current_velocities)))
+                #         print(str(self.bxd.box_list[self.bxd.box].lower.n) + '\t' + str(self.bxd.box_list[self.bxd.box].lower.d))
+            hit = False
 
-
+            #new_hit =  self.bxd.box_list[self.bxd.box].lower.hit(self.bxd.get_s(self.mol), 'down') or self.bxd.box_list[self.bxd.box].upper.hit(self.bxd.get_s(self.mol), 'up')
+            #old_hit = self.bxd.box_list[self.bxd.box].lower.hit(self.bxd.get_s(self.md_integrator.old_positions), 'down') or self.bxd.box_list[self.bxd.box].upper.hit(self.bxd.get_s(self.md_integrator.old_positions), 'up')
+            #print(str(old_hit) + '\t' + str(new_hit))
             # Now determine what to print at the current MD step. TODO improve data writing / reporting mechanism
             # First check if we are due to print the geometry
             if iterations % self.geo_print_frequency == 0 and self.bxd.steps_since_any_boundary_hit > self.bxd.decorrelation_limit:

@@ -175,7 +175,7 @@ class Adaptive(BXD):
                                 after the previous hit.
     """
 
-    def __init__(self, progress_metric, stuck_limit=5,  fix_to_path=False, adaptive_steps=1000, epsilon=0.9,
+    def __init__(self, progress_metric, stuck_limit=2,  fix_to_path=False, adaptive_steps=1000, epsilon=0.9,
                  reassign_rate=2, one_direction = False, decorrelation_limit = 0):
         # call the base class init function to set up general parameters
         super(Adaptive, self).__init__(progress_metric, stuck_limit)
@@ -1252,7 +1252,6 @@ class Converging(BXD):
                 self.data_file = open(self.box_list[self.box].data_path, 'a')
                 self.hit_file = open(self.box_list[self.box].hit_path, 'a')
                 self.box_list[self.box].milestoning_count = 0
-                self.box_list[self.box].upper_non_milestoning_count = 0
                 self.box_list[self.box].lower_non_milestoning_count = 0
                 self.box_list[self.box].last_hit = 'upper'
                 if self.box == 0:
