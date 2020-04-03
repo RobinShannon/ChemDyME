@@ -1266,9 +1266,6 @@ class Converging(BXD):
                     elif self.box_list[self.box].last_hit == 'upper':
                         self.lower_milestoning_rates_file.write(str(self.box_list[self.box].milestoning_count) + '\n')
                         self.box_list[self.box].milestoning_count = 0
-                else:
-                    if self.box_list[self.box].last_hit == 'upper':
-                        self.box_list[self.box].milestoning_count = 0
                 self.box_list[self.box].last_hit = 'lower'
                 self.box_list[self.box].decorrelation_count = 0
                 self.box_list[self.box].lower_non_milestoning_count = 0
