@@ -5,6 +5,7 @@ import os
 from concurrent.futures import ProcessPoolExecutor as PE
 import copy
 from ChemDyME.OpenMMCalc import OpenMMCalculator
+from statistics import mean
 
 class Trajectory:
     """
@@ -28,7 +29,7 @@ class Trajectory:
 
     def __init__(self, mol, bxd, md_integrator, geo_print_frequency=1000, data_print_freqency=100,
                  plot_update_frequency=100, no_text_output=False, plot_output=False, plotter=None, calc = 'openMM',
-                 calcMethod = 'sys.xml', initialise_velocities = True):
+                 calcMethod = 'sys.xml', initialise_velocities = True, decorrelation_limit = 0.025):
 
         self.bxd = bxd
         self.calc = calc
@@ -103,8 +104,10 @@ class Trajectory:
         # depending upon the type of BXD object this function does some initial setup
         self.bxd.initialise_files()
 
-
-
+        vac_array = []
+        decorrelated = True
+        velocities_0 = copy.deepcopy(self.md_integrator.current_velocities)
+        vac_0 = np.sum(np.sum(velocities_0 * velocities_0, axis=1))
         # Set up boolean for while loop to determine whether the trajectory loop should keep going
         keep_going = True
 
@@ -123,7 +126,7 @@ class Trajectory:
         while keep_going:
             del_phi = []
             # update the BXDconstraint with the current geometry
-            self.bxd.update(self.mol)
+            self.bxd.update(self.mol, decorrelated)
             # If the trajectory has been stuck in a box for too long then the bxd object will set skip_box = True
             # In that case try to alter the molecular geometry so that it moves to the next BXD box
             if self.bxd.skip_box:
@@ -148,7 +151,8 @@ class Trajectory:
                     del_phi.append(self.bxd.path_del_constraint(self.mol))
                 # If we have hit a bound get the md object to modify the velocities / positions appropriately.
                 self.md_integrator.constrain(del_phi)
-                hit = True
+                decorellated = False
+
             # Now we have gone through the first inversion section we can set first_run to false
             first_run = False
 
@@ -170,35 +174,28 @@ class Trajectory:
             except:
                 print('forces error')
             self.md_integrator.md_step_vel(self.forces, self.mol)
-            #if hit:
-                # #print("hit!\tOld/New s\t=\t" +str(self.bxd.get_s(self.md_integrator.old_positions)) +'\t' +  str(self.bxd.get_s(self.md_integrator.current_positions)) + "Old/New vel\t=\t"+str(self.bxd.get_s(self.md_integrator.discarded_velocities)) +'\t' +str(self.bxd.get_s(self.md_integrator.old_velocities)) +'\t' +  str(self.bxd.get_s(self.md_integrator.current_velocities)))
-                #
-                # if self.bxd.bound_hit=='upper':
-                #     if self.bxd.box_list[self.bxd.box].upper.hit(self.bxd.get_s(self.mol), 'up'):
-                #         print("upper still hit after inversion!")
-                #         print("hit!\tOld/New s\t=\t" +str(self.bxd.get_s(self.md_integrator.old_positions)) +'\t' +  str(self.bxd.get_s(self.md_integrator.current_positions)) + "Old/New vel\t=\t"+str(self.bxd.get_s(self.md_integrator.discarded_velocities)) +'\t' +str(self.bxd.get_s(self.md_integrator.old_velocities)) +'\t' +  str(self.bxd.get_s(self.md_integrator.current_velocities)))
-                #         print(str(self.bxd.box_list[self.bxd.box].upper.n) + '\t' + str(
-                #             self.bxd.box_list[self.bxd.box].upper.d))
-                # elif self.bxd.bound_hit=='lower':
-                #     if self.bxd.box_list[self.bxd.box].lower.hit(self.bxd.get_s(self.mol), 'down'):
-                #         print("lower still hit after inversion!")
-                #         print("hit!\tOld/New s\t=\t" +str(self.bxd.get_s(self.md_integrator.old_positions)) +'\t' +  str(self.bxd.get_s(self.md_integrator.current_positions)) + "Old/New vel\t=\t"+str(self.bxd.get_s(self.md_integrator.discarded_velocities)) +'\t' +str(self.bxd.get_s(self.md_integrator.old_velocities)) +'\t' +  str(self.bxd.get_s(self.md_integrator.current_velocities)))
-                #         print(str(self.bxd.box_list[self.bxd.box].lower.n) + '\t' + str(self.bxd.box_list[self.bxd.box].lower.d))
-            hit = False
 
-            #new_hit =  self.bxd.box_list[self.bxd.box].lower.hit(self.bxd.get_s(self.mol), 'down') or self.bxd.box_list[self.bxd.box].upper.hit(self.bxd.get_s(self.mol), 'up')
-            #old_hit = self.bxd.box_list[self.bxd.box].lower.hit(self.bxd.get_s(self.md_integrator.old_positions), 'down') or self.bxd.box_list[self.bxd.box].upper.hit(self.bxd.get_s(self.md_integrator.old_positions), 'up')
-            #print(str(old_hit) + '\t' + str(new_hit))
+            if bounded:
+                vac_array = []
+                velocities_0 = copy.deepcopy(self.md_integrator.current_velocities)
+                vac_0 = np.sum(np.sum(velocities_0 * velocities_0, axis=1))
+
+            vac_i = np.sum(np.sum(self.md_integrator.current_velocities * velocities_0, axis=1)) * 1/vac_0
+            vac_array.append(vac_i)
+            current_mean = mean(vac_array)
+            if not decorrelated and current_mean < self.decorellation_limit:
+                decorrelated = True
+
             # Now determine what to print at the current MD step. TODO improve data writing / reporting mechanism
             # First check if we are due to print the geometry
-            if iterations % self.geo_print_frequency == 0 and self.bxd.steps_since_any_boundary_hit > self.bxd.decorrelation_limit:
+            if iterations % self.geo_print_frequency == 0 and decorrelated:
                 if print_to_file:
                     io.write(geom_file,self.mol, format='xyz', append=True)
                     geom_file.flush()
 
 
             # Now see if we are due to print the BXD current value of the collective variable to file.
-            if iterations % 10 == 0 and self.bxd.steps_since_any_boundary_hit > self.bxd.decorrelation_limit:
+            if iterations % 10 == 0 and self.bxd.steps_since_any_boundary_hit > decorrelated:
                 if print_to_file:
                     string = str(self.bxd.s)
                     # remove all newline and tab characters

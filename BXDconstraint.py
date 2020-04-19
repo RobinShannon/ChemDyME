@@ -199,7 +199,7 @@ class Adaptive(BXD):
         self.decorrelation_limit = decorrelation_limit
 
 
-    def update(self, mol):
+    def update(self, mol, decorrelated):
         """
         General bookeeping method. Takes an ASE atoms object, stores data from progress_metric at the current geometry,
         and calls the update_adaptive_bounds and boundary_check methods to add new boundaries and to keep track of which
@@ -257,7 +257,7 @@ class Adaptive(BXD):
             self.box_list[self.box].lower.step_since_hit += 1
             # Provided we are close enough to the path, store the data of the current point
             if not self.progress_metric.reflect_back_to_path():
-                if self.steps_since_any_boundary_hit > self.decorrelation_limit:
+                if decorrelated:
                     self.box_list[self.box].data.append((self.s, projected_data))
                 # If this is point is the largest progress metric so far then store its geometry.
                 # At the end of the run this will store the geometry of the furthest point along the BXD path
@@ -722,7 +722,7 @@ class Converging(BXD):
             box.data_path = temp_dir + '/box_data.txt'
             box.hit_path = temp_dir + '/hits.txt'
 
-    def update(self, mol):
+    def update(self, mol, decorrelated):
         """
         Does the general BXD bookkeeping and management. Firsts gets the progress_metric data from the mol object and
         then calls functions to check whether a BXD inversion is required and whether we need to move to the next box.
@@ -753,7 +753,7 @@ class Converging(BXD):
         self.path_bound_hit = self.progress_metric.reflect_back_to_path()
         if self.path_bound_hit:
             self.hit_file.write("HIT\tType\t=\tPATH\tStep\t=\t" + str(self.box_list[self.box].points_in_box)+ "\n")
-        self.inversion = self.boundary_check() or self.path_bound_hit
+        self.inversion = self.boundary_check(decorrelated) or self.path_bound_hit
         if self.inversion and not self.path_bound_hit:
             if self.bound_hit == "upper" :
                 self.hit_file.write("HIT\tType\t=\tUPPER\tStep\t=\t" + str(self.box_list[self.box].points_in_box) + "\n")
@@ -771,7 +771,7 @@ class Converging(BXD):
             self.old_s = self.s
             self.box_list[self.box].upper.step_since_hit += 1
             self.box_list[self.box].lower.step_since_hit += 1
-            if self.steps_since_any_boundary_hit > self.decorrelation_limit:
+            if decorrelated:
                 # Consult box_data_print_freqency to determine whether or not print the data to a file
                 if self.box_list[self.box].points_in_box != 0 and self.box_list[self.box].points_in_box % self.box_data_print_freqency == 0:
                     self.data_file.write(str(self.s) + '\t' + str(projected_data) + '\t' + str(distance_from_bound) + '\t' + str(mol.get_potential_energy()) + '\t' + str(distance_from_upper) +'\n')
@@ -1166,17 +1166,13 @@ class Converging(BXD):
 
 
 
-    def boundary_check(self):
+    def boundary_check(self, decorrelated):
         """
         Check upper and lower boundaries for hits and return True if an inversion is required. Also determines the mean
         first passage times for hits against each bound.
         :return: Boolean indicating whether or not a BXD inversion should be performed
         """
         self.bound_hit = 'none'
-        if self.path_bound_hit:
-            self.box_list[self.box].decorrelation_count = 0
-        else:
-            self.box_list[self.box].decorrelation_count += 1
         self.box_list[self.box].milestoning_count += 1
         self.box_list[self.box].upper_non_milestoning_count += 1
         self.box_list[self.box].lower_non_milestoning_count += 1
@@ -1213,7 +1209,7 @@ class Converging(BXD):
                 return False
             else:
                 self.bound_hit = 'upper'
-                if self.box_list[self.box].decorrelation_count > self.decorrelation_limit:
+                if decorrelated:
                     self.box_list[self.box].upper.hits += 1
                     self.upper_rates_file.write(str(self.box_list[self.box].upper_non_milestoning_count) + '\n')
                     if self.box_list[self.box].last_hit == 'lower':
@@ -1258,7 +1254,7 @@ class Converging(BXD):
             else:
                 self.bound_hit = 'lower'
 
-                if self.box_list[self.box].decorrelation_count > self.decorrelation_limit:
+                if decorrelated:
                     self.box_list[self.box].lower.hits += 1
                     self.lower_rates_file.write(str(self.box_list[self.box].lower_non_milestoning_count) + '\n')
                     if self.box_list[self.box].last_hit == 'upper':
