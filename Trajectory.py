@@ -151,7 +151,7 @@ class Trajectory:
                     del_phi.append(self.bxd.path_del_constraint(self.mol))
                 # If we have hit a bound get the md object to modify the velocities / positions appropriately.
                 self.md_integrator.constrain(del_phi)
-                decorellated = False
+                decorrelated = False
 
             # Now we have gone through the first inversion section we can set first_run to false
             first_run = False
@@ -183,6 +183,7 @@ class Trajectory:
             vac_i = np.sum(np.sum(self.md_integrator.current_velocities * velocities_0, axis=1)) * 1/vac_0
             vac_array.append(vac_i)
             current_mean = mean(vac_array)
+            print(str(current_mean))
             if not decorrelated and current_mean < self.decorellation_limit:
                 decorrelated = True
 
