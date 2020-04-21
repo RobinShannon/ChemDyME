@@ -106,6 +106,7 @@ class Trajectory:
 
         vac_array = []
         decorrelated = True
+        current_mean = 1
         velocities_0 = copy.deepcopy(self.md_integrator.current_velocities)
         vac_0 = np.sum(np.sum(velocities_0 * velocities_0, axis=1))
         # Set up boolean for while loop to determine whether the trajectory loop should keep going
