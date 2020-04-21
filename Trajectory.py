@@ -184,7 +184,6 @@ class Trajectory:
             vac_i = np.sum(np.sum(self.md_integrator.current_velocities * velocities_0, axis=1)) * 1/vac_0
             vac_array.append(vac_i)
             current_mean = mean(vac_array)
-            print(str(current_mean))
             if not decorrelated and not bounded and current_mean < self.decorrelation_limit:
                 decorrelated = True
 
