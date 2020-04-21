@@ -29,7 +29,7 @@ class Trajectory:
 
     def __init__(self, mol, bxd, md_integrator, geo_print_frequency=1000, data_print_freqency=100,
                  plot_update_frequency=100, no_text_output=False, plot_output=False, plotter=None, calc = 'openMM',
-                 calcMethod = 'sys.xml', initialise_velocities = True, decorrelation_limit = 0.025):
+                 calcMethod = 'sys.xml', initialise_velocities = True, decorrelation_limit = 0.01):
         self.decorrelation_limit = decorrelation_limit
         self.bxd = bxd
         self.calc = calc
@@ -126,7 +126,7 @@ class Trajectory:
         while keep_going:
             del_phi = []
             # update the BXDconstraint with the current geometry
-            self.bxd.update(self.mol, decorrelated)
+            self.bxd.update(self.mol, decorrelated, current_mean)
             # If the trajectory has been stuck in a box for too long then the bxd object will set skip_box = True
             # In that case try to alter the molecular geometry so that it moves to the next BXD box
             if self.bxd.skip_box:
@@ -184,7 +184,7 @@ class Trajectory:
             vac_array.append(vac_i)
             current_mean = mean(vac_array)
             print(str(current_mean))
-            if not decorrelated and current_mean < self.decorrelation_limit:
+            if not decorrelated and not bounded and current_mean < self.decorrelation_limit:
                 decorrelated = True
 
             # Now determine what to print at the current MD step. TODO improve data writing / reporting mechanism
