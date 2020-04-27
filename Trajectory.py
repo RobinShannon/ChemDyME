@@ -29,7 +29,11 @@ class Trajectory:
 
     def __init__(self, mol, bxd, md_integrator, geo_print_frequency=1000, data_print_freqency=100,
                  plot_update_frequency=100, no_text_output=False, plot_output=False, plotter=None, calc = 'openMM',
-                 calcMethod = 'sys.xml', initialise_velocities = True, decorrelation_limit = 0.01):
+                 calcMethod = 'sys.xml', initialise_velocities = True, decorrelation_limit = 1, check_decorrelation=False,
+                 decorrelation_length = 1000, number_of_decorrelation_runs = 5):
+        self.decorrelation_length = decorrelation_length
+        self.number_of_decorrelation_runs = number_of_decorrelation_runs
+        self.check_decorrelation = check_decorrelation
         self.decorrelation_limit = decorrelation_limit
         self.bxd = bxd
         self.calc = calc
@@ -100,15 +104,13 @@ class Trajectory:
            data_file = open(temp_dir+'/data.txt', 'w')
            geom_file = open(temp_dir+'/geom.xyz', 'w')
            bound_file = open(temp_dir+'/bound_file.txt', 'w')
+           
 
         # depending upon the type of BXD object this function does some initial setup
         self.bxd.initialise_files()
 
-        vac_array = []
         decorrelated = True
-        current_mean = 1
-        velocities_0 = copy.deepcopy(self.md_integrator.current_velocities)
-        vac_0 = np.sum(np.sum(velocities_0 * velocities_0, axis=1))
+        old_box = -1
         # Set up boolean for while loop to determine whether the trajectory loop should keep going
         keep_going = True
 
@@ -121,13 +123,27 @@ class Trajectory:
         # Want to make sure the trajectory doesnt try to perform and BXD inversion on the first MD step. This shouldnt happen.
         # While first_run = True, we will override the bxd inversion.
         first_run = True
+        steps_since_last_hit = 0
         iterations = 0
 
         # Run MD trajectory for specified number of steps or until BXD reaches its end point
         while keep_going:
+
+            if self.bxd.box > old_box and self.check_decorrelation:
+                vaf_ar = []
+                turning_point_ar = []
+                for i in range(0,self.number_of_decorrelation_runs):
+                    vaf, turning_point = self.get_correlation_time(self.decorrelation_length)
+                    vaf_ar.append(vaf)
+                    turning_point_ar.append(turning_point)
+                t_point = np.mean(np.asarray(turning_point_ar))
+                self.bxd.box_list[self.bxd.box].decorrelation_time = t_point
+
+            old_box = self.bxd.box
+
             del_phi = []
             # update the BXDconstraint with the current geometry
-            self.bxd.update(self.mol, decorrelated, current_mean)
+            self.bxd.update(self.mol, decorrelated)
             # If the trajectory has been stuck in a box for too long then the bxd object will set skip_box = True
             # In that case try to alter the molecular geometry so that it moves to the next BXD box
             if self.bxd.skip_box:
@@ -153,6 +169,7 @@ class Trajectory:
                 # If we have hit a bound get the md object to modify the velocities / positions appropriately.
                 self.md_integrator.constrain(del_phi)
                 decorrelated = False
+                steps_since_last_hit = 0
 
             # Now we have gone through the first inversion section we can set first_run to false
             first_run = False
@@ -176,15 +193,7 @@ class Trajectory:
                 print('forces error')
             self.md_integrator.md_step_vel(self.forces, self.mol)
 
-            if bounded:
-                vac_array = []
-                velocities_0 = copy.deepcopy(self.md_integrator.current_velocities)
-                vac_0 = np.sum(np.sum(velocities_0 * velocities_0, axis=1))
-
-            vac_i = np.sum(np.sum(self.md_integrator.current_velocities * velocities_0, axis=1)) * 1/vac_0
-            vac_array.append(vac_i)
-            current_mean = mean(vac_array)
-            if not decorrelated and not bounded and current_mean < self.decorrelation_limit:
+            if not decorrelated and steps_since_last_hit > self.bxd.box_list[self.bxd.box].decorrelation_time:
                 decorrelated = True
 
             # Now determine what to print at the current MD step. TODO improve data writing / reporting mechanism
@@ -250,6 +259,67 @@ class Trajectory:
                 except:
                     print("couldnt do final BXD printing")
             iterations += 1
+            steps_since_last_hit +=1
+
+    def get_correlation_time(self, max_time):
+        """
+        Runs a bxd trajectory until either the attached BXDconstraint indicates sufficient information has been obtained
+        or the max_steps parameter is exceeded
+        :param max_steps: DEFAULT np.inf
+                          Maximum number of steps in MD trajectory
+        :param parallel: Boolean DEFAULT False
+                         If True then multiple copies of the trajectory are being run by multiprocess and this affects
+                         how the calculator is attached
+        :param print_to_file: Boolean DEFAULT False
+                              Determines whether to print trajectory data to a file
+        :param print_directory: String DEFAULT 'BXD_data'
+                                Prefix for output directory for printing data
+        :return:
+        """
+        first_run = True
+        vac_array = []
+        vac_array.append(self.md_integrator.current_velocities)
+        for i in range(0,max_time):
+            s = self.bxd.get_s(self.mol)
+            bounded = self.bxd.box_list[self.bxd.box].upper.hit(s, 'up') or self.bxd.box_list[self.bxd.box].lower.hit(s, 'down')
+            del_phi = []
+            if bounded and first_run:
+                print(
+                    "BXD bound hit on first step, either there is a small rounding error or there is something wrong with the initial geometry or bound. Proceed with caution")
+                bounded = False
+            if bounded:
+                # If we have hit a bound we need to determine whether we have hit the upper / lower boundary of the box
+                # the path boundary or whether both are hit. The del_phi list is populated with each constraint.
+                if self.bxd.bound_hit != 'none':
+                    del_phi.append(self.bxd.del_constraint(self.mol))
+                # If we have hit a bound get the md object to modify the velocities / positions appropriately.
+                self.md_integrator.constrain(del_phi)
+
+            self.md_integrator.md_step_pos(self.forces, self.mol)
+            first_run = False
+            try:
+                self.forces = self.mol.get_forces()
+            except:
+                print('forces error')
+            self.md_integrator.md_step_vel(self.forces, self.mol)
+            i+=1
+            vac_array.append(self.md_integrator.current_velocities)
+
+        vac_array = np.asarray(vac_array)
+        vaf2 = np.zeros((1000) * 2 + 1)
+        for l in range(len(self.mol.get_atomic_numbers())):
+            for m in range(3):
+                vaf2 += np.correlate(vac_array[:,l,m],vac_array[:,l,m],'full')
+        vaf = vaf2[1000:]
+        vaf /= copy.deepcopy(vaf[0])
+
+        j=1
+        while vaf[j] < vaf[j-0]:
+            j+=1
+        decorrelation_time = j
+        return vaf, decorrelation_time
+
+
 
     def converging_trajectory_pool(self, root = 'Converging_data', processes=1 ):
         """

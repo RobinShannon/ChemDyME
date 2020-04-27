@@ -199,7 +199,7 @@ class Adaptive(BXD):
         self.decorrelation_limit = decorrelation_limit
 
 
-    def update(self, mol, decorrelated, current_mean):
+    def update(self, mol, decorrelated):
         """
         General bookeeping method. Takes an ASE atoms object, stores data from progress_metric at the current geometry,
         and calls the update_adaptive_bounds and boundary_check methods to add new boundaries and to keep track of which
@@ -459,7 +459,7 @@ class Adaptive(BXD):
             n2 = b.upper.n
             d1 = b.lower.d
             d2 = b.upper.d
-            box =BXDBox(BXDBound(n1,d1),BXDBound(n2,d2), 'fixed', True)
+            box =BXDBox(BXDBound(n1,d1),BXDBound(n2,d2), 'fixed', True, decorrelation_time = b.decorrelation_time)
             box.geometry = b.geometry
             con.box_list.append(box)
         con.generate_output_files()
@@ -654,7 +654,7 @@ class Converging(BXD):
         self.number_of_boxes = number_of_boxes
         self.boxes_to_converge = boxes_to_converge
         if self.read_from_file:
-            self.box_list = self.read_exsisting_boundaries(self.bound_file)
+            self.box_list = self.read_exsisting_boundaries(self.bound_file, decorrelation_limit)
             self.generate_output_files()
             try:
                 self.get_box_geometries(self.geom_file)
@@ -722,7 +722,7 @@ class Converging(BXD):
             box.data_path = temp_dir + '/box_data.txt'
             box.hit_path = temp_dir + '/hits.txt'
 
-    def update(self, mol, decorrelated, current_mean):
+    def update(self, mol, decorrelated):
         """
         Does the general BXD bookkeeping and management. Firsts gets the progress_metric data from the mol object and
         then calls functions to check whether a BXD inversion is required and whether we need to move to the next box.
@@ -753,7 +753,7 @@ class Converging(BXD):
         self.path_bound_hit = self.progress_metric.reflect_back_to_path()
         if self.path_bound_hit:
             self.hit_file.write("HIT\tType\t=\tPATH\tStep\t=\t" + str(self.box_list[self.box].points_in_box)+ "\n")
-        self.inversion = self.boundary_check(decorrelated, current_mean) or self.path_bound_hit
+        self.inversion = self.boundary_check(decorrelated) or self.path_bound_hit
         if self.inversion and not self.path_bound_hit:
             if self.bound_hit == "upper" :
                 self.hit_file.write("HIT\tType\t=\tUPPER\tStep\t=\t" + str(self.box_list[self.box].points_in_box) + "\n")
@@ -844,7 +844,7 @@ class Converging(BXD):
     def create_fixed_boxes(self, width, number_of_boxes, start_s):
         pass
 
-    def read_exsisting_boundaries(self,file):
+    def read_exsisting_boundaries(self,file, decorrelation_limit):
         """
         Read BXD boundaries from a file
         :param file: string giving the filename of the bounds file
@@ -867,7 +867,7 @@ class Converging(BXD):
             for l2 in range(0,len(norm_upper)):
                 norm_upper[l2] = float(norm_upper[l2])
             upper_bound = BXDBound(norm_upper,d_upper)
-            box = BXDBox(lower_bound, upper_bound, "fixed", True)
+            box = BXDBox(lower_bound, upper_bound, "fixed", True, decorrelation_time=decorrelation_limit)
             box_list.append(box)
         return box_list
 
@@ -1166,7 +1166,7 @@ class Converging(BXD):
 
 
 
-    def boundary_check(self, decorrelated, current_mean):
+    def boundary_check(self, decorrelated):
         """
         Check upper and lower boundaries for hits and return True if an inversion is required. Also determines the mean
         first passage times for hits against each bound.
@@ -1211,9 +1211,9 @@ class Converging(BXD):
                 self.bound_hit = 'upper'
                 if decorrelated:
                     self.box_list[self.box].upper.hits += 1
-                    self.upper_rates_file.write(str(self.box_list[self.box].upper_non_milestoning_count) + '\t' + str(current_mean) + '\n')
+                    self.upper_rates_file.write(str(self.box_list[self.box].upper_non_milestoning_count) + '\t' + '\n')
                     if self.box_list[self.box].last_hit == 'lower':
-                        self.upper_milestoning_rates_file.write(str(self.box_list[self.box].milestoning_count) + '\t' + str(current_mean) + '\n')
+                        self.upper_milestoning_rates_file.write(str(self.box_list[self.box].milestoning_count) + '\n')
                         self.box_list[self.box].milestoning_count = 0
                 self.box_list[self.box].decorrelation_count = 0
                 self.box_list[self.box].last_hit = 'upper'
@@ -1257,9 +1257,9 @@ class Converging(BXD):
                 self.bound_hit = 'lower'
                 if decorrelated:
                     self.box_list[self.box].lower.hits += 1
-                    self.lower_rates_file.write(str(self.box_list[self.box].lower_non_milestoning_count) + '\t' + str(current_mean) + '\n')
+                    self.lower_rates_file.write(str(self.box_list[self.box].lower_non_milestoning_count) + '\n')
                     if self.box_list[self.box].last_hit == 'upper':
-                        self.lower_milestoning_rates_file.write(str(self.box_list[self.box].milestoning_count) + '\t' + str(current_mean) + '\n')
+                        self.lower_milestoning_rates_file.write(str(self.box_list[self.box].milestoning_count) + '\n')
                         self.box_list[self.box].milestoning_count = 0
                 self.box_list[self.box].last_hit = 'lower'
                 self.box_list[self.box].lower_non_milestoning_count = 0
@@ -1289,7 +1289,7 @@ class Converging(BXD):
 
 class BXDBox:
 
-    def __init__(self, lower, upper, type, act):
+    def __init__(self, lower, upper, type, act, decorrelation_time = 0):
         self.upper = upper
         self.lower = lower
         self.type = type
@@ -1310,6 +1310,7 @@ class BXDBox:
         self.lower_non_milestoning_count = 0
         self.decorrelation_count = 0
         self.points_in_box = 0
+        self.decorrelation_time = decorrelation_time
 
     def reset(self, type, active):
         self.type = type
@@ -1328,6 +1329,7 @@ class BXDBox:
         self.last_hit = 'lower'
         self.milestoning_count = 0
         self.decorrelation_count = 0
+        self.decorrelation_time = 0
 
 
     def get_s_extremes(self, b, eps):
