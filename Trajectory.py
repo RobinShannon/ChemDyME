@@ -104,7 +104,7 @@ class Trajectory:
            data_file = open(temp_dir+'/data.txt', 'w')
            geom_file = open(temp_dir+'/geom.xyz', 'w')
            bound_file = open(temp_dir+'/bound_file.txt', 'w')
-           
+
 
         # depending upon the type of BXD object this function does some initial setup
         self.bxd.initialise_files()
@@ -314,7 +314,7 @@ class Trajectory:
         vaf /= copy.deepcopy(vaf[0])
 
         j=1
-        while vaf[j] < vaf[j-0]:
+        while vaf[j] < vaf[j-1]:
             j+=1
         decorrelation_time = j
         return vaf, decorrelation_time
