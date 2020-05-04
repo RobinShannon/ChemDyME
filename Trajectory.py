@@ -130,12 +130,18 @@ class Trajectory:
         while keep_going:
 
             if self.bxd.box > old_box and self.check_decorrelation:
+                velocities = copy.deepcopy(self.md_integrator.current_velocities)
+                positions = copy.deepcopy(self.md_integrator.current_positions)
                 vaf_ar = []
                 turning_point_ar = []
                 for i in range(0,self.number_of_decorrelation_runs):
                     vaf, turning_point = self.get_correlation_time(self.decorrelation_length)
                     vaf_ar.append(vaf)
                     turning_point_ar.append(turning_point)
+                    self.md_integrator.current_positions = copy.deepcopy(positions)
+                    self.md_integrator.old_positions = copy.deepcopy(positions)
+                    self.md_integrator.current_velocities = copy.deepcopy(velocities)
+                    self.md_integrator.old_velocities = copy.deepcopy(velocities)
                 t_point = np.mean(np.asarray(turning_point_ar))
                 self.bxd.box_list[self.bxd.box].decorrelation_time = t_point
 
@@ -306,15 +312,15 @@ class Trajectory:
             vac_array.append(self.md_integrator.current_velocities)
 
         vac_array = np.asarray(vac_array)
-        vaf2 = np.zeros((1000) * 2 + 1)
+        vaf2 = np.zeros((max_time) * 2 + 1)
         for l in range(len(self.mol.get_atomic_numbers())):
             for m in range(3):
                 vaf2 += np.correlate(vac_array[:,l,m],vac_array[:,l,m],'full')
-        vaf = vaf2[1000:]
+        vaf = vaf2[max_time:]
         vaf /= copy.deepcopy(vaf[0])
 
         j=1
-        while vaf[j] < vaf[j-1]:
+        while vaf[j] < vaf[j-1] and j < max_time:
             j+=1
         decorrelation_time = j
         return vaf, decorrelation_time
