@@ -150,6 +150,7 @@ class Trajectory:
                     correlation_file.write("Time profile " + str(i) + "\n")
                     for j in tp:
                         correlation_file.write(str(j) + "\n")
+                correlation_file.close()
 
 
             old_box = self.bxd.box
