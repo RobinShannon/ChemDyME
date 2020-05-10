@@ -30,7 +30,7 @@ class Trajectory:
     def __init__(self, mol, bxd, md_integrator, geo_print_frequency=1000, data_print_freqency=100,
                  plot_update_frequency=100, no_text_output=False, plot_output=False, plotter=None, calc = 'openMM',
                  calcMethod = 'sys.xml', initialise_velocities = True, decorrelation_limit = 1, check_decorrelation=False,
-                 decorrelation_length = 1000, number_of_decorrelation_runs = 5):
+                 decorrelation_length = 5000, number_of_decorrelation_runs = 5):
         self.decorrelation_length = decorrelation_length
         self.number_of_decorrelation_runs = number_of_decorrelation_runs
         self.check_decorrelation = check_decorrelation
@@ -91,7 +91,7 @@ class Trajectory:
 
         print(str(self.mol.get_potential_energy))
         # If print_to_file = True then setup an output directory. If the print_directory already exists then append
-        # consecutive numbers to the "print_directory" prefix until a the name does not correspond to an exsisting
+        # consecutive numbers to the "print_directory" prefix until a the name does not correspond to an existing
         # directory.
         if print_to_file:
            dir = str(print_directory)
@@ -144,6 +144,13 @@ class Trajectory:
                     self.md_integrator.old_velocities = copy.deepcopy(velocities)
                 t_point = np.mean(np.asarray(turning_point_ar))
                 self.bxd.box_list[self.bxd.box].decorrelation_time = t_point
+                correlation_file = open(self.bxd.temp_dir + '/correlation.txt', 'w')
+                correlation_file.write("Decorrelation time = " + str(t_point) + str("\n"))
+                for i,tp in enumerate(vaf_ar):
+                    correlation_file.write("Time profile " + str(i) + "\n")
+                    for j in tp:
+                        correlation_file.write(str(j) + "\n")
+
 
             old_box = self.bxd.box
 
@@ -320,7 +327,7 @@ class Trajectory:
         vaf /= copy.deepcopy(vaf[0])
 
         j=1
-        while vaf[j] < vaf[j-1] and j < max_time:
+        while (vaf[j] < vaf[j-1] or vaf[j] > 0) and j < max_time:
             j+=1
         decorrelation_time = j
         return vaf, decorrelation_time
