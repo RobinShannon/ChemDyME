@@ -28,8 +28,6 @@ class BXD:
     def __init__(self, progress_metric, stuck_limit=20):
         self.progress_metric = progress_metric
         self.steps_since_any_boundary_hit = 0
-        self.steps_since_upper_hit = 0
-        self.steps_since_lower_hit = 0
         self.stuck_limit = stuck_limit
         self.box_list = []
         self.box = 0
@@ -769,8 +767,6 @@ class Converging(BXD):
             self.stuck_count = 0
             self.stuck = False
             self.old_s = self.s
-            self.box_list[self.box].upper.step_since_hit += 1
-            self.box_list[self.box].lower.step_since_hit += 1
             if decorrelated:
                 # Consult box_data_print_freqency to determine whether or not print the data to a file
                 if self.box_list[self.box].points_in_box != 0 and self.box_list[self.box].points_in_box % self.box_data_print_freqency == 0:
@@ -786,6 +782,8 @@ class Converging(BXD):
                 self.lower_milestoning_rates_file.close()
                 self.data_file.close()
                 self.hit_file.close()
+                self.box_list[self.box].upper_non_milestoning_count = 0
+                self.box_list[self.box].lower_non_milestoning_count = 0
                 self.box += 1
                 self.upper_rates_file = open(self.box_list[self.box].upper_rates_path, 'a')
                 self.upper_milestoning_rates_file = open(self.box_list[self.box].upper_milestoning_rates_path, 'a')
@@ -800,6 +798,8 @@ class Converging(BXD):
                 self.lower_milestoning_rates_file.close()
                 self.data_file.close()
                 self.hit_file.close()
+                self.box_list[self.box].upper_non_milestoning_count = 0
+                self.box_list[self.box].lower_non_milestoning_count = 0
                 self.box -= 1
                 self.upper_rates_file = open(self.box_list[self.box].upper_rates_path, 'a')
                 self.upper_milestoning_rates_file = open(self.box_list[self.box].upper_milestoning_rates_path, 'a')
@@ -816,7 +816,8 @@ class Converging(BXD):
             self.lower_milestoning_rates_file.close()
             self.data_file.close()
             self.hit_file.close()
-            self.box_list[self.box].lower.step_since_hit = 0
+            self.box_list[self.box].upper_non_milestoning_count = 0
+            self.box_list[self.box].lower_non_milestoning_count = 0
             self.box -= 1
             self.upper_rates_file = open(self.box_list[self.box].upper_rates_path, 'a')
             self.upper_milestoning_rates_file = open(self.box_list[self.box].upper_milestoning_rates_path, 'a')
@@ -831,7 +832,8 @@ class Converging(BXD):
             self.lower_rates_file.close()
             self.lower_milestoning_rates_file.close()
             self.data_file.close()
-            self.box_list[self.box].upper.step_since_hit = 0
+            self.box_list[self.box].upper_non_milestoning_count = 0
+            self.box_list[self.box].lower_non_milestoning_count = 0
             self.box += 1
             self.upper_rates_file = open(self.box_list[self.box].upper_rates_path, 'a')
             self.upper_milestoning_rates_file = open(self.box_list[self.box].upper_milestoning_rates_path, 'a')
