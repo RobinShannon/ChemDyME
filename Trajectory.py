@@ -144,7 +144,7 @@ class Trajectory:
                     self.md_integrator.old_velocities = copy.deepcopy(velocities)
                 t_point = np.mean(np.asarray(turning_point_ar))
                 self.bxd.box_list[self.bxd.box].decorrelation_time = t_point
-                correlation_file = open(self.bxd.temp_dir + '/correlation.txt', 'w')
+                correlation_file = open(self.bxd.box_list[self.bxd.box].temp_dir + '/correlation.txt', 'w')
                 correlation_file.write("Decorrelation time = " + str(t_point) + str("\n"))
                 for i,tp in enumerate(vaf_ar):
                     correlation_file.write("Time profile " + str(i) + "\n")

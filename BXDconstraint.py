@@ -710,15 +710,15 @@ class Converging(BXD):
         :return:
         """
         for i,box in enumerate(self.box_list):
-            self.temp_dir = self.dir + ("/box_" + str(i))
-            if not os.path.isdir(self.temp_dir):
-                os.makedirs(self.temp_dir)
-            box.upper_rates_path = self.temp_dir + '/upper_rates.txt'
-            box.lower_rates_path = self.temp_dir + '/lower_rates.txt'
-            box.upper_milestoning_rates_path = self.temp_dir + '/upper_milestoning.txt'
-            box.lower_milestoning_rates_path = self.temp_dir + '/lower_milestoning.txt'
-            box.data_path = self.temp_dir + '/box_data.txt'
-            box.hit_path = self.temp_dir + '/hits.txt'
+            box.temp_dir = self.dir + ("/box_" + str(i))
+            if not os.path.isdir(box.temp_dir):
+                os.makedirs(box.temp_dir)
+            box.upper_rates_path = box.temp_dir + '/upper_rates.txt'
+            box.lower_rates_path = box.temp_dir + '/lower_rates.txt'
+            box.upper_milestoning_rates_path = box.temp_dir + '/upper_milestoning.txt'
+            box.lower_milestoning_rates_path = box.temp_dir + '/lower_milestoning.txt'
+            box.data_path = box.temp_dir + '/box_data.txt'
+            box.hit_path = box.temp_dir + '/hits.txt'
 
     def update(self, mol, decorrelated):
         """
