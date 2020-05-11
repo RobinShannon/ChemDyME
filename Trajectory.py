@@ -327,11 +327,7 @@ class Trajectory:
         vaf = vaf2[max_time:]
         vaf /= copy.deepcopy(vaf[0])
 
-        m = min(vaf)
-        a = vaf[0]-m
-        vaf_temp = copy.deepcopy(vaf)
-        for v in vaf_temp:
-            v = np.log((v-m)/a)
+
         x = np.arange(1,max_time+2)
         x = np.log(x)
         fit = np.polyfit(x, vaf, 1)
