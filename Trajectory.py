@@ -327,10 +327,15 @@ class Trajectory:
         vaf = vaf2[max_time:]
         vaf /= copy.deepcopy(vaf[0])
 
-        j=1
-        while (vaf[j] < vaf[j-1] or vaf[j] > 0) and j < max_time:
-            j+=1
-        decorrelation_time = j
+        m = min(vaf)
+        a = vaf[0]-m
+        vaf_temp = copy.deepcopy(vaf)
+        for v in vaf_temp:
+            v = np.log((v-m)/a)
+        x = np.arange(1,max_time+2)
+        x = np.log(x)
+        fit = np.polyfit(x, vaf, 1)
+        decorrelation_time = (-np.log(2)/fit[0])*5
         return vaf, decorrelation_time
 
 
