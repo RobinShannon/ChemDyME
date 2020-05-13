@@ -327,10 +327,19 @@ class Trajectory:
         vaf = vaf2[max_time:]
         vaf /= copy.deepcopy(vaf[0])
 
+        turning_point = np.inf
+        vaf_reduced = []
+        for i,v in enumerate(vaf):
+            if i > turning_point:
+                break
+            if vaf[i] > vaf[i-1] and i != 0 and turning_point > max_time:
+                turning_point = i*5
+            vaf_reduced.append(v)
 
-        x = np.arange(1,max_time+2)
+        x = np.arange(1,len(vaf_reduced)+1)
         x = np.log(x)
-        fit = np.polyfit(x, vaf, 1)
+        vaf_reduced = np.asarray(vaf_reduced)
+        fit = np.polyfit(x, vaf_reduced, 1)
         decorrelation_time = (-np.log(2)/fit[0])*5
         return vaf, decorrelation_time
 
