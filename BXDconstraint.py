@@ -942,12 +942,12 @@ class Converging(BXD):
                 self.box_list[i].gibbs = 0
             try:
                 k_eq = self.box_list[i].upper.average_rate / self.box_list[i + 1].lower.average_rate
-                K_eq_err = np.sqrt((self.box_list[i].upper.rate_error/self.box_list[i].upper.average_rate)**2 + (self.box_list[i+1].lower.rate_error/self.box_list[i+1].lower.average_rate)**2)
+                K_eq_err = k_eq * np.sqrt((self.box_list[i].upper.rate_error/self.box_list[i].upper.average_rate)**2 + (self.box_list[i+1].lower.rate_error/self.box_list[i+1].lower.average_rate)**2)
                 try:
                     delta_g = -1.0 * np.log(k_eq)
                 except:
                     delta_g = 0
-                delta_g_err = (T * K_eq_err) / k_eq
+                delta_g_err = (K_eq_err) / k_eq
                 self.box_list[i + 1].gibbs = delta_g + self.box_list[i].gibbs
                 self.box_list[i + 1].gibbs_err = delta_g_err
             except:
@@ -982,9 +982,9 @@ class Converging(BXD):
                         d_err = 1/np.sqrt(float(dens[j]))
                         d = float(dens[j]) / float(len(self.box_list[i].data))
                         p = d * self.box_list[i].eq_population
-                        p_err = np.sqrt((d_err / d) ** 2 + (self.box_list[i].eq_population_err / self.box_list[i].eq_population) ** 2)
+                        p_err = p * np.sqrt((d_err / d) ** 2 + (self.box_list[i].eq_population_err / self.box_list[i].eq_population) ** 2)
                         p = -1.0 * np.log(p)
-                        p_err = (T * p_err) / p
+                        p_err = (p_err) / p
                         s_path = s[j] + last_s
                         profile.append((s_path, p, p_err, ene[j]))
                     last_s += s[-1]
