@@ -767,8 +767,7 @@ class Converging(BXD):
         else:
             max_seg = self.box_list[self.box+1].min_segment
 
-        projected_data = self.progress_metric.project_point_on_path(self.s, self.box_list[self.box].min_segment,
-                                                                    self.box_list[self.box].max_segment)
+        projected_data = self.progress_metric.project_point_on_path(self.s, min_segment=min_seg, max_segment=max_seg)
 
         if self.progress_metric.path_segment < self.box_list[self.box].min_segment:
             self.box_list[self.box].min_segment = self.progress_metric.path_segment
