@@ -213,8 +213,23 @@ class Adaptive(BXD):
 
         # get the current value of the collective variable and the progress data
         self.s = self.get_s(mol)
-        projected_data = self.progress_metric.project_point_on_path(self.s)
+        if self.box == 0:
+            min_seg = 0
+        else:
+            min_seg = self.box_list[self.box-1].max_segment
 
+        if self.box == len(self.box_list) -1:
+            max_seg = np.inf
+        else:
+            max_seg = self.box_list[self.box+1].min_segment
+        projected_data = self.progress_metric.project_point_on_path(self.s, min_segment = min_seg, max_segment = max_seg)
+        distance_from_bound = self.progress_metric.get_dist_from_bound(self.s, self.box_list[self.box].lower)
+
+        if not self.reverse:
+            if self.progress_metric.path_segment < self.box_list[self.box].min_segment:
+                self.box_list[self.box].min_segment = self.progress_metric.path_segment
+            if self.progress_metric.path_segment > self.box_list[self.box].max_segment:
+                self.box_list[self.box].max_segment = self.progress_metric.path_segment
 
         self.inversion = False
         self.bound_hit = "none"
@@ -256,7 +271,7 @@ class Adaptive(BXD):
             # Provided we are close enough to the path, store the data of the current point
             if not self.progress_metric.reflect_back_to_path():
                 if decorrelated:
-                    self.box_list[self.box].data.append((self.s, projected_data))
+                    self.box_list[self.box].data.append((self.s, projected_data, distance_from_bound))
                 # If this is point is the largest progress metric so far then store its geometry.
                 # At the end of the run this will store the geometry of the furthest point along the BXD path
                 if projected_data > self.furthest_progress:
@@ -296,6 +311,7 @@ class Adaptive(BXD):
                 self.box_list[self.box].upper = b1
                 self.box_list[self.box].upper.transparent = True
                 new_box = self.get_default_box(b2, b3)
+                new_box.min_segment = self.box_list[self.box].max_segment
                 self.box_list.append(new_box)
             elif self.reverse:
                 print("making new adaptive bound in reverse direction")
@@ -308,6 +324,8 @@ class Adaptive(BXD):
                 b3 = deepcopy(self.box_list[self.box].lower)
                 self.box_list[self.box].lower = b1
                 new_box = self.get_default_box(b3, b2)
+                new_box.max_segment = self.box_list[self.box].max_segment
+                new_box.min_segment = self.box_list[self.box].min_segment
                 # at this point we partition the  current box into two by inserting a new box at the correct point in the box_list
                 self.box_list.insert(self.box, new_box)
                 self.box_list[self.box].active = True
@@ -475,6 +493,7 @@ class Adaptive(BXD):
                 self.box_list[self.box].lower.transparent = True
                 self.box_list[self.box].data = []
                 self.box += 1
+                self.box_list[self.box].min_segment = self.progress_metric.path_segment
                 self.box_list[self.box].data = []
                 self.new_box = True
                 return False
@@ -487,7 +506,9 @@ class Adaptive(BXD):
                 self.box_list[self.box].data = []
                 self.box -= 1
                 self.box_list[self.box].data = []
+                self.box_list[self.box].min_segment = self.progress_metric.path_segment
                 self.new_box = True
+                self.box_list[self.box].max_segment = self.progress_metric.path_segment
                 if self.box == 0:
                     self.reverse = False
                     self.completed_runs += 1
@@ -735,7 +756,25 @@ class Converging(BXD):
 
         # update current and previous s(r) values
         self.s = self.get_s(mol)
-        projected_data = self.progress_metric.project_point_on_path(self.s)
+
+        if self.box == 0:
+            min_seg = 0
+        else:
+            min_seg = self.box_list[self.box-1].max_segment
+
+        if self.box == len(self.box_list) -1:
+            max_seg = np.inf
+        else:
+            max_seg = self.box_list[self.box+1].min_segment
+
+        projected_data = self.progress_metric.project_point_on_path(self.s, self.box_list[self.box].min_segment,
+                                                                    self.box_list[self.box].max_segment)
+
+        if self.progress_metric.path_segment < self.box_list[self.box].min_segment:
+            self.box_list[self.box].min_segment = self.progress_metric.path_segment
+        if self.progress_metric.path_segment > self.box_list[self.box].max_segment:
+            self.box_list[self.box].max_segment = self.progress_metric.path_segment
+
         distance_from_bound = self.progress_metric.get_dist_from_bound(self.s, self.box_list[self.box].lower)
         distance_from_upper = self.progress_metric.get_dist_from_bound(self.s, self.box_list[self.box].upper)
 
@@ -1313,6 +1352,8 @@ class BXDBox:
         self.decorrelation_count = 0
         self.points_in_box = 0
         self.decorrelation_time = decorrelation_time
+        self.min_segment = np.inf
+        self.max_segment = 0
 
     def reset(self, type, active):
         self.type = type
@@ -1384,9 +1425,12 @@ class BXDBox:
         for j in range(0, boxes):
             temp_ene = []
             for ene,da in zip(energy,d):
-                if not (sub_bound_list[j+1].hit(da,"up")) and not (sub_bound_list[j].hit(da,"down")):
-                    hist[j] += 1
-                    temp_ene.append(float(ene))
+                try:
+                    if not (sub_bound_list[j+1].hit(da,"up")) and not (sub_bound_list[j].hit(da,"down")):
+                        hist[j] += 1
+                        temp_ene.append(float(ene))
+                except:
+                    pass
             try:
                 temp_ene = np.asarray(temp_ene)
                 energies.append(min(temp_ene))

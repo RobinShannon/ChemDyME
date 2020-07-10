@@ -71,7 +71,8 @@ class bxd_plotter_2d:
         self.path_data = path_data
         self.fig = plt.figure()
         self.ax = self.fig.add_subplot(111)
-        self.scatter = self.ax.scatter([], [], s=3, color=self.point_colour, alpha=0.1)
+        self.scatter = self.ax.scatter([], [], s=3, color=self.point_colour, alpha=0.01)
+        self.scatter2 = self.ax.scatter([], [], s=3, color="red", alpha=1)
         self.bound_lines = []
         b1 = self.ax.plot([], [], color=self.bound_colour)
         b2 = self.ax.plot([], [], color=self.bound_colour)
@@ -88,9 +89,15 @@ class bxd_plotter_2d:
             print("couldnt print path ")
         self.fig.show()
 
-    def plot_bxd_from_file(self, point_file, bound_file):
-        points, bounds = self.read_file(point_file, bound_file)
-        self.plot_update(points, bounds)
+    def plot_bxd_from_file(self, point_file, bound_file, point = -1):
+        self.points, self.bounds = self.read_file(point_file, bound_file)
+        self.plot_update(point = point)
+
+    def animate(self, point_file, bound_file):
+        self.points, self.bounds = self.read_file(point_file, bound_file)
+        self.ani = animation.FuncAnimation(self.fig, self.ani_update, interval=5,
+                                           init_func=self.ani_init, blit=True)
+        self.fig.show()
 
     def read_file(self, point, bound):
         point_file = open(point,'r')
@@ -128,16 +135,20 @@ class bxd_plotter_2d:
             boundList.append(bo)
         self.plot_update(np.array(points), boundList)
 
-    def plot_update(self, points, bounds):
-        self.scatter.set_offsets(points[:,:2])
-        if self.follow_current_box:
-            self.ax.set_xlim([(points[-1,0])-5, (points[-1,0])+5])
-            self.ax.set_ylim([(points[-1,1])-5, (points[-1,1])+5])
+    def plot_update(self, point = -1):
+        if point == -1:
+            self.scatter.set_offsets(self.points[:,:2])
+            self.scatter2.set_offsets(self.points[-1])
         else:
-            self.ax.set_xlim([min(points[:,0])-2, max(points[:,0])+1])
-            self.ax.set_ylim([min(points[:,1])-2, max(points[:,1])+1])
+            self.scatter2.set_offsets(self.points[point])
+        if self.follow_current_box:
+            self.ax.set_xlim([(self.points[-1,0])-5, (self.points[-1,0])+5])
+            self.ax.set_ylim([(self.points[-1,1])-5, (self.points[-1,1])+5])
+        else:
+            self.ax.set_xlim([min(self.points[:,0])-2, max(self.points[:,0])+1])
+            self.ax.set_ylim([min(self.points[:,1])-2, max(self.points[:,1])+1])
         self.bound_lines = []
-        for b in bounds:
+        for b in self.bounds:
             line_start, line_end = b.getLine(self.bound_size)
             bl = self.ax.plot(line_start, line_end, color= self.bound_colour)
             self.bound_lines.append(bl)
@@ -147,6 +158,25 @@ class bxd_plotter_2d:
                 self.bound_lines.append(bl2)
         self.fig.canvas.draw()
         plt.pause(3)
+
+    def ani_init(self):
+        self.ax.set_xlim([min(self.points[:,0])-2, max(self.points[:,0])+1])
+        self.ax.set_ylim([min(self.points[:,1])-2, max(self.points[:,1])+1])
+        self.bound_lines = []
+        for b in self.bounds:
+            line_start, line_end = b.getLine(self.bound_size)
+            bl = self.ax.plot(line_start, line_end, color= self.bound_colour)
+            self.bound_lines.append(bl)
+            if self.double_bounds:
+                line_start2, line_end2 = b.getLine(self.bound_size * 2)
+                bl2 = self.ax.plot(line_start2, line_end2, color='grey')
+                self.bound_lines.append(bl2)
+        self.fig.canvas.draw()
+
+    def ani_update(self, i):
+        self.scatter2.set_offsets(self.points[i])
+        return self.fig
+
 
 
 class bxd_plotter_3d:

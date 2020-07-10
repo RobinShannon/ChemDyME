@@ -197,7 +197,7 @@ class Curve(ProgressMetric):
         norm = (s - vector_projection)/np.linalg.norm(s - vector_projection)
         return norm
 
-    def project_point_on_path(self, s):
+    def project_point_on_path(self, s, min_segment = 0, max_segment = np.inf):
         """
         Get projected distance along the path for a given geometry with collective variable s
         :param s: collective variable value for current MD frame
@@ -206,11 +206,15 @@ class Curve(ProgressMetric):
         # Set up tracking variables to log the closest segment and the distance to it
         minim = float("inf")
         closest_segment = 0
+        if max_segment > len(self.path.s) - 1:
+            max_segment = len(self.path.s) - 1
         dist = 0
         p = 0
         # Use self.max_nodes_skipped to set up the start and end points for looping over path segments.
-        start = max(self.path_segment - self.max_nodes_skipped, 0)
-        end = min(self.path_segment + (self.max_nodes_skipped+1), len(self.path.s) - 1)
+        if (self.path_segment - self.max_nodes_skipped) < min_segment:
+            self.path_segment = min_segment + self.max_nodes_skipped
+        start = self.path_segment - self.max_nodes_skipped
+        end = min(self.path_segment + (self.max_nodes_skipped+1), max_segment)
         # If the one_direction flag is True then only consider nodes in one direction
         if self.one_direction:
             # If BXD is going forward then the start node is the current node
@@ -221,6 +225,7 @@ class Curve(ProgressMetric):
                 end = min(self.path_segment + 1, len(self.path.s) - 1)
         # Now loop over all segments considered and get the distance from S to that segment and the projected distance
         # of S along that segment
+        percentage = 0
         for i in range(start, end):
             dist, projection, percent = self.distance_to_segment(s, self.path.s[i+1], self.path.s[i])
             if dist < minim:
