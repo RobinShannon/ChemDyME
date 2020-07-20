@@ -40,7 +40,7 @@ class MDIntegrator:
             warnings.warn('three or more BXD constraints have been hit simultaneously, currently only a maximum of two '
                           'can be dealt with')
         elif len(del_phi) == 2:
-            self.constrain2(del_phi[0],del_phi[1])
+            self.constrain1(del_phi[0])
         elif len(del_phi) == 1:
             self.constrain1(del_phi[0])
 

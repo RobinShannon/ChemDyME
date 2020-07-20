@@ -222,7 +222,8 @@ class Adaptive(BXD):
             max_seg = np.inf
         else:
             max_seg = self.box_list[self.box+1].min_segment
-        projected_data = self.progress_metric.project_point_on_path(self.s, min_segment = min_seg, max_segment = max_seg)
+        #projected_data = self.progress_metric.project_point_on_path(self.s, min_segment = min_seg, max_segment = max_seg)
+        projected_data = self.progress_metric.project_point_on_path(self.s)
         distance_from_bound = self.progress_metric.get_dist_from_bound(self.s, self.box_list[self.box].lower)
 
         if not self.reverse:

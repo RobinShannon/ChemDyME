@@ -29,7 +29,7 @@ class Trajectory:
 
     def __init__(self, mol, bxd, md_integrator, geo_print_frequency=1000, data_print_freqency=100,
                  plot_update_frequency=100, no_text_output=False, plot_output=False, plotter=None, calc = 'openMM',
-                 calcMethod = 'sys.xml', initialise_velocities = True, decorrelation_limit = 1, check_decorrelation=False,
+                 calcMethod = 'sys.xml', initialise_velocities = True, decorrelation_limit = 0, check_decorrelation=False,
                  decorrelation_length = 5000, number_of_decorrelation_runs = 5):
         self.decorrelation_length = decorrelation_length
         self.number_of_decorrelation_runs = number_of_decorrelation_runs
@@ -151,6 +151,9 @@ class Trajectory:
                     for j in tp:
                         correlation_file.write(str(j) + "\n")
                 correlation_file.close()
+            else:
+                for b in  self.bxd.box_list:
+                    b.decorrelation_time = self.decorrelation_limit
 
 
             old_box = self.bxd.box
@@ -180,10 +183,11 @@ class Trajectory:
                     del_phi.append(self.bxd.del_constraint(self.mol))
                 if self.bxd.path_bound_hit:
                     del_phi.append(self.bxd.path_del_constraint(self.mol))
+                    steps_since_last_hit = 0
                 # If we have hit a bound get the md object to modify the velocities / positions appropriately.
                 self.md_integrator.constrain(del_phi)
                 decorrelated = False
-                steps_since_last_hit = 0
+
 
             # Now we have gone through the first inversion section we can set first_run to false
             first_run = False
