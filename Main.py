@@ -60,30 +60,25 @@ def runNormal(p):
 
                 # TS optimisation
                 try:
-                    p[0].optTSpoint(changedBonds, prodpath, p[1].MolList, p[1].TSpoint, 0)
+                    p[0].optTS(changedBonds, prodpath, p[1].MolList, p[1].TSpoint)
                 except:
                     # If TS opt fails for some reason, assume barrierless
                     print('Couldnt opt TS at trans point')
                     p[0].barrierlessReaction = True
 
-                printTS2 = False
+                data = open(('MechanismData.txt'), "a")
+                try:
+                    data.write('Reactant = ' + str(p[0].ReacName) + ' Product = ' + str(
+                    p[0].ProdName) + ' BarrierHeight = ' + str(
+                    (p[0].forwardBarrier - p[0].reactantEnergy) * 96.45) + ' Reaction Energy = ' + str(
+                    (p[0].productEnergy - p[0].reactantEnergy) * 96.45) + ' Spline = ' + str(p[0].spline) + '\n')
+                except:
+                    data.write('Reactant = ' + str(p[0].ReacName) + ' Product = ' + str(
+                        p[0].ProdName) + ' BarrierHeight = ' + str(
+                        (p[0].forwardBarrier - p[0].reactantEnergy) * 96.45) + ' Reaction Energy = ' + str(
+                        (p[0].productEnergy - p[0].reactantEnergy) * 96.45))
+
                 printXML = True
-
-                if p[0].TScorrect != True:
-                    # See whether a dynamical path calculation or an NEB calculation has been specified to refine TS
-                    if p[5].printDynPath == True:
-                        try:
-                            p[0].optDynPath(changedBonds, prodpath, p[1].MolList, p[1].TSpoint)
-                        except:
-                            print("DynPath failed")
-                    elif p[5].printNEB == True:
-                        try:
-                            p[0].optNEB(changedBonds, prodpath, p[1].changePoints, p[1].MolList)
-                        except:
-                            print("NEB failed")
-                    if p[0].TS2correct == True:
-                        printTS2 = True
-
                 # check whether there is an alternate product
                 # if p[0].checkAltProd == True and p[0].is_IntermediateProd == True:
                 #    p[0].optProd(p[1].productGeom, True)
@@ -95,13 +90,16 @@ def runNormal(p):
                     printXML = True
 
                 # Then check barrier isnt ridiculous
-                if (((p[0].forwardBarrier - p[0].reactantEnergy) * 96.45) > 500):
+                if (((p[0].forwardBarrier - p[0].reactantEnergy) * 96.45) > 400):
                     printXML = False
                     print('channel barrier too large')
 
                 # Finally check that the product isnt higher in energy than the reactant in case of ILT
                 if p[0].is_bimol_reac == True and p[0].barrierlessReaction == True and p[0].reactantEnergy < p[
                     0].productEnergy:
+                    printXML = False
+
+                if p[0].is_bimol_prod:
                     printXML = False
 
                 if printXML == True:
@@ -111,20 +109,9 @@ def runNormal(p):
                     except:
                         print('Couldnt print TS1')
 
-                    if printTS2 == True:
-                        try:
-                            io.writeTSXML2(p[0], p[3])
-                            io.writeTSXML2(p[0], p[3].replace('.xml', 'Full.xml'))
-                        except:
-                            print('Couldnt print TS2')
 
                     tmppath = p[3].replace('/MESMER/mestemplate.xml', '/')
                     tmppath = tmppath + p[0].ProdName
-
-                    data = open(('MechanismData.txt'), "a")
-                    data.write('Reactant = ' + str(p[0].ReacName) + ' Product = ' + str(
-                        p[0].ProdName) + ' BarrierHeight = ' + str(
-                        (p[0].forwardBarrier - p[0].reactantEnergy) * 96.45) + '\n')
 
                     if not os.path.exists(tmppath):
                         io.writeMinXML(p[0], p[3], False, False)
@@ -132,8 +119,8 @@ def runNormal(p):
                             io.writeMinXML(p[0], p[3], False, True)
                     if not os.path.exists(tmppath + "/" + p[0].ReacName):
                         if p[0].is_bimol_prod == False:
-                            io.writeReactionXML(p[0], p[3], printTS2)
-                        io.writeReactionXML(p[0], p[3].replace('.xml', 'Full.xml'), printTS2)
+                            io.writeReactionXML(p[0], p[3], False)
+                        io.writeReactionXML(p[0], p[3].replace('.xml', 'Full.xml'), False)
 
         if (p[5].InitialBi == True):
             p[0].re_init_bi(p[5].cartesians, p[5].species)

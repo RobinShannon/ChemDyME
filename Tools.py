@@ -9,6 +9,8 @@ from ase.io import write, read
 import shutil
 from ase.optimize import BFGS
 from pathlib import Path
+import io
+from contextlib import redirect_stdout
 try:
     from OpenMMCalc import OpenMMCalculator
 except:
@@ -20,12 +22,12 @@ def getSMILES(mol, opt, partialOpt = False):
         min = BFGS(mol)
         if partialOpt:
             try:
-                min.run(fmax=0.1, steps=50)
+                min.run(fmax=0.1, steps=200)
             except:
                 min.run(fmax=0.1, steps=1)
         else:
             try:
-                min.run(fmax=0.1, steps=100)
+                min.run(fmax=0.1, steps=200)
             except:
                 min.run(fmax=0.1, steps=1)
 
@@ -196,6 +198,10 @@ def getOptGeom(path, opath, mol, method):
     elif method == 'mopac':
         outmol = getMopOptGeom(path, opath, mol)
         return outmol
+    elif method =='scine':
+        mol._calc.minimise_stable(path, mol)
+        outmol = mol.copy()
+        return outmol
     else:
         print('unknown opt method')
         return mol
@@ -263,8 +269,10 @@ def getFreqs(path,method):
     elif method == 'mopac':
         freqs,zpe = getMopFreqs(path)
         return freqs,zpe
-        if len(freqs) == 0:
+    if len(freqs) == 0:
             raise Exception('freq returned empty list')
+    elif method == 'scine':
+        freqs,zpe = mol
     else:
         print('unknown opt method')
         return freqs,zpe
@@ -597,6 +605,8 @@ def readGaussTSOutput(path):
 #Method to identify the code required for obtaining potential forces.
 #This call the correct method from Calculators.py and sets up an ASE calculator on Mol
 def setCalc(mol, lab, method, level):
+    if method == 'scine':
+        mol = calc.scine(mol,lab,level)
     if method == 'dftb':
         mol = calc.dftb(mol, lab, level)
     if method == 'nwchem':

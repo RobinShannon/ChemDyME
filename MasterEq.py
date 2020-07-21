@@ -12,10 +12,11 @@ class MasterEq:
         self.prodName = 'none'
         self.visitedList = []
         self.equilCount = 0
-        self.MESCommand = os.environ['CHEMDYME_ME_PATH']
+        #self.MESCommand = os.environ['CHEMDYME_ME_PATH']
+        self.MESCommand = '/Users/RobinS/Documents/mesmerStoch/src/mesmer'
 
     def runTillReac(self, args2):
-        p = Popen([self.MESCommand,args2], stdout=PIPE, stderr=PIPE )
+        p = Popen([self.MESCommand,args2], stdout=PIPE, stderr=PIPE)
         stdout, stderr = p.communicate()
         out = stderr.decode("utf-8")
         lines = str(out).split('\n')

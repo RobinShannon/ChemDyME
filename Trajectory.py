@@ -65,11 +65,11 @@ class Trajectory:
         try:
             self.window = gl.reactionWindow/2
             self.endOnReac = gl.endOnReaction
-            self.consistantWindow = gl.reactionWindow/2
+            self.consistantWindow = gl.reactionWindow/4
         except:
             pass
         if self.biMolecular:
-            self.consistantWindow = 10
+            self.consistantWindow = 2
         self.savePath = path
         self.ReactionCountDown = 0
         self.MolList = []
@@ -156,16 +156,6 @@ class Trajectory:
             except:
                 pass
 
-            #Print Smiles? This intermitently checks whether the current sturcture optimises to a new species as identified by the SMILES string
-            if self.printSMILES:
-                if i % self.printFreq == 0:
-                    tempMol = self.Mol.copy()
-                    tempMol =tl.setCalc(self.Mol,'calcMopac' + str(self.procNum) + '/Traj', self.method, self.level)
-                    Name = tl.getSMILES(tempMol, True)
-                    self.names.append(Name)
-                    length = len(self.names)
-                    if length > 3 and Name == self.names[length - 2] and Name != self.names[length-3]:
-                        self.changePoints.append(i-self.printFreq)
 
 
             # Update the COM seperation and check whether it is bounded
@@ -239,34 +229,33 @@ class Trajectory:
             self.MolList.append(self.Mol.copy())
 
             # Update connectivity map to check for reaction
-            if not self.biMolecular or (self.comBXD and comBxd.s[0] < self.minCOM):
-                con.update(self.Mol)
-                if con.criteriaMet is True:
-                    eneBXDon = False
-                    if consistantChange == 0:
-                        self.TSpoint = i
-                        self.TSgeom = self.Mol.copy()
-                        consistantChange = self.consistantWindow
-                    elif consistantChange > 0:
-                        if consistantChange == 1:
-                            self.ReactionCountDown = self.window
-                            consistantChange -= 2
-                        else:
-                            consistantChange -= 1
-                else:
-                    consistantChange = 0
-                    con.criteriaMet = False
-                    if self.eneBXD and not self.comBXD:
-                        eneBXDon = True
+            con.update(self.Mol)
+            if con.criteriaMet is True or (self.biMolecular and comBxd.s[0] < self.minCOM):
+                eneBXDon = False
+                if consistantChange == 0:
+                    self.TSpoint = i
+                    self.TSgeom = self.Mol.copy()
+                    consistantChange = self.consistantWindow
+                elif consistantChange > 0:
+                    if consistantChange == 1:
+                        self.ReactionCountDown = self.window
+                        consistantChange -= 2
+                    else:
+                        consistantChange -= 1
+            else:
+                consistantChange = 0
+                con.criteriaMet = False
+                if self.eneBXD and not self.comBXD:
+                    eneBXDon = True
 
-                if not self.ReactionCountDown == 0:
-                    self.ReactionCountDown -= 1
-                if self.ReactionCountDown == 1:
-                    if self.endOnReac is True:
-                        self.ReactionCountDown = 0
-                        self.productGeom = self.Mol.get_positions()
-                        os.chdir(workingDir)
-                        break
+            if not self.ReactionCountDown == 0:
+                self.ReactionCountDown -= 1
+            if self.ReactionCountDown == 1:
+                if self.endOnReac is True:
+                    self.ReactionCountDown = 0
+                    self.productGeom = self.Mol.get_positions()
+                    os.chdir(workingDir)
+                    break
         namefile.close()
         os.chdir(workingDir)
 
