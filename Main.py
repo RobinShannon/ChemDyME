@@ -1,9 +1,9 @@
 import os
-import Reaction as rxn
-import Trajectory
-import inout as io
-import MasterEq
-import ConnectTools as CT
+import ChemDyME.Reaction as rxn
+import ChemDyME.Trajectory
+import ChemDyME.inout as io
+import ChemDyME.MasterEq
+import ChemDyME.ConnectTools as CT
 from shutil import copyfile
 import multiprocessing
 import numpy as np
