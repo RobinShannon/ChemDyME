@@ -158,7 +158,7 @@ def run(glo):
     mechanismRunTime = 0.0
 
     # Set reaction instance
-    reacs = dict(("reac_" + str(i), rxn.Reaction(glo.cartesians, glo.species, i, glo)) for i in range(glo.cores))
+    reacs = rxn.Reaction(glo.cartesians, glo.species, 0, glo)
 
     # Initialise Master Equation object
     me = MasterEq.MasterEq()
@@ -172,25 +172,9 @@ def run(glo):
     while mechanismRunTime < glo.maxSimulationTime:
 
         # Minimise starting Geom and write summary xml for channel
-        if reacs['reac_0'].have_reactant == False:
-            outputs = []
-            if __name__ == 'Main':
-                arguments = []
-                for i in range(0, glo.cores):
-                    name = 'reac_' + str(i)
-                    arguments.append(reacs[name])
-                p = multiprocessing.Pool(glo.cores)
-                results = p.map(minReac, arguments)
-                outputs = [result for result in results]
+        if reacs.have_reactant == False:
+            reacs.optReac()
 
-            for i in range(0, glo.cores):
-                name = 'reac_' + str(i)
-                reacs[name] = outputs[i]
-
-        else:
-            for i in range(0, glo.cores):
-                name = 'reac_' + str(i)
-                reacs[name].have_reactant = False
 
         # Update path for new minima
         minpath = syspath + '/' + reacs['reac_0'].ReacName
