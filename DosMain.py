@@ -1,6 +1,6 @@
 import ChemDyME.Trajectory
 from ase.optimize import BFGS
-import Tools as tl
+import ChemDyME.Tools as tl
 import os
 from ase.io import write, read
 

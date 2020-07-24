@@ -1,7 +1,7 @@
 import ChemDyME.Trajectory
 import ChemDyME.ConnectTools as ct
 import numpy as np
-import Tools as tl
+import ChemDyME.Tools as tl
 from ase.optimize import BFGS
 from ase.neb import NEB, NEBtools
 import os

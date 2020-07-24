@@ -6,7 +6,7 @@ from xml.dom import minidom
 def writeTSXML(React, path):
     spinMult = 2
 
-    cml = Tools.getCML(React.TS,'TS_' + React.ReacName + '_' + React.ProdName)
+    cml = ChemDyME.Tools.getCML(React.TS,'TS_' + React.ReacName + '_' + React.ProdName)
 
     ET.register_namespace('me', 'http://www.chem.leeds.ac.uk/mesmer')
     ET.register_namespace('xsi', 'http://www.w3.org/2001/XMLSchema-instance')
@@ -51,12 +51,12 @@ def writeTSXML(React, path):
 
     # ...so we'll use minidom to make the output a little prettier
     dom = minidom.parseString(out)
-    Tools.prettyPrint(dom, path)
+    ChemDyME.Tools.prettyPrint(dom, path)
 
 def writeTSXML2(React, path):
     spinMult = 2
     
-    cml = Tools.getCML(React.TS2,'TS2_' + React.ReacName + '_' + React.ProdName)
+    cml = ChemDyME.Tools.getCML(React.TS2,'TS2_' + React.ReacName + '_' + React.ProdName)
     
     ET.register_namespace('me', 'http://www.chem.leeds.ac.uk/mesmer')
     ET.register_namespace('xsi', 'http://www.w3.org/2001/XMLSchema-instance')
@@ -98,30 +98,30 @@ def writeTSXML2(React, path):
     
     # ...so we'll use minidom to make the output a little prettier
     dom = minidom.parseString(out)
-    Tools.prettyPrint(dom, path)
+    ChemDyME.Tools.prettyPrint(dom, path)
 
 def writeMinXML(React, path, isReactant, isBi):
 
     spinMult = 2
     if isReactant and isBi:
-        cml = Tools.getCML(React.biReac,React.biReacName)
-        spinMult = Tools.getSpinMult(React.biReac, React.biReacName)
+        cml = ChemDyME.Tools.getCML(React.biReac,React.biReacName)
+        spinMult = ChemDyME.Tools.getSpinMult(React.biReac, React.biReacName)
         freqs = str(React.biReacFreqs)
         potE = 0.0
     elif isReactant and not isBi:
-        cml = Tools.getCML(React.Reac,React.ReacName)
-        spinMult = Tools.getSpinMult(React.Reac, React.ReacName)
+        cml = ChemDyME.Tools.getCML(React.Reac,React.ReacName)
+        spinMult = ChemDyME.Tools.getSpinMult(React.Reac, React.ReacName)
         freqs = str(React.ReacFreqs)
         symb  = "".join(React.CombReac.get_chemical_symbols())
         potE = React.reactantEnergy - React.energyDictionary[symb]
     elif not isReactant and isBi:
-        cml = Tools.getCML(React.biProd,React.biProdName)
-        spinMult = Tools.getSpinMult(React.biProd, React.biProdName)
+        cml = ChemDyME.Tools.getCML(React.biProd,React.biProdName)
+        spinMult = ChemDyME.Tools.getSpinMult(React.biProd, React.biProdName)
         freqs = str(React.biProdFreqs)
         potE = 0.0
     elif not isReactant and not isBi:
-        cml = Tools.getCML(React.Prod,React.ProdName)
-        spinMult = Tools.getSpinMult(React.Prod, React.ProdName)
+        cml = ChemDyME.Tools.getCML(React.Prod,React.ProdName)
+        spinMult = ChemDyME.Tools.getSpinMult(React.Prod, React.ProdName)
         freqs = str(React.ProdFreqs)
         symb  = "".join(React.CombReac.get_chemical_symbols())
         potE = React.productEnergy - React.energyDictionary[symb]
@@ -186,7 +186,7 @@ def writeMinXML(React, path, isReactant, isBi):
 
     # ...so we'll use minidom to make the output a little prettier
     dom = minidom.parseString(out)
-    Tools.prettyPrint(dom, path)
+    ChemDyME.Tools.prettyPrint(dom, path)
 
 def writeReactionXML(React,path, printTS2):
 
@@ -275,7 +275,7 @@ def writeReactionXML(React,path, printTS2):
 
     # ...so we'll use minidom to make the output a little prettier
     dom = minidom.parseString(out)
-    Tools.prettyPrint(dom, path)
+    ChemDyME.Tools.prettyPrint(dom, path)
 
 def lumpSpecies(rName, pName, iPath, oPath):
 
@@ -341,7 +341,7 @@ def lumpSpecies(rName, pName, iPath, oPath):
                     a = str(array[0].firstChild.nodeValue)
                     array[0].firstChild.nodeValue = a + str(lName) + aLump
 
-    Tools.prettyPrint(doc,oPath)
+    ChemDyME.Tools.prettyPrint(doc,oPath)
     return rName
 
 def update_me_start(name, ene, path):
@@ -352,4 +352,4 @@ def update_me_start(name, ene, path):
     init[0].setAttribute("ref", str(name))
     init[0].setAttribute("grain", str(ene))
 
-    Tools.prettyPrint(doc, path)
+    ChemDyME.Tools.prettyPrint(doc, path)
