@@ -2,7 +2,7 @@ from ase import Atoms
 import numpy as np
 import math as mth
 import openbabel, pybel
-import Calculators as calc
+import ChemDyME.Calculators as calc
 import os
 import re
 from ase.io import write, read
