@@ -73,14 +73,13 @@ class SparrowCalculator(Calculator):
         calc.set_settings(settings)
         print('calculating_sparrow 8 ')
         if 'energy' in properties:
-            energy_hartree = calc.calculate_energy()
             print('calculating_sparrow 9 ')
+            energy_hartree = calc.calculate_energy()
             self.results['energy'] = energy_hartree * EV_PER_HARTREE
             print('energy = ' + str(energy_hartree * EV_PER_HARTREE))
         if 'forces' in properties:
-            #TODO make np array come out of wrapper.
-            gradients_hartree_bohr = np.array(calc.calculate_gradients())
             print('calculating_sparrow 11')
+            gradients_hartree_bohr = np.array(calc.calculate_gradients())
             self.results['forces'] = - gradients_hartree_bohr * EV_PER_HARTREE / ANG_PER_BOHR
             print('gradients = ' + str(gradients_hartree_bohr * EV_PER_HARTREE / ANG_PER_BOHR))
         return
