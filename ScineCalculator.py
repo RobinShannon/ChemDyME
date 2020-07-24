@@ -50,6 +50,12 @@ class SparrowCalculator(Calculator):
         print('calculating_sparrow 4')
         s = sum(atoms.get_atomic_numbers())
         print('calculating_sparrow 5')
+
+        calculation = Calculation('AM1')
+        calculation.set_elements(['H', 'H'])
+        calculation.set_positions([[0, 0, 0], [1, 0, 0]])
+        calculation.calculate_energy()
+
         if s % 2 != 0:
             self.spin_mult = 2
             self.unrestricted = True
