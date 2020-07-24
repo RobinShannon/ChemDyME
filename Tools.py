@@ -1,16 +1,12 @@
 from ase import Atoms
 import numpy as np
-import math as mth
 import openbabel, pybel
 import ChemDyME.Calculators as calc
 import os
 import re
-from ase.io import write, read
+from ase.io import read
 import shutil
 from ase.optimize import BFGS
-from pathlib import Path
-import io
-from contextlib import redirect_stdout
 try:
     from OpenMMCalc import OpenMMCalculator
 except:
