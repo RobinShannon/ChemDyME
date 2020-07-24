@@ -44,7 +44,8 @@ class SparrowCalculator(Calculator):
         calculation = scine_sparrow.Calculation('AM1')
         calculation.set_elements(['H', 'H'])
         calculation.set_positions([[0, 0, 0], [1, 0, 0]])
-        calculation.calculate_energy()
+        ene = calculation.calculate_energy()
+        print(str(ene))
         # Determine spin multiplicity
         sym = atoms.get_chemical_symbols()
         is_O = len(sym) == 1 and sym[0] == 'O'
@@ -74,6 +75,7 @@ class SparrowCalculator(Calculator):
             self.results['energy'] = energy_hartree * EV_PER_HARTREE
         if 'forces' in properties:
             gradients_hartree_bohr = np.array(calc.calculate_gradients())
+            print(str(gradients_hartree_bohr))
             self.results['forces'] = - gradients_hartree_bohr * EV_PER_HARTREE / ANG_PER_BOHR
         return
 
