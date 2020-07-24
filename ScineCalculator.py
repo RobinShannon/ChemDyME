@@ -41,6 +41,7 @@ class SparrowCalculator(Calculator):
 
     def _calculate_sparrow(self, atoms: Atoms, properties: Collection[str]):
         # Determine spin multiplicity
+        print('calculating_sparrow')
         sym = atoms.get_chemical_symbols()
         is_O = len(sym) == 1 and sym[0] == 'O'
         is_OO = len(sym) == 2 and sym[0] == 'O' and sym[1] == 'O'
@@ -69,10 +70,12 @@ class SparrowCalculator(Calculator):
         if 'energy' in properties:
             energy_hartree = calc.calculate_energy()
             self.results['energy'] = energy_hartree * EV_PER_HARTREE
+            print('energy = ' + str(energy_hartree * EV_PER_HARTREE))
         if 'forces' in properties:
-            #TODO make np array come out of wwrapper.
+            #TODO make np array come out of wrapper.
             gradients_hartree_bohr = np.array(calc.calculate_gradients())
             self.results['forces'] = - gradients_hartree_bohr * EV_PER_HARTREE / ANG_PER_BOHR
+            print('gradients = ' + str(gradients_hartree_bohr * EV_PER_HARTREE / ANG_PER_BOHR))
         return
 
     def minimise_stable(self,path, atoms: Optional[Atoms] = None, ):
