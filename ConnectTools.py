@@ -1,8 +1,5 @@
 import numpy as np
-import Tools as tl
 from time import process_time
-import util
-import math as mth
 
 # Method to get the center of mass seperation for two fragments.
 # Frag1 has the start and end index of the smaller fragment in xyz
@@ -202,45 +199,8 @@ def getDistVect(mol):
 def getSPRINT(xyz):
     pass
 
-def getDistMatrix(mol,active):
-    t = process_time()
-    #do some stuff
 
-    #Hack
-    try:
-        l = active[0].shape[0]
-    except:
-        l = 0
-    if active == "all":
-        s1 = len(mol.get_positions())
-        s2 = s1*(s1+1)/2
-    else:
-        s2 = len(active)
-    D = np.zeros((s2))
-    Dind = []
-    if active == "all":
-        n = 0
-        for i in range(0,s1):
-            for j in range(0,(s1 - i)):
-                Dist = mol.get_distance(i,j)
-                D[n] = Dist
-                Dind.append((i,j))
-                n += 1
-    #Hack to to read principle component in form of linear combination of atomic distances
-    elif l > 2:
-        dist = getDistVect(mol)
-        Dind = active
-        D,Dind = util.getPC(active,dist)
-    elif l >1:
-        for i in range(0,s2):
-            D[i] = mol.get_distance(int(active[i][0]),int(active[i][1]))
-            Dind.append([active[i][0],active[i][1]])
-    else:
-        D = mol.get_distance(int(active[0]),int(active[1]))
-        Dind.append([active[0], active[1]])
-    elapsed_time = process_time() - t
-    #print("time to get S = " + str(elapsed_time))
-    return D,Dind
+
 
 def projectPointOnPath2(S,path,type,n,D,reac, pathNode):
     baseline = S - reac

@@ -133,14 +133,14 @@ class SparrowCalculator(Calculator):
         irc_for = atoms.copy()
         irc_rev = atoms.copy()
         system1 = scine_readuct.load_system('temp.xyz', self.method, program='Sparrow',
-                                            molecular_charge=0, unrestricted_calculation=self.unrestricted, spin_multiplicity=self.spin_mult)
+                                            molecular_charge=0, unrestricted_calculation=self.unrestricted, spin_multiplicity=self.spin_mult, convergence_max_iterations=500)
         systems = {}
         systems['reac'] = system1
         try:
             systems, success = scine_readuct.run_tsopt_task(systems, ['reac'], output= ['ts_opt'], allow_unconverged = True)
             atoms.set_positions(systems['ts_opt'].positions * ANG_PER_BOHR)
             systems, success = scine_readuct.run_irc_task(systems, ['ts_opt'], output=['forward','reverse'],
-                                                            allow_unconverged=True)
+                                                            allow_unconverged=True, convergence_max_iterations=500)
             rmol.set_positions(systems['forward'].positions * ANG_PER_BOHR)
             pmol.set_positions(systems['reverse'].positions * ANG_PER_BOHR)
             irc_for = read('forward/forward.irc.forward.trj.xyz', ':')
