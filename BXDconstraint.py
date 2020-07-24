@@ -1,5 +1,5 @@
 from abc import ABCMeta, abstractmethod
-import ConnectTools  as ct
+import ChemDyME.ConnectTools  as ct
 import numpy as np
 
 

@@ -1,8 +1,8 @@
 import os
-import Globals as g
-import Main as m
-import GenBXDMain as gm
-import DosMain  as dm
+import ChemDyME.Globals as g
+import ChemDyME.Main as m
+import ChemDyME.GenBXDMain as gm
+import ChemDyME.DosMain  as dm
 import scine_sparrow
 
 calculation = scine_sparrow.Calculation('AM1')

@@ -1,10 +1,10 @@
-import BXDconstraint
+import ChemDyME.BXDconstraint
 import os
 from ase import Atoms
-import MDIntegrator
-import Connectivity
+import ChemDyME.MDIntegrator
+import ChemDyME.Connectivity
 import numpy as np
-import Tools as tl
+import ChemDyME.Tools as tl
 from ase.md.velocitydistribution import (MaxwellBoltzmannDistribution,Stationary, ZeroRotation)
 from ase import units
 from time import process_time
@@ -127,14 +127,14 @@ class Trajectory:
 
         #Get MDintegrator type
         if self.MDIntegrator == 'VelocityVerlet':
-            mdInt = MDIntegrator.VelocityVerlet(self.forces, self.velocity, self.Mol)
+            mdInt = ChemDyME.MDIntegrator.VelocityVerlet(self.forces, self.velocity, self.Mol)
         elif self.MDIntegrator == 'Langevin':
-            mdInt = MDIntegrator.Langevin(units.kB * self.LangTemp, self.LangFric, self.forces, self.velocity, self.Mol,timeStep)
+            mdInt = ChemDyME.MDIntegrator.Langevin(units.kB * self.LangTemp, self.LangFric, self.forces, self.velocity, self.Mol,timeStep)
 
 
 
         # Then set up reaction criteria or connectivity map
-        con = Connectivity.NunezMartinez(self.Mol)
+        con = ChemDyME.Connectivity.NunezMartinez(self.Mol)
 
 
         # Then set up various BXD procedures
@@ -142,9 +142,9 @@ class Trajectory:
             self.comBXD = True
             if self.mixedTimestep == True:
                 mdInt.reset(self.timeStep * 10)
-            comBxd = BXDconstraint.COM(self.Mol, 0, self.minCOM, hitLimit = 100000, activeS = self.fragIdx, runType="fixed")
+            comBxd = ChemDyME.BXDconstraint.COM(self.Mol, 0, self.minCOM, hitLimit = 100000, activeS = self.fragIdx, runType="fixed")
         if self.eneBXD:
-            eneBXD = BXDconstraint.Energy(self.Mol, -10000, 10000, hitLimit = 1, adapMax = self.adaptiveSteps, runType="adaptive")
+            eneBXD = ChemDyME.BXDconstraint.Energy(self.Mol, -10000, 10000, hitLimit = 1, adapMax = self.adaptiveSteps, runType="adaptive")
 
 
         # Run MD trajectory for specified number of steps
@@ -278,15 +278,15 @@ class Trajectory:
 
         #Get MDintegrator type
         if self.MDIntegrator == 'VelocityVerlet':
-            mdInt = MDIntegrator.VelocityVerlet(self.forces, self.velocity, self.Mol)
+            mdInt = ChemDyME.MDIntegrator.VelocityVerlet(self.forces, self.velocity, self.Mol)
         elif self.MDIntegrator == 'Langevin':
-            mdInt = MDIntegrator.Langevin(units.kB * self.LangTemp, self.LangFric, self.forces, self.velocity, self.Mol, self.timeStep)
+            mdInt = ChemDyME.MDIntegrator.Langevin(units.kB * self.LangTemp, self.LangFric, self.forces, self.velocity, self.Mol, self.timeStep)
 
         if (eneAdaptive == False):
-            BXD = BXDconstraint.Energy(self.Mol, -10000, 10000, runType="fixed", numberOfBoxes = numberOfBoxes, hitLimit = maxHits )
+            BXD = ChemDyME.BXDconstraint.Energy(self.Mol, -10000, 10000, runType="fixed", numberOfBoxes = numberOfBoxes, hitLimit = maxHits )
             BXD.createFixedBoxes(grainSize)
         else:
-            BXD = BXDconstraint.Energy(self.Mol, -10000, 10000, hitLimit = 1, adapMax = maxAdapSteps, runType="adaptive", numberOfBoxes = numberOfBoxes, decorrelationSteps = decorrelationSteps, hist = histogramLevel)
+            BXD = ChemDyME.BXDconstraint.Energy(self.Mol, -10000, 10000, hitLimit = 1, adapMax = maxAdapSteps, runType="adaptive", numberOfBoxes = numberOfBoxes, decorrelationSteps = decorrelationSteps, hist = histogramLevel)
 
         #Check whether a list of bounds is present? If so read adaptive boundaries from previous run
         if os.path.isfile("BXDbounds565.txt"):
@@ -311,9 +311,9 @@ class Trajectory:
 
         #Get MDintegrator type
         if self.MDIntegrator == 'VelocityVerlet':
-            mdInt = MDIntegrator.VelocityVerlet(self.forces, self.velocity, self.Mol)
+            mdInt = ChemDyME.MDIntegrator.VelocityVerlet(self.forces, self.velocity, self.Mol)
         elif self.MDIntegrator == 'Langevin':
-            mdInt = MDIntegrator.Langevin(units.kB * self.LangTemp, self.LangFric, self.forces, self.velocity, self.Mol, self.timeStep)
+            mdInt = ChemDyME.MDIntegrator.Langevin(units.kB * self.LangTemp, self.LangFric, self.forces, self.velocity, self.Mol, self.timeStep)
 
         # Run MD trajectory for specified number of steps
         while keepGoing:
@@ -418,12 +418,12 @@ class Trajectory:
 
         #Get MDintegrator type
         if self.MDIntegrator == 'VelocityVerlet':
-            mdInt = MDIntegrator.VelocityVerlet(self.forces, self.velocity, self.Mol)
+            mdInt = ChemDyME.MDIntegrator.VelocityVerlet(self.forces, self.velocity, self.Mol)
         elif self.MDIntegrator == 'Langevin':
-            mdInt = MDIntegrator.Langevin(units.kB * self.LangTemp, self.LangFric, self.forces, self.velocity, self.Mol, self.timeStep)
+            mdInt = ChemDyME.MDIntegrator.Langevin(units.kB * self.LangTemp, self.LangFric, self.forces, self.velocity, self.Mol, self.timeStep)
 
         #Check whether a list of bounds is present? If so read adaptive boundaries from previous run
-        BXD = BXDconstraint.genBXD(self.Mol, Reac, Prod, adapMax = adapMax, activeS = bonds, path = path, pathType = pathType, decorrelationSteps = decSteps, runType = 'adaptive', hitLimit = 1, hist = histogramBins, endDistance=pathLength, fixToPath=fixToPath, pathDistCutOff=pathDistCutOff, epsilon=epsilon )
+        BXD = ChemDyME.BXDconstraint.genBXD(self.Mol, Reac, Prod, adapMax = adapMax, activeS = bonds, path = path, pathType = pathType, decorrelationSteps = decSteps, runType = 'adaptive', hitLimit = 1, hist = histogramBins, endDistance=pathLength, fixToPath=fixToPath, pathDistCutOff=pathDistCutOff, epsilon=epsilon )
         #Check whether a list of bounds is present? If so read adaptive boundaries from previous run
         if os.path.isfile("BXDbounds.txt"):
             BXD.readExisitingBoundaries("BXDbounds.txt")

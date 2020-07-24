@@ -1,6 +1,6 @@
 from abc import ABCMeta, abstractmethod
 import numpy as np
-import ConnectTools as ct
+import ChemDyME.ConnectTools as ct
 import xml.etree.ElementTree as etree
 
 class ForceField:

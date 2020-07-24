@@ -1,4 +1,4 @@
-import Trajectory
+import ChemDyME.Trajectory
 from ase.optimize import BFGS
 import Tools as tl
 import os
@@ -25,5 +25,5 @@ def run(gl):
             min.run(fmax=0.1, steps=150)
         except:
             min.run(fmax=0.1, steps=50)
-    t = Trajectory.Trajectory(Reac,gl,os.getcwd(),0,False)
+    t = ChemDyME.Trajectory.Trajectory(Reac,gl,os.getcwd(),0,False)
     t.runBXDEconvergence(gl.maxHits,gl.maxAdapSteps,gl.eneAdaptive, gl.decorrelationSteps, gl.histogramLevel, gl.runsThrough, gl.numberOfBoxes,gl.grainSize)

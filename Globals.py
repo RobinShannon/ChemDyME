@@ -1,6 +1,6 @@
 import re
 import numpy as np
-import Tools as tl
+import ChemDyME.Tools as tl
 from io import StringIO
 
 # Class to store global variables from the input file

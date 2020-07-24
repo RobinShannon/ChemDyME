@@ -1,4 +1,4 @@
-import Tools as tl
+import ChemDyME.Tools as tl
 import numpy as np
 from ase import Atoms
 from ase.optimize import BFGS

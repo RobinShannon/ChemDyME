@@ -1,5 +1,5 @@
-import Trajectory
-import ConnectTools as ct
+import ChemDyME.Trajectory
+import ChemDyME.ConnectTools as ct
 import numpy as np
 import Tools as tl
 from ase.optimize import BFGS
@@ -78,7 +78,7 @@ def run(gl):
 
 
     # initialise then run trajectory
-    t = Trajectory.Trajectory(Reac,gl,os.getcwd(),0,False)
+    t = ChemDyME.Trajectory.Trajectory(Reac,gl,os.getcwd(),0,False)
     t.runGenBXD(Reac,Prod,gl.maxHits,gl.maxAdapSteps,gl.PathType,distPath, cbs, gl.decorrelationSteps, gl.histogramBins,totalPathLength, gl.fixToPath, gl.pathDistCutOff,gl.epsilon)
 
 def getPath(Reac,Prod,gl):
