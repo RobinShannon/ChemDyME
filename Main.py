@@ -174,7 +174,7 @@ def run(glo):
         # Minimise starting Geom and write summary xml for channel
         if reacs['reac_0'].have_reactant == False:
             outputs = []
-            if __name__ == 'ChemDyME.Main':
+            if __name__ == 'ChemDyME_Main':
                 arguments = []
                 for i in range(0, glo.cores):
                     name = 'reac_' + str(i)
