@@ -8,7 +8,6 @@ from shutil import copyfile
 import multiprocessing
 import numpy as np
 from ase import Atoms
-import scine_sparrow
 
 
 # Function to minimise the reactant geometry
@@ -137,11 +136,6 @@ def runNormal(p):
 
 
 def run(glo):
-    calculation = scine_sparrow.Calculation('AM1')
-    calculation.set_elements(['H', 'H'])
-    calculation.set_positions([[0, 0, 0], [1, 0, 0]])
-    ene = calculation.calculate_energy()
-    print(str(ene))
     # Get path to current directory
     path = os.getcwd()
 
@@ -155,39 +149,50 @@ def run(glo):
     # Add system name to path
     syspath = path + '/' + glo.dirName
 
-    # Make working directories for each core
-    for i in range(0, glo.cores):
+    #Make working directories for each core
+    for i in range(0,glo.cores):
         if not os.path.exists(path + '/Raw/' + str(i)):
             os.mkdir(path + '/Raw/' + str(i))
 
-    # Start counter which tracks the kinetic timescale
+    #Start counter which tracks the kinetic timescale
     mechanismRunTime = 0.0
 
-    # Set reaction instance
-    reacs = rxn.Reaction(glo.cartesians, glo.species, 0, glo)
+    #Set reaction instance
+    reacs = dict(("reac_" + str(i), rxn.Reaction(glo.cartesians, glo.species, i, glo)) for i in range(glo.cores))
 
-    # Initialise Master Equation object
-    me = ChemDyME.MasterEq.MasterEq()
+    #Initialise Master Equation object
+    me = MasterEq.MasterEq()
 
     # Open files for saving summary
-    mainsumfile = open(('mainSummary.txt'), "a")
-
-    # Base energy value
-    base_ene = 0.0
+    mainsumfile = open(( 'mainSummary.txt'), "a")
 
     while mechanismRunTime < glo.maxSimulationTime:
 
         # Minimise starting Geom and write summary xml for channel
-        if reacs.have_reactant == False:
-            reacs.optReac()
+        if reacs['reac_0'].have_reactant == False:
+            outputs = []
+            if __name__ == 'Main':
+                arguments = []
+                for i in range(0,glo.cores):
+                    name = 'reac_' + str(i)
+                    arguments.append(reacs[name])
+                p = multiprocessing.Pool(glo.cores)
+                results = p.map(minReac, arguments)
+                outputs = [result for result in results]
+
+            for i in range(0,glo.cores):
+                name = 'reac_' + str(i)
+                reacs[name] = outputs[i]
+
+        else:
+            for i in range(0,glo.cores):
+                name = 'reac_' + str(i)
+                reacs[name].have_reactant = False
 
 
         # Update path for new minima
-        minpath = syspath + '/' + reacs['reac_0'].ReacName
+        minpath  = syspath + '/' + reacs['reac_0'].ReacName
 
-        # Update base energy on the first run round
-        if base_ene == 0.0:
-            base_ene = reacs['reac_0'].reactantEnergy
         # Get smiles name for initial geom and create directory for first minimum
         if not os.path.exists(minpath):
             os.makedirs(minpath)

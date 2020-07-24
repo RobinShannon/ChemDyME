@@ -9,9 +9,7 @@ from scine_sparrow import Calculation
 import scine_sparrow
 from ase.io import write, read
 import scine_readuct
-import io
-import contextlib
-import sys
+
 
 EV_PER_HARTREE = 27.2114
 ANG_PER_BOHR = 0.529177
@@ -75,7 +73,6 @@ class SparrowCalculator(Calculator):
             self.results['energy'] = energy_hartree * EV_PER_HARTREE
         if 'forces' in properties:
             gradients_hartree_bohr = np.array(calc.calculate_gradients())
-            print(str(gradients_hartree_bohr))
             self.results['forces'] = - gradients_hartree_bohr * EV_PER_HARTREE / ANG_PER_BOHR
         return
 
