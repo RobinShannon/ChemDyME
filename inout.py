@@ -1,5 +1,5 @@
 import xml.etree.cElementTree as ET
-import Tools
+import ChemDyME.Tools
 import numpy as np
 from xml.dom import minidom
 
