@@ -8,6 +8,7 @@ from shutil import copyfile
 import multiprocessing
 import numpy as np
 from ase import Atoms
+import scine_sparrow
 
 
 # Function to minimise the reactant geometry
@@ -136,6 +137,11 @@ def runNormal(p):
 
 
 def run(glo):
+    calculation = scine_sparrow.Calculation('AM1')
+    calculation.set_elements(['H', 'H'])
+    calculation.set_positions([[0, 0, 0], [1, 0, 0]])
+    ene = calculation.calculate_energy()
+    print(str(ene))
     # Get path to current directory
     path = os.getcwd()
 
