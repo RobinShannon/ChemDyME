@@ -6,6 +6,7 @@ import numpy as np
 from ase import Atoms
 from ase.calculators.calculator import Calculator, all_changes
 from scine_sparrow import Calculation
+import scine_sparrow
 from ase.io import write, read
 import scine_readuct
 import io
@@ -40,16 +41,15 @@ class SparrowCalculator(Calculator):
         self._calculate_sparrow(atoms, properties)
 
     def _calculate_sparrow(self, atoms: Atoms, properties: Collection[str]):
+        calculation = scine_sparrow.Calculation('AM1')
+        calculation.set_elements(['H', 'H'])
+        calculation.set_positions([[0, 0, 0], [1, 0, 0]])
+        calculation.calculate_energy()
         # Determine spin multiplicity
-        print('calculating_sparrow')
         sym = atoms.get_chemical_symbols()
-        print('calculating_sparrow 2')
         is_O = len(sym) == 1 and sym[0] == 'O'
-        print('calculating_sparrow 3')
         is_OO = len(sym) == 2 and sym[0] == 'O' and sym[1] == 'O'
-        print('calculating_sparrow 4')
         s = sum(atoms.get_atomic_numbers())
-        print('calculating_sparrow 5')
         if s % 2 != 0:
             self.spin_mult = 2
             self.unrestricted = True
@@ -61,27 +61,20 @@ class SparrowCalculator(Calculator):
             self.unrestricted = False
 
         positions = atoms.positions
-        print('calculating_sparrow 6')
         elements = atoms.get_chemical_symbols()
         calc = Calculation()
         calc.set_elements(elements)
         calc.set_positions(positions)
-        print('calculating_sparrow 7')
         settings = {}
         settings['spin_multiplicity'] = self.spin_mult
         settings['unrestricted_calculation'] = self.unrestricted
         calc.set_settings(settings)
-        print('calculating_sparrow 8 ')
         if 'energy' in properties:
-            print('calculating_sparrow 9 ')
             energy_hartree = calc.calculate_energy()
             self.results['energy'] = energy_hartree * EV_PER_HARTREE
-            print('energy = ' + str(energy_hartree * EV_PER_HARTREE))
         if 'forces' in properties:
-            print('calculating_sparrow 11')
             gradients_hartree_bohr = np.array(calc.calculate_gradients())
             self.results['forces'] = - gradients_hartree_bohr * EV_PER_HARTREE / ANG_PER_BOHR
-            print('gradients = ' + str(gradients_hartree_bohr * EV_PER_HARTREE / ANG_PER_BOHR))
         return
 
     def minimise_stable(self,path, atoms: Optional[Atoms] = None, ):
