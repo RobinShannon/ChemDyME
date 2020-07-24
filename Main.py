@@ -167,7 +167,7 @@ def run(glo):
     reacs = rxn.Reaction(glo.cartesians, glo.species, 0, glo)
 
     # Initialise Master Equation object
-    me = MasterEq.MasterEq()
+    me = ChemDyME.MasterEq.MasterEq()
 
     # Open files for saving summary
     mainsumfile = open(('mainSummary.txt'), "a")
@@ -243,11 +243,11 @@ def run(glo):
                 # If this is the first species and it is a bimolecular channel, then initialise a bimolecular trajectory
                 # Otherwise initialise unimolecular trajectory at minima
                 if glo.InitialBi == True:
-                    trajs = dict(("traj_" + str(i), Trajectory.Trajectory(reacs[('reac_' + str(i))].CombReac, glo,
+                    trajs = dict(("traj_" + str(i), ChemDyME.Trajectory.Trajectory(reacs[('reac_' + str(i))].CombReac, glo,
                                                                           tempPaths[('tempPath_' + str(i))], str(i),
                                                                           True)) for i in range(glo.cores))
                 else:
-                    trajs = dict(("traj_" + str(i), Trajectory.Trajectory(reacs[('reac_' + str(i))].CombReac, glo,
+                    trajs = dict(("traj_" + str(i), ChemDyME.Trajectory.Trajectory(reacs[('reac_' + str(i))].CombReac, glo,
                                                                           tempPaths[('tempPath_' + str(i))], str(i),
                                                                           False)) for i in range(glo.cores))
 
@@ -312,7 +312,7 @@ def run(glo):
                                 glo.trajLevel = glo.trajLevel2
 
                             biTrajs = dict(("traj_" + str(k),
-                                            Trajectory.Trajectory(combinedMol, glo, bitempPaths[('bitempPath_' + str(k))],
+                                            ChemDyME.Trajectory.Trajectory(combinedMol, glo, bitempPaths[('bitempPath_' + str(k))],
                                                                   str(k), True)) for k in range(glo.cores))
 
                             if __name__ == "Main":
