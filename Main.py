@@ -263,7 +263,7 @@ def run(glo):
 
                 results2 = []
                 outputs2 = []
-                if __name__ == "Main":
+                if __name__ == "ChemDyME.Main":
                     arguments1 = []
                     arguments2 = []
                     for i in range(0, glo.cores):
