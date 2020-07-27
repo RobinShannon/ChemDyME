@@ -94,8 +94,19 @@ class Trajectory:
         if not os.path.exists(newpath):
             os.makedirs(newpath)
         os.chdir(newpath)
-        print("new file for trajectory " + (newpath + "/totaltraj.xyz"))
-        namefile = open((newpath + "/totaltraj.xyz"), "a")
+        file_name = str(newpath + "/totaltraj.xyz")
+        if os.path.isfile(file_name):
+            expand = 1
+            while True:
+                expand += 1
+                new_file_name = file_name.split(".txt")[0] + str(expand) + ".txt"
+                if os.path.isfile(new_file_name):
+                    continue
+                else:
+                    file_name = new_file_name
+                    break
+
+        namefile = open((file_name), "a")
 
         self.numberOfSteps = 0
         consistantChange = 0
