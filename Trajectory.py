@@ -63,13 +63,13 @@ class Trajectory:
         self.TSgeom = mol.copy()
         self.productGeom = self.Mol.get_positions()
         try:
-            self.window = gl.reactionWindow/2
+            self.window = gl.reactionWindow
             self.endOnReac = gl.endOnReaction
-            self.consistantWindow = gl.reactionWindow/4
+            self.consistantWindow = gl.reactionWindow/2
         except:
             pass
         if self.biMolecular:
-            self.consistantWindow = 2
+            self.consistantWindow = gl.reactionWindow/4
         self.savePath = path
         self.ReactionCountDown = 0
         self.MolList = []

@@ -320,10 +320,7 @@ class Reaction:
             self.CombProd.set_positions(cart)
         path = (self.workingDir + '/Raw/calcHigh' + self.procNum)
         self.CombProd = tl.setCalc(self.CombProd, self.lowString, self.lowMeth, self.lowLev)
-        min = BFGS(self.CombProd)
         self.ProdName = tl.getSMILES(self.CombProd, True, partialOpt=True)
-        if self.is_bimol_reac == True:
-            self.ProdName = self.ProdName.replace('____', 'comp')
         FullName = self.ProdName.split('____', 1)
         if len(FullName) > 1:
             self.is_bimol_prod = True

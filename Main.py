@@ -95,11 +95,7 @@ def runNormal(p):
                     print('channel barrier too large')
 
                 # Finally check that the product isnt higher in energy than the reactant in case of ILT
-                if p[0].is_bimol_reac == True and p[0].barrierlessReaction == True and p[0].reactantEnergy < p[
-                    0].productEnergy:
-                    printXML = False
-
-                if p[0].is_bimol_prod:
+                if p[0].is_bimol_reac == True and p[0].barrierlessReaction == True and p[0].reactantEnergy < p[0].productEnergy:
                     printXML = False
 
                 if printXML == True:

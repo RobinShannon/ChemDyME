@@ -112,6 +112,7 @@ class SparrowCalculator(Calculator):
 
     def minimise_ts(self,path, atoms: Optional[Atoms] = None ):
         current_dir = os.getcwd()
+        os.makedirs(path, exist_ok=True)
         os.chdir(path)
         sym = atoms.get_chemical_symbols()
         is_O = len(sym) == 1 and sym[0] == 'O'
@@ -154,6 +155,7 @@ class SparrowCalculator(Calculator):
 
     def minimise_bspline(self,path, reac, prod ):
         current_dir = os.getcwd()
+        os.makedirs(path, exist_ok=True)
         os.chdir(path)
         sym = reac.get_chemical_symbols()
         is_O = len(sym) == 1 and sym[0] == 'O'
