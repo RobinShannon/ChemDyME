@@ -290,7 +290,7 @@ class Reaction:
         self.CombReac = tl.setCalc(self.CombReac, self.lowString, self.lowMeth, self.lowLev)
         self.ReacName = tl.getSMILES(self.CombReac, True)
         FullName = self.ReacName.split('____', 1)
-        path = (self.workingDir + '/Raw/calcHigh')
+        path = (self.workingDir + '/Raw/calcHigh' + self.procNum)
         if len(FullName) > 1:
             self.is_bimol_reac = True
             self.ReacName = FullName[0].strip('\n\t')
