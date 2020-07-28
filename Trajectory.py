@@ -99,7 +99,7 @@ class Trajectory:
             expand = 1
             while True:
                 expand += 1
-                new_file_name = file_name.split(".txt")[0] + str(expand) + ".txt"
+                new_file_name = file_name.split(".xyz")[0] + str(expand) + ".xyz"
                 if os.path.isfile(new_file_name):
                     continue
                 else:
@@ -241,7 +241,7 @@ class Trajectory:
 
             # Update connectivity map to check for reaction
             con.update(self.Mol)
-            if con.criteriaMet is True or (self.biMolecular and comBxd.s[0] < self.minCOM):
+            if con.criteriaMet is True:
                 eneBXDon = False
                 if consistantChange == 0:
                     self.TSpoint = i
