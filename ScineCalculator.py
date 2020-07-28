@@ -139,10 +139,9 @@ class SparrowCalculator(Calculator):
         systems = {}
         systems['reac'] = system1
         try:
-            systems, success = scine_readuct.run_tsopt_task(systems, ['reac'], output= ['ts_opt'], allow_unconverged = True)
+            systems, success = scine_readuct.run_tsopt_task(systems, ['reac'], output= ['ts_opt'], optimizer='bfgs', allow_unconverged = True)
             atoms.set_positions(systems['ts_opt'].positions * ANG_PER_BOHR)
-            systems, success = scine_readuct.run_irc_task(systems, ['ts_opt'], output=['forward','reverse'],
-                                                            allow_unconverged=True)
+            systems, success = scine_readuct.run_irc_task(systems, ['ts_opt'], output=['forward','reverse'], optimizer='bfgs', allow_unconverged=True)
             rmol.set_positions(systems['forward'].positions * ANG_PER_BOHR)
             pmol.set_positions(systems['reverse'].positions * ANG_PER_BOHR)
             irc_for = read('forward/forward.irc.forward.trj.xyz', ':')
@@ -185,7 +184,7 @@ class SparrowCalculator(Calculator):
         systems['prod'] = system2
         spline_traj = []
         try:
-            systems, success = scine_readuct.run_bspline_task(systems, ['reac','prod'], output = ['spline'], num_structures = 50)
+            systems, success = scine_readuct.run_bspline_task(systems, ['reac','prod'], output = ['spline'], optimizer='sd', num_integration_points=31, num_control_points=11,  num_structures = 50)
             spline_traj = read('spline/spline_optimized.xyz', index=':')
         except:
             pass
