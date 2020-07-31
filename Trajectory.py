@@ -181,12 +181,14 @@ class Trajectory:
                 # the path boundary or whether both are hit. The del_phi list is populated with each constraint.
                 if self.bxd.bound_hit != 'none':
                     del_phi.append(self.bxd.del_constraint(self.mol))
+                    decorrelated = True
                 if self.bxd.path_bound_hit:
                     del_phi.append(self.bxd.path_del_constraint(self.mol))
                     steps_since_last_hit = 0
+                    decorrelated = False
                 # If we have hit a bound get the md object to modify the velocities / positions appropriately.
                 self.md_integrator.constrain(del_phi)
-                decorrelated = False
+
 
 
             # Now we have gone through the first inversion section we can set first_run to false
