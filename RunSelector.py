@@ -2,7 +2,7 @@ import os
 import ChemDyME.Globals as g
 import ChemDyME.Main as m
 import ChemDyME.GenBXDMain as gm
-import ChemDyME.DosMain  as dm
+import ChemDyME.DosMain as dm
 
 
 path = os.getcwd()

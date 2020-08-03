@@ -43,7 +43,6 @@ class SparrowCalculator(Calculator):
         calculation.set_elements(['H', 'H'])
         calculation.set_positions([[0, 0, 0], [1, 0, 0]])
         ene = calculation.calculate_energy()
-        print(str(ene))
         # Determine spin multiplicity
         sym = atoms.get_chemical_symbols()
         is_O = len(sym) == 1 and sym[0] == 'O'
@@ -76,7 +75,7 @@ class SparrowCalculator(Calculator):
             self.results['forces'] = - gradients_hartree_bohr * EV_PER_HARTREE / ANG_PER_BOHR
         return
 
-    def minimise_stable(self,path, atoms: Optional[Atoms] = None, ):
+    def minimise_stable(self,path = os.getcwd(), atoms: Optional[Atoms] = None):
         current_dir = os.getcwd()
         os.makedirs(path, exist_ok=True)
         os.chdir(path)
@@ -139,9 +138,9 @@ class SparrowCalculator(Calculator):
         systems = {}
         systems['reac'] = system1
         try:
-            systems, success = scine_readuct.run_tsopt_task(systems, ['reac'], output= ['ts_opt'], optimizer='bfgs', allow_unconverged = True)
+            systems, success = scine_readuct.run_tsopt_task(systems, ['reac'], output= ['ts_opt'], allow_unconverged = True)
             atoms.set_positions(systems['ts_opt'].positions * ANG_PER_BOHR)
-            systems, success = scine_readuct.run_irc_task(systems, ['ts_opt'], output=['forward','reverse'], optimizer='bfgs', allow_unconverged=True)
+            systems, success = scine_readuct.run_irc_task(systems, ['ts_opt'], output=['forward','reverse'], allow_unconverged=True)
             rmol.set_positions(systems['forward'].positions * ANG_PER_BOHR)
             pmol.set_positions(systems['reverse'].positions * ANG_PER_BOHR)
             irc_for = read('forward/forward.irc.forward.trj.xyz', ':')
@@ -182,13 +181,24 @@ class SparrowCalculator(Calculator):
         systems = {}
         systems['reac'] = system1
         systems['prod'] = system2
-        spline_traj = []
         try:
-            systems, success = scine_readuct.run_bspline_task(systems, ['reac','prod'], output = ['spline'], optimizer='sd', num_integration_points=31, num_control_points=11,  num_structures = 50)
+            systems, success = scine_readuct.run_bspline_task(systems, ['reac','prod'], output = ['spline'],  num_integration_points=20, num_control_points=10,  num_structures = 60)
+        except:
+            try:
+                systems, success = scine_readuct.run_bspline_task(systems, ['reac','prod'], output = ['spline'],  num_integration_points=10, num_control_points=5,  num_structures = 60)
+            except:
+                pass
+        try:
             spline_traj = read('spline/spline_optimized.xyz', index=':')
         except:
-            pass
+            print('spline_failed')
+            spline_traj = read('spline/spline_interpolated.xyz', index=':')
+        os.remove('spline/spline_optimized.xyz')
+        os.remove('spline/spline_interpolated.xyz')
         os.remove('reac.xyz')
         os.remove('prod.xyz')
-        os.chdir(current_dir)
+        try:
+            os.chdir(current_dir)
+        except:
+            pass
         return spline_traj
