@@ -413,6 +413,21 @@ class Reaction:
         except:
             self.TScorrect = False
 
+
+        inc = - 100
+        while self.TScorrect == False and inc <= 100:
+            os.remove('/Data/TSGuess.xyz')
+            self.TS = MolList[TrajStart - inc].copy()
+            self.TS = tl.setCalc(self.TS, self.lowString, self.lowMeth, self.lowLev)
+            c = FixAtoms(trans)
+            self.TS.set_constraint(c)
+            min = BFGS(self.TS)
+            min.run(fmax=0.05, steps=50)
+            write(path + '/Data/TSGuess.xyz', self.TS)
+            TSGuess = self.TS.copy()
+            del self.TS.constraints
+            inc += 10
+
         if self.TScorrect:
             irc_ene = []
             irc = irc_rev.reverse() + irc_for
@@ -448,11 +463,13 @@ class Reaction:
                 f.write(str(sp) + "\n")
             f.close()
         self.spline = spline_ene
+
         self.TS2 = tl.setCalc(self.TS2, self.lowString, self.lowMeth, self.lowLev)
         self.TS2, rmol, pmol, irc_for, irc_rev = self.TS2._calc.minimise_ts(raw_path, self.TS2)
         self.TS2Freqs, zpe, self.imaginaryFreq2 = self.characteriseTSFreqInternal(self.TS2)
         self.TS2 = tl.setCalc(self.TS2, self.singleString, self.singleMeth, self.singleLev)
         self.forwardBarrier2 = self.TS2.get_potential_energy() + zpe
+
         if self.TScorrect == False:
             try:
                 self.TS2correct = self.compareRandP(rmol, pmol)
