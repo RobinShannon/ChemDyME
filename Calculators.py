@@ -526,7 +526,7 @@ def gaussian(mol, lab, level):
                           save=None,
                           method=lev,
                           basis=bas,
-                          mult=m,
+                          multiplicity=m,
                           scf='qc')
 
     return mol
