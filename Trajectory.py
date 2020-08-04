@@ -254,7 +254,8 @@ class Trajectory:
                     else:
                         consistantChange -= 1
             else:
-                consistantChange = 0
+                if consistantChange > 0:
+                    consistantChange = 0
                 con.criteriaMet = False
                 if self.eneBXD and not self.comBXD:
                     eneBXDon = True

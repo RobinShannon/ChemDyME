@@ -83,9 +83,9 @@ class Reaction:
         rmol = tl.setCalc(rmol, self.lowString, self.lowMeth, self.lowLev)
         min = BFGS(rmol)
         try:
-            min.run(fmax=0.1, steps=50)
+            min.run(fmax=0.1, steps=5)
         except:
-            min.run(fmax=0.1, steps=50)
+            min.run(fmax=0.1, steps=5)
         Name = tl.getSMILES(rmol, False).strip('\n\t')
         FullName = Name.split('____')
         if len(FullName) > 1:
@@ -93,9 +93,9 @@ class Reaction:
         pmol = tl.setCalc(pmol, self.lowString, self.lowMeth, self.lowLev)
         min = BFGS(pmol)
         try:
-            min.run(fmax=0.1, steps=50)
+            min.run(fmax=0.1, steps=5)
         except:
-            min.run(fmax=0.1, steps=50)
+            min.run(fmax=0.1, steps=5)
         Name2 = tl.getSMILES(pmol, False).strip('\n\t')
         FullName2 = Name2.split('____')
         if len(FullName2) > 1:
@@ -416,7 +416,6 @@ class Reaction:
 
         inc = - 100
         while self.TScorrect == False and inc <= 100:
-            os.remove('/Data/TSGuess.xyz')
             self.TS = MolList[TrajStart - inc].copy()
             self.TS = tl.setCalc(self.TS, self.lowString, self.lowMeth, self.lowLev)
             c = FixAtoms(trans)
@@ -426,6 +425,11 @@ class Reaction:
             write(path + '/Data/TSGuess.xyz', self.TS)
             TSGuess = self.TS.copy()
             del self.TS.constraints
+            self.TS, rmol, pmol, irc_for, irc_rev = self.TS._calc.minimise_ts(raw_path, self.TS)
+            try:
+                self.TScorrect = self.compareRandP(rmol, pmol)
+            except:
+                self.TScorrect = False
             inc += 10
 
         if self.TScorrect:
