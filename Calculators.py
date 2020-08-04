@@ -505,7 +505,7 @@ def gaussian2(mol, lab, level):
     return mol
 
 def gaussian(mol, lab, level):
-
+    level = level.split('_')
     sym = mol.get_chemical_symbols()
     is_O = len(sym) == 1 and sym[0] == 'O'
     is_OO = len(sym) == 2 and sym[0] == 'O' and sym[1] =='O'
@@ -522,8 +522,7 @@ def gaussian(mol, lab, level):
     mol.calc = Gaussian(mem='1GB',
                           chk='MyJob.chk',
                           save=None,
-                          method=lab,
-                          basis=level,
+                          method=level,
                           mult=m,
                           scf='qc')
 
