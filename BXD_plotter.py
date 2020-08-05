@@ -17,19 +17,15 @@ class boundary:
     def getLine(self, length):
         # Get vector b pependicular to line defined by n1,n2
         # Set b1 = 1 and then solve n.b = 0
-        x_low = self.centerPoint[0] - 0.1 * self.centerPoint[0]
-        x_high = self.centerPoint[0] + 0.1 * self.centerPoint[0]
-        y_low = (-self.D - self.n1 * x_low)/self.n2
-        y_high = (-self.D - self.n1 * x_high)/self.n2
-        vector1 = np.array([x_low,y_low])
-        vector2 = np.array([x_high,y_high])
-        vector = vector2 - vector1
-        # Make b a unit vector
-        unit = vector/np.linalg.norm(vector)
+        b1 = 1
+        b2 = self.n1/-self.n2
+        vector = np.array([b1,b2])
         # Now add and subtract unit vector multiplied by half the length to the boundary point S1 and S2
         # This gives the start and end points of a line length L centered upon point S1 and S2
-        start = vector1 + (length/2) * unit
-        end = vector1 - (length/2) * unit
+        # Make b a unit vector
+        unit = vector / np.linalg.norm(vector)
+        start = self.centerPoint + (length/2) * unit
+        end = self.centerPoint - (length/2) * unit
         x = np.array([start[0],end[0]])
         y = np.array([start[1],end[1]])
         return(x,y)
