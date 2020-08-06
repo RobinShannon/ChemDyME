@@ -451,7 +451,7 @@ class Reaction:
         self.TS = tl.setCalc(self.TS, self.singleString, self.singleMeth, self.singleLev)
         self.forwardBarrier = self.TS.get_potential_energy() + zpe
 
-
+        self.TS = tl.setCalc(self.TS, self.lowString, self.lowMeth, self.lowLev)
         spline = self.TS._calc.minimise_bspline(raw_path, self.CombReac, self.CombProd)
         spline_ene = []
         for sp in spline:
