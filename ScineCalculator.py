@@ -80,7 +80,8 @@ class SparrowCalculator(Calculator):
         os.makedirs(path, exist_ok=True)
         os.chdir(path)
         sym = atoms.get_chemical_symbols()
-        is_O = len(sym) == 1 and sym[0] == 'O'
+        if len(sym) == 1:
+            return
         is_OO = len(sym) == 2 and sym[0] == 'O' and sym[1] == 'O'
         s = sum(atoms.get_atomic_numbers())
         if s % 2 != 0:
@@ -114,7 +115,6 @@ class SparrowCalculator(Calculator):
         os.makedirs(path, exist_ok=True)
         os.chdir(path)
         sym = atoms.get_chemical_symbols()
-        is_O = len(sym) == 1 and sym[0] == 'O'
         is_OO = len(sym) == 2 and sym[0] == 'O' and sym[1] == 'O'
         s = sum(atoms.get_atomic_numbers())
         if s % 2 != 0:
