@@ -87,7 +87,7 @@ class SparrowCalculator(Calculator):
         if s % 2 != 0:
             self.spin_mult = 2
             self.unrestricted = True
-        elif is_O or is_OO:
+        elif is_OO:
             self.spin_mult = 3
             self.unrestricted = False
         else:
@@ -120,7 +120,7 @@ class SparrowCalculator(Calculator):
         if s % 2 != 0:
             self.spin_mult = 2
             self.unrestricted = True
-        elif is_O or is_OO:
+        elif is_OO:
             self.spin_mult = 3
             self.unrestricted = False
         else:
@@ -156,13 +156,12 @@ class SparrowCalculator(Calculator):
         os.makedirs(path, exist_ok=True)
         os.chdir(path)
         sym = reac.get_chemical_symbols()
-        is_O = len(sym) == 1 and sym[0] == 'O'
         is_OO = len(sym) == 2 and sym[0] == 'O' and sym[1] == 'O'
         s = sum(reac.get_atomic_numbers())
         if s % 2 != 0:
             self.spin_mult = 2
             self.unrestricted = True
-        elif is_O or is_OO:
+        elif is_OO:
             self.spin_mult = 3
             self.unrestricted = False
         else:
