@@ -995,8 +995,11 @@ class Converging(BXD):
         if boxes == 1:
             profile = []
             for i in range(0, len(self.box_list)):
-                enedata = [float(d[3]) for d in self.box_list[i].data]
-                ave_ene = min(np.asarray(enedata))
+                try:
+                    enedata = [float(d[3]) for d in self.box_list[i].data]
+                    ave_ene = min(np.asarray(enedata))
+                except:
+                    ave_ene = "nan"
                 profile.append((str(i), self.box_list[i].gibbs, self.box_list[i].gibbs_err, ave_ene))
             return profile
         else:
