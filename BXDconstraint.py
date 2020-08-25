@@ -659,11 +659,12 @@ class Converging(BXD):
     """
     def __init__(self, progress_metric, stuck_limit=5, box_skip_limit = 500000, bound_file="bounds.txt", geom_file='box_geoms.xyz', bound_hits=100,
                  read_from_file=False, convert_fixed_boxes = False, box_width=0, number_of_boxes=0, decorrelation_limit=0,  boxes_to_converge = [],
-                 print_directory='Converging_Data', converge_ends = False, box_data_print_freqency = 10):
+                 print_directory='Converging_Data', converge_ends = False, box_data_print_freqency = 10, box_geom_print_frequency=10000  ):
 
         super(Converging, self).__init__(progress_metric, stuck_limit)
         self.bound_file = bound_file
         self.box_data_print_freqency = box_data_print_freqency
+        self.box_geom_print_freqency = box_geom_print_frequency
         self.geom_file = geom_file
         self.box_skip_limit = box_skip_limit
         self.dir = str(print_directory)
@@ -713,6 +714,7 @@ class Converging(BXD):
         self.lower_rates_file = open(self.box_list[self.box].lower_rates_path, 'a')
         self.lower_milestoning_rates_file = open(self.box_list[self.box].lower_milestoning_rates_path, 'a')
         self.data_file = open(self.box_list[self.box].data_path, 'a')
+        self.geom_file = open(self.box_list[self.box].geom_path, 'a')
         self.hit_file = open(self.box_list[self.box].hit_path, 'a')
 
     def get_box_geometries(self, file):
@@ -741,6 +743,7 @@ class Converging(BXD):
             box.lower_milestoning_rates_path = box.temp_dir + '/lower_milestoning.txt'
             box.data_path = box.temp_dir + '/box_data.txt'
             box.hit_path = box.temp_dir + '/hits.txt'
+            box.geom_path = box.temp_dir + '/geom.xyz'
 
     def update(self, mol, decorrelated):
         """
@@ -810,6 +813,8 @@ class Converging(BXD):
                 # Consult box_data_print_freqency to determine whether or not print the data to a file
                 if self.box_list[self.box].points_in_box != 0 and self.box_list[self.box].points_in_box % self.box_data_print_freqency == 0:
                     self.data_file.write(str(self.s) + '\t' + str(projected_data) + '\t' + str(distance_from_bound) + '\t' + str(mol.get_potential_energy()) + '\t' + str(distance_from_upper) +'\n')
+                if self.box_list[self.box].points_in_box != 0 and self.box_list[self.box].points_in_box % self.box_geom_print_freqency == 0:
+                    write(self.geom_file,mol,append=True)
                 self.box_list[self.box].points_in_box += 1
         # Check whether we are stuck in a loop of inversions. If stuck, make the boundary we are stuck at transparent to move to then next box
         if self.stuck_count > self.stuck_limit:
@@ -821,6 +826,7 @@ class Converging(BXD):
                 self.lower_milestoning_rates_file.close()
                 self.data_file.close()
                 self.hit_file.close()
+                self.geom_file.close()
                 self.box_list[self.box].upper_non_milestoning_count = 0
                 self.box_list[self.box].lower_non_milestoning_count = 0
                 self.box += 1
@@ -830,6 +836,7 @@ class Converging(BXD):
                 self.lower_milestoning_rates_file = open(self.box_list[self.box].lower_milestoning_rates_path, 'a')
                 self.data_file = open(self.box_list[self.box].data_path, 'a')
                 self.hit_file = open(self.box_list[self.box].hit_path, 'a')
+                self.geom_file = open(self.box_list[self.box].geom_path, 'a')
             elif self.bound_hit == 'lower':
                 self.upper_rates_file.close()
                 self.upper_milestoning_rates_file.close()
@@ -837,6 +844,7 @@ class Converging(BXD):
                 self.lower_milestoning_rates_file.close()
                 self.data_file.close()
                 self.hit_file.close()
+                self.geom_file.close()
                 self.box_list[self.box].upper_non_milestoning_count = 0
                 self.box_list[self.box].lower_non_milestoning_count = 0
                 self.box -= 1
@@ -846,6 +854,7 @@ class Converging(BXD):
                 self.lower_milestoning_rates_file = open(self.box_list[self.box].lower_milestoning_rates_path, 'a')
                 self.data_file = open(self.box_list[self.box].data_path, 'a')
                 self.hit_file = open(self.box_list[self.box].hit_path, 'a')
+                self.geom_file = open(self.box_list[self.box].geom_path, 'a')
         # Check whether we have reach the box_skip_limit and alter the box accordingly.
         if self.reverse and self.box_list[self.box].lower.step_since_hit > self.box_skip_limit:
             self.skip_box = True
@@ -855,6 +864,7 @@ class Converging(BXD):
             self.lower_milestoning_rates_file.close()
             self.data_file.close()
             self.hit_file.close()
+            self.geom_file.close()
             self.box_list[self.box].upper_non_milestoning_count = 0
             self.box_list[self.box].lower_non_milestoning_count = 0
             self.box -= 1
@@ -864,6 +874,7 @@ class Converging(BXD):
             self.lower_milestoning_rates_file = open(self.box_list[self.box].lower_milestoning_rates_path, 'a')
             self.data_file = open(self.box_list[self.box].data_path, 'a')
             self.hit_file = open(self.box_list[self.box].hit_path, 'a')
+            self.geom_file = open(self.box_list[self.box].geom_path, 'a')
         if not self.reverse and self.box_list[self.box].upper.step_since_hit > self.box_skip_limit:
             self.skip_box = True
             self.upper_rates_file.close()
@@ -871,6 +882,7 @@ class Converging(BXD):
             self.lower_rates_file.close()
             self.lower_milestoning_rates_file.close()
             self.data_file.close()
+            self.geom_file.close()
             self.box_list[self.box].upper_non_milestoning_count = 0
             self.box_list[self.box].lower_non_milestoning_count = 0
             self.box += 1
@@ -880,6 +892,7 @@ class Converging(BXD):
             self.lower_milestoning_rates_file = open(self.box_list[self.box].lower_milestoning_rates_path, 'a')
             self.data_file = open(self.box_list[self.box].data_path, 'a')
             self.hit_file = open(self.box_list[self.box].hit_path, 'a')
+            self.geom_file = open(self.box_list[self.box].geom_path, 'a')
 
 
     def create_fixed_boxes(self, width, number_of_boxes, start_s):
@@ -1238,6 +1251,7 @@ class Converging(BXD):
                 self.lower_milestoning_rates_file.close()
                 self.data_file.close()
                 self.hit_file.close()
+                self.geom_file.close()
                 self.box += 1
                 self.upper_rates_file = open(self.box_list[self.box].upper_rates_path, 'a')
                 self.upper_milestoning_rates_file = open(self.box_list[self.box].upper_milestoning_rates_path, 'a')
@@ -1245,6 +1259,7 @@ class Converging(BXD):
                 self.lower_milestoning_rates_file = open(self.box_list[self.box].lower_milestoning_rates_path, 'a')
                 self.data_file = open(self.box_list[self.box].data_path, 'a')
                 self.hit_file = open(self.box_list[self.box].hit_path, 'a')
+                self.geom_file = open(self.box_list[self.box].geom_path, 'a')
                 self.box_list[self.box].milestoning_count = 0
                 self.box_list[self.box].upper_non_milestoning_count = 0
                 self.box_list[self.box].lower_non_milestoning_count = 0
@@ -1282,6 +1297,7 @@ class Converging(BXD):
                 self.lower_milestoning_rates_file.close()
                 self.data_file.close()
                 self.hit_file.close()
+                self.geom_file.close()
                 self.box -= 1
                 self.upper_rates_file = open(self.box_list[self.box].upper_rates_path, 'a')
                 self.upper_milestoning_rates_file = open(self.box_list[self.box].upper_milestoning_rates_path, 'a')
@@ -1289,6 +1305,7 @@ class Converging(BXD):
                 self.lower_milestoning_rates_file = open(self.box_list[self.box].lower_milestoning_rates_path, 'a')
                 self.data_file = open(self.box_list[self.box].data_path, 'a')
                 self.hit_file = open(self.box_list[self.box].hit_path, 'a')
+                self.geom_file = open(self.box_list[self.box].geom_path, 'a')
                 self.box_list[self.box].milestoning_count = 0
                 self.box_list[self.box].lower_non_milestoning_count = 0
                 self.box_list[self.box].upper_non_milestoning_count = 0
