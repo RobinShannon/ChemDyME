@@ -319,8 +319,9 @@ def lumpSpecies(rName, pName, iPath, oPath):
         rName = rName
         lName = pName
     else:
-        rName = pName
         lName = rName
+        rName = pName
+
 
     aLump = ""
     names = doc.getElementsByTagName("molecule")

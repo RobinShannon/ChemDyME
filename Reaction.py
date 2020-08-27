@@ -757,7 +757,7 @@ class Reaction:
         self.CombProd = self.Reac.copy()
         self.is_bimol_prod = False
         self.is_bimol_reac = False
-        self.Reac = tl.setCalc(self.Reac, self.lowString, self.lowString, self.lowString)
+        self.Reac = tl.setCalc(self.Reac, self.lowString, self.lowMeth, self.lowLev)
         self.TS = tl.setCalc(self.TS, self.lowString, self.lowMeth, self.lowLev)
         self.TS2 = tl.setCalc(self.TS2, self.lowString, self.lowMeth, self.lowLev)
         self.imaginaryFreq = 0.0
