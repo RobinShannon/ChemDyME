@@ -65,7 +65,7 @@ class Trajectory:
         try:
             self.window = gl.reactionWindow
             self.endOnReac = gl.endOnReaction
-            self.consistantWindow = gl.reactionWindow/2
+            self.consistantWindow = 20
         except:
             pass
         if self.biMolecular:
@@ -86,6 +86,9 @@ class Trajectory:
 
     def runTrajectory(self):
         # Create specific directory
+        rmol= self.Mol.copy()
+        rmol =tl.setCalc(rmol, 'Traj_' + str(self.procNum), self.method, self.level)
+        reac_smile = (rmol,True)
         workingDir = os.getcwd()
         newpath = workingDir + '/Raw/traj' + str(self.procNum)
         print("making directory " + newpath)
@@ -263,11 +266,16 @@ class Trajectory:
             if not self.ReactionCountDown == 0:
                 self.ReactionCountDown -= 1
             if self.ReactionCountDown == 1:
-                if self.endOnReac is True:
+                pmol = self.Mol.copy()
+                pmol = tl.setCalc(pmol, 'Traj_' + str(self.procNum), self.method, self.level)
+                prod_smile = (pmol, True)
+                if self.endOnReac is True and prod_smile != reac_smile:
                     self.ReactionCountDown = 0
                     self.productGeom = self.Mol.get_positions()
                     os.chdir(workingDir)
                     break
+                else:
+                    self.ReactionCountDown = self.window
         namefile.close()
         os.chdir(workingDir)
 
