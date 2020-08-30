@@ -88,7 +88,7 @@ class Trajectory:
         # Create specific directory
         rmol= self.Mol.copy()
         rmol =tl.setCalc(rmol, 'Traj_' + str(self.procNum), self.method, self.level)
-        reac_smile = tl.getMolFromSmile(rmol,True)
+        reac_smile = tl.getSMILES(rmol,True)
         workingDir = os.getcwd()
         newpath = workingDir + '/Raw/traj' + str(self.procNum)
         print("making directory " + newpath)
@@ -268,7 +268,7 @@ class Trajectory:
             if self.ReactionCountDown == 1:
                 pmol = self.Mol.copy()
                 pmol = tl.setCalc(pmol, 'Traj_' + str(self.procNum), self.method, self.level)
-                prod_smile = tl.getMolFromSmile(pmol, True)
+                prod_smile = tl.getSMILES(pmol, True)
                 if self.endOnReac is True and prod_smile != reac_smile:
                     self.ReactionCountDown = 0
                     self.productGeom = self.Mol.get_positions()
