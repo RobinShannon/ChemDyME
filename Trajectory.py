@@ -65,7 +65,7 @@ class Trajectory:
         try:
             self.window = gl.reactionWindow
             self.endOnReac = gl.endOnReaction
-            self.consistantWindow = 20
+            self.consistantWindow = 10
         except:
             pass
         if self.biMolecular:
@@ -86,6 +86,7 @@ class Trajectory:
 
     def runTrajectory(self):
         # Create specific directory
+        fails = 0
         rmol= self.Mol.copy()
         rmol =tl.setCalc(rmol, 'Traj_' + str(self.procNum), self.method, self.level)
         reac_smile = tl.getSMILES(rmol,True)
@@ -245,7 +246,6 @@ class Trajectory:
             # Update connectivity map to check for reaction
             con.update(self.Mol)
             if con.criteriaMet is True:
-                eneBXDon = False
                 if consistantChange == 0:
                     self.TSpoint = i
                     self.TSgeom = self.Mol.copy()
@@ -260,22 +260,26 @@ class Trajectory:
                 if consistantChange > 0:
                     consistantChange = 0
                 con.criteriaMet = False
-                if self.eneBXD and not self.comBXD:
-                    eneBXDon = True
+
 
             if not self.ReactionCountDown == 0:
                 self.ReactionCountDown -= 1
             if self.ReactionCountDown == 1:
                 pmol = self.Mol.copy()
                 pmol = tl.setCalc(pmol, 'Traj_' + str(self.procNum), self.method, self.level)
-                prod_smile = tl.getSMILES(pmol, True)
+                prod_smile = tl.getSMILES(pmol, True,True)
                 if self.endOnReac is True and prod_smile != reac_smile:
                     self.ReactionCountDown = 0
                     self.productGeom = self.Mol.get_positions()
                     os.chdir(workingDir)
                     break
-                else:
+                elif fails < 10:
                     self.ReactionCountDown = self.window
+                    fails +=1
+                else:
+                    fails = 0
+                    self.ReactionCountDown = 0
+                    consistantChange = 0
         namefile.close()
         os.chdir(workingDir)
 
