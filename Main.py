@@ -318,7 +318,7 @@ def run(glo):
                                 glo.trajLevel = glo.trajLevel2
 
                             biTrajs = dict(("traj_" + str(k),
-                                            ChemDyMETrajectory.Trajectory(combinedMol, glo, bitempPaths[('bitempPath_' + str(k))],
+                                            ChemDyME.Trajectory.Trajectory(combinedMol, glo, bitempPaths[('bitempPath_' + str(k))],
                                                                   str(k), True)) for k in range(glo.cores))
 
                             if __name__ == "Main":

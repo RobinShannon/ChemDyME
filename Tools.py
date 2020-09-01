@@ -18,7 +18,7 @@ def getSMILES(mol, opt, partialOpt = False):
         min = BFGS(mol)
         if partialOpt:
             try:
-                min.run(fmax=0.1, steps=10)
+                min.run(fmax=0.1, steps=200)
             except:
                 min.run(fmax=0.1, steps=1)
         else:
