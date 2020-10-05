@@ -524,7 +524,6 @@ def gaussian(mol, lab, level):
             m = 2
 
     mol.calc = Gaussian(
-               save=None,
                method=str(lev),
                basis=str(bas),
                scf='qc',
