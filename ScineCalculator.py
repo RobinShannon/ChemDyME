@@ -39,7 +39,7 @@ class SparrowCalculator(Calculator):
         self._calculate_sparrow(atoms, properties)
 
     def _calculate_sparrow(self, atoms: Atoms, properties: Collection[str]):
-        calculation = scine_sparrow.Calculation('AM1')
+        calculation = scine_sparrow.Calculation(self.method)
         calculation.set_elements(['H', 'H'])
         calculation.set_positions([[0, 0, 0], [1, 0, 0]])
         ene = calculation.calculate_energy()
