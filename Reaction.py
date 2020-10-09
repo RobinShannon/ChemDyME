@@ -281,11 +281,6 @@ class Reaction:
         return freqs, zpe, imaginaryFreq
 
     def optReac(self):
-        calculation = scine_sparrow.Calculation('AM1')
-        calculation.set_elements(['H', 'H'])
-        calculation.set_positions([[0, 0, 0], [1, 0, 0]])
-        ene = calculation.calculate_energy()
-        print(str(ene))
         self.is_bimol_reac = False
         self.CombReac = tl.setCalc(self.CombReac, self.lowString, self.lowMeth, self.lowLev)
         self.ReacName = tl.getSMILES(self.CombReac, True)

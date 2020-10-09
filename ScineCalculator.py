@@ -27,6 +27,9 @@ class SparrowCalculator(Calculator):
         super().__init__(**kwargs)
         self.atoms = atoms
         self.method = method
+        self.calc =  Calculation(method = self.method)
+        if atoms is None:
+            self.has_atoms = False
 
     def calculate(self, atoms: Optional[Atoms] = None,
                   properties=('energy', 'forces'),
@@ -36,42 +39,37 @@ class SparrowCalculator(Calculator):
             atoms = self.atoms
         if atoms is None:
             raise ValueError('No ASE atoms supplied to calculator, and no ASE atoms supplied with initialisation.')
+        if not self.has_atoms:
+            sym = atoms.get_chemical_symbols()
+            is_O = len(sym) == 1 and sym[0] == 'O'
+            is_OO = len(sym) == 2 and sym[0] == 'O' and sym[1] == 'O'
+            s = sum(atoms.get_atomic_numbers())
+            if s % 2 != 0:
+                self.spin_mult = 2
+                self.unrestricted = True
+            elif is_O or is_OO:
+                self.spin_mult = 3
+                self.unrestricted = False
+            else:
+                self.spin_mult = 1
+                self.unrestricted = False
+            self.calc.set_elements(sym)
+            settings = {}
+            settings['spin_multiplicity'] = self.spin_mult
+            settings['unrestricted_calculation'] = self.unrestricted
+            self.calc.set_settings(settings)
+        self.has_atoms = True
         self._calculate_sparrow(atoms, properties)
 
     def _calculate_sparrow(self, atoms: Atoms, properties: Collection[str]):
-        calculation = scine_sparrow.Calculation(self.method)
-        calculation.set_elements(['H', 'H'])
-        calculation.set_positions([[0, 0, 0], [1, 0, 0]])
-        ene = calculation.calculate_energy()
-        # Determine spin multiplicity
-        sym = atoms.get_chemical_symbols()
-        is_O = len(sym) == 1 and sym[0] == 'O'
-        is_OO = len(sym) == 2 and sym[0] == 'O' and sym[1] == 'O'
-        s = sum(atoms.get_atomic_numbers())
-        if s % 2 != 0:
-            self.spin_mult = 2
-            self.unrestricted = True
-        elif is_O or is_OO:
-            self.spin_mult = 3
-            self.unrestricted = False
-        else:
-            self.spin_mult = 1
-            self.unrestricted = False
 
         positions = atoms.positions
-        elements = atoms.get_chemical_symbols()
-        calc = Calculation()
-        calc.set_elements(elements)
-        calc.set_positions(positions)
-        settings = {}
-        settings['spin_multiplicity'] = self.spin_mult
-        settings['unrestricted_calculation'] = self.unrestricted
-        calc.set_settings(settings)
+        self.calc.set_positions(positions)
         if 'energy' in properties:
-            energy_hartree = calc.calculate_energy()
+            energy_hartree = self.calc.calculate_energy()
             self.results['energy'] = energy_hartree * EV_PER_HARTREE
         if 'forces' in properties:
-            gradients_hartree_bohr = np.array(calc.calculate_gradients())
+            gradients_hartree_bohr = np.array(self.calc.calculate_gradients())
             self.results['forces'] = - gradients_hartree_bohr * EV_PER_HARTREE / ANG_PER_BOHR
         return
 
@@ -138,9 +136,9 @@ class SparrowCalculator(Calculator):
         systems = {}
         systems['reac'] = system1
         try:
-            systems, success = scine_readuct.run_tsopt_task(systems, ['reac'], output= ['ts_opt'], allow_unconverged = True)
+            systems, success = scine_readuct.run_tsopt_task(systems, ['reac'], output= ['ts_opt'], optimizer='ef',  allow_unconverged = False)
             atoms.set_positions(systems['ts_opt'].positions * ANG_PER_BOHR)
-            systems, success = scine_readuct.run_irc_task(systems, ['ts_opt'], output=['forward','reverse'], allow_unconverged=True)
+            systems, success = scine_readuct.run_irc_task(systems, ['ts_opt'], output=['forward','reverse'], convergence_max_iterations =5000, allow_unconverged=True)
             rmol.set_positions(systems['forward'].positions * ANG_PER_BOHR)
             pmol.set_positions(systems['reverse'].positions * ANG_PER_BOHR)
             irc_for = read('forward/forward.irc.forward.trj.xyz', ':')

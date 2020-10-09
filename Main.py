@@ -146,15 +146,14 @@ def run(glo):
     syspath = path + '/' + glo.dirName
 
     # Make working directories for each core
-    for i in range(0, glo.cores):
-        if not os.path.exists(path + '/Raw/' + str(i)):
-            os.mkdir(path + '/Raw/' + str(i))
+    if not os.path.exists(path + '/Raw/' + str(0)):
+        os.mkdir(path + '/Raw/' + str(0))
 
     # Start counter which tracks the kinetic timescale
     mechanismRunTime = 0.0
 
     # Set reaction instance
-    reacs = dict(("reac_" + str(i), rxn.Reaction(glo.cartesians, glo.species, i, glo)) for i in range(glo.cores))
+    reac = rxn.Reaction(glo.cartesians, glo.species, 0, glo)
 
     # Initialise Master Equation object
     me = ChemDyME.MasterEq.MasterEq()
@@ -168,49 +167,30 @@ def run(glo):
     while mechanismRunTime < glo.maxSimulationTime:
 
         # Minimise starting Geom and write summary xml for channel
-        if reacs['reac_0'].have_reactant == False:
-            outputs = []
-            if __name__ == 'ChemDyME.Main':
-                arguments = []
-                for i in range(0, glo.cores):
-                    name = 'reac_' + str(i)
-                    arguments.append(reacs[name])
-                p = multiprocessing.Pool(glo.cores)
-                results = p.map(minReac, arguments)
-                outputs = [result for result in results]
-
-            for i in range(0, glo.cores):
-                name = 'reac_' + str(i)
-                reacs[name] = outputs[i]
-
+        if reac.have_reactant == False:
+            reac = minReac(reac)
         else:
-            for i in range(0, glo.cores):
-                name = 'reac_' + str(i)
-                reacs[name].have_reactant = False
+            reac.have_reactant = False
 
         # Update path for new minima
-        minpath = syspath + '/' + reacs['reac_0'].ReacName
+        minpath = syspath + '/' + reac.ReacName
 
         # Update base energy on the first run round
         if base_ene == 0.0:
-            base_ene = reacs['reac_0'].reactantEnergy
+            base_ene = reac.reactantEnergy
         # Get smiles name for initial geom and create directory for first minimum
         if not os.path.exists(minpath):
             os.makedirs(minpath)
 
         # Copy MESMER file from mes folder
         MESpath = syspath + '/MESMER/'
-        symb = "".join(reacs[name].CombReac.get_chemical_symbols())
-        if symb not in reacs['reac_0'].energyDictionary:
-            for i in range(0, glo.cores):
-                name = 'reac_' + str(i)
-                d = {symb: base_ene}
-                reacs[name].energyDictionary.update(d)
-        if reacs['reac_0'].energyDictionary[symb] == 0.0:
-            for i in range(0, glo.cores):
-                name = 'reac_' + str(i)
-                d = {symb: reacs[name].reactantEnergy}
-                reacs[name].energyDictionary.update(d)
+        symb = "".join(reac.CombReac.get_chemical_symbols())
+        if symb not in reac.energyDictionary:
+            d = {symb: base_ene}
+            reac.energyDictionary.update(d)
+        if reac.energyDictionary[symb] == 0.0:
+            d = {symb: reac.reactantEnergy}
+            reac.energyDictionary.update(d)
         # If a MESMER file has not been created for the current minima then create one
         if not os.path.exists(MESpath):
             os.makedirs(MESpath)
@@ -218,11 +198,11 @@ def run(glo):
             copyfile('mestemplate.xml', MESpath + 'mestemplateFull.xml')
             MESFullPath = MESpath + 'mestemplateFull.xml'
             MESpath = MESpath + 'mestemplate.xml'
-            io.writeMinXML(reacs['reac_0'], MESpath, True, False)
-            io.writeMinXML(reacs['reac_0'], MESFullPath, True, False)
-            if reacs['reac_0'].is_bimol_reac == True:
-                io.writeMinXML(reacs['reac_0'], MESpath, True, True)
-                io.writeMinXML(reacs['reac_0'], MESFullPath, True, True)
+            io.writeMinXML(reac, MESpath, True, False)
+            io.writeMinXML(reac, MESFullPath, True, False)
+            if reac.is_bimol_reac == True:
+                io.writeMinXML(reac, MESpath, True, True)
+                io.writeMinXML(reac, MESFullPath, True, True)
             glo.restart = False
         else:
             MESFullPath = MESpath + 'mestemplateFull.xml'
@@ -231,13 +211,12 @@ def run(glo):
         # If this is a restart then need to find the next new product from the ME, otherwise start trajectories
         if glo.restart == False:
 
-            reacs['reac_0'].printReac(minpath)
+            reac.printReac(minpath)
             for r in range(0, glo.ReactIters):
-                tempPaths = dict(("tempPath_" + str(i), minpath + '/temp' + str(i) + '_' + str(r)) for i in range(glo.cores))
+                tempPath = minpath + '/temp' + str(0) + '_' + str(r)
                 # Now set up tmp directory for each thread
-                for i in range(0, glo.cores):
-                    if not os.path.exists(tempPaths[('tempPath_' + str(i))]):
-                        os.makedirs(tempPaths[('tempPath_' + str(i))])
+                if not os.path.exists(tempPath):
+                    os.makedirs(tempPath)
 
                 if r % 2 == 0:
                     glo.trajMethod = glo.trajMethod1
@@ -249,34 +228,11 @@ def run(glo):
                 # If this is the first species and it is a bimolecular channel, then initialise a bimolecular trajectory
                 # Otherwise initialise unimolecular trajectory at minima
                 if glo.InitialBi == True:
-                    trajs = dict(("traj_" + str(i), ChemDyME.Trajectory.Trajectory(reacs[('reac_' + str(i))].CombReac, glo,
-                                                                          tempPaths[('tempPath_' + str(i))], str(i),
-                                                                          True)) for i in range(glo.cores))
+                    traj = ChemDyME.Trajectory.Trajectory(reac.CombReac, glo,tempPath, str(0),True)
                 else:
-                    trajs = dict(("traj_" + str(i), ChemDyME.Trajectory.Trajectory(reacs[('reac_' + str(i))].CombReac, glo,
-                                                                          tempPaths[('tempPath_' + str(i))], str(i),
-                                                                          False)) for i in range(glo.cores))
+                    traj = ChemDyME.Trajectory.Trajectory(reac.CombReac, glo,tempPath, str(0),False)
 
-                results2 = []
-                outputs2 = []
-                if __name__ == "ChemDyME.Main":
-                    arguments1 = []
-                    arguments2 = []
-                    for i in range(0, glo.cores):
-                        name = 'reac_' + str(i)
-                        name2 = 'traj_' + str(i)
-                        arguments1.append(reacs[name])
-                        arguments2.append(trajs[name2])
-                    if glo.cores ==1:
-                        arguments = [arguments1[0], arguments2[0], minpath , MESpath * glo.cores, 0, glo]
-                        results2 = runNormal(arguments)
-                    else:
-                        arguments = list(
-                            zip(arguments1, arguments2, [minpath] * glo.cores, [MESpath] * glo.cores, range(glo.cores),
-                                [glo] * glo.cores))
-                        p = multiprocessing.Pool(glo.cores)
-                        results2 = p.map(runNormal, arguments)
-                        outputs2 = [result for result in results2]
+                results1 = runNormal([reac,traj,minpath , MESpath, 0, glo])
 
 
             # run a master eqution to estimate the lifetime of the current species
@@ -288,27 +244,22 @@ def run(glo):
                 print("looking at list of bimolecular candidates")
                 for i in range(0, len(glo.BiList)):
                     print("getting chemical symbols")
-                    baseXYZ = reacs['reac_0'].CombReac.get_chemical_symbols()
+                    baseXYZ = reac.CombReac.get_chemical_symbols()
                     if me.time > (1 / float(glo.BiRates[i])):
                         print("assessing whether or not to look for bimolecular channel. Rate = " + str(
                             float(glo.BiRates[i])) + " Mesmer reaction time = " + str(me.time))
                         glo.InitialBi = True
-                        xyz = CT.get_bi_xyz(reacs['reac_0'].Reac, glo.BiList[i])
+                        xyz = CT.get_bi_xyz(reac.Reac, glo.BiList[i])
                         spec = np.append(baseXYZ, np.array(glo.BiList[i].get_chemical_symbols()))
                         combinedMol = Atoms(symbols=spec, positions=xyz)
                         # Set reaction instance
-                        for j in range(0, glo.cores):
-                            name = 'reac_' + str(j)
-                            reacs[name].re_init_bi(xyz, spec)
-                        io.writeMinXML(reacs['reac_0'], MESpath, True, True)
+                        reac.re_init_bi(xyz, spec)
+                        io.writeMinXML(reac, MESpath, True, True)
                         for r in range(0, glo.ReactIters):
-                            bitempPaths = dict(
-                                ("bitempPath_" + str(i), minpath + '/temp' + str(i) + '_' + str(r)) for i in
-                                range(glo.cores))
+                            bitempPath = "bitempPath_" + str(0), minpath + '/temp' + str(0) + '_' + str(r)
                             # Now set up tmp directory for each thread
-                            for i in range(0, glo.cores):
-                                if not os.path.exists(bitempPaths[('bitempPath_' + str(i))]):
-                                    os.makedirs(bitempPaths[('bitempPath_' + str(i))])
+                            if not os.path.exists(bitempPath):
+                                os.makedirs(bitempPath)
 
                             if r % 2 == 0:
                                 glo.trajMethod = glo.trajMethod1
@@ -317,36 +268,19 @@ def run(glo):
                                 glo.trajMethod = glo.trajMethod2
                                 glo.trajLevel = glo.trajLevel2
 
-                            biTrajs = dict(("traj_" + str(k),
-                                            ChemDyME.Trajectory.Trajectory(combinedMol, glo, bitempPaths[('bitempPath_' + str(k))],
-                                                                  str(k), True)) for k in range(glo.cores))
+                            biTraj = ChemDyME.Trajectory.Trajectory(combinedMol, glo, bitempPath,str(0), True)
 
-                            if __name__ == "Main":
-                                arguments1 = []
-                                arguments2 = []
-                                for j in range(0, glo.cores):
-                                    name = 'reac_' + str(j)
-                                    name2 = 'traj_' + str(j)
-                                    biTrajs[name2].fragIdx = (len(baseXYZ), len(xyz))
-                                    arguments1.append(reacs[name])
-                                    arguments2.append(biTrajs[name2])
 
-                                if glo.cores == 1:
-                                    arguments = [arguments1[0], arguments2[0], minpath, MESpath * glo.cores, 0, glo, glo.BiList[i]]
-                                    results2 = runNormal(arguments)
-                                else:
-                                    arguments = list(
-                                        zip(arguments1, arguments2, [minpath] * glo.cores, [MESpath] * glo.cores,
-                                            range(glo.cores), [glo] * glo.cores, [glo.BiList[i]] * glo.cores))
-                                    p = multiprocessing.Pool(glo.cores)
-                                    results2 = p.map(runNormal, arguments)
-                                    outputs2 = [result for result in results2]
+                            biTraj.fragIdx = (len(baseXYZ), len(xyz))
+                            results2 = runNormal([reac,biTraj, minpath, MESpath, 0, glo, glo.BiList[i]])
+
 
                             glo.InitialBi = False
 
 
             glo.restart = False
-        glo.InitialBi = False
+            glo.InitialBi = False
+
         while me.newSpeciesFound == False:
             me.runTillReac(MESpath)
             mechanismRunTime += me.time
@@ -356,17 +290,15 @@ def run(glo):
             mainsumfile.flush()
             if not os.path.exists(syspath + '/' + me.prodName):
                 os.makedirs(syspath + '/' + me.prodName)
-                for i in range(0, glo.cores):
-                    if os.path.exists(syspath + '/' + reacs[('reac_' + str(i))].ReacName + '/' + me.prodName):
-                        reacs[('reac_' + str(i))].newReac(
-                            syspath + '/' + reacs[('reac_' + str(i))].ReacName + '/' + me.prodName, me.prodName, False)
-                    else:
-                        print("cant find path " + str(
-                            syspath + '/' + reacs[('reac_' + str(i))].ReacName + '/' + me.prodName))
-                        try:
-                            reacs[('reac_' + str(i))].newReac(syspath + '/' + me.prodName, me.prodName, True)
-                        except:
-                            reacs[('reac_' + str(i))].newReacFromSMILE(me.prodName)
+                if os.path.exists(syspath + '/' + reac.ReacName + '/' + me.prodName):
+                    reac.newReac(syspath + '/' + reac.ReacName + '/' + me.prodName, me.prodName, False)
+                else:
+                    print("cant find path " + str(
+                        syspath + '/' + reac.ReacName + '/' + me.prodName))
+                    try:
+                        reac.newReac(syspath + '/' + me.prodName, me.prodName, True)
+                    except:
+                        reac.newReacFromSMILE(me.prodName)
                 io.update_me_start(me.prodName, me.ene, MESpath)
                 me.newSpeciesFound = True
             else:
@@ -374,20 +306,18 @@ def run(glo):
                     me.equilCount += 1
                     if me.equilCount >= 20:
                         mainsumfile.write(
-                            'lumping' + ' ' + str(reacs['reac_0'].ReacName) + ' ' + str(me.prodName) + '\n')
-                        me.prodName = io.lumpSpecies(reacs['reac_0'].ReacName, me.prodName, MESpath, MESpath)
+                            'lumping' + ' ' + str(reac.ReacName) + ' ' + str(me.prodName) + '\n')
+                        me.prodName = io.lumpSpecies(reac, me.prodName, MESpath, MESpath)
                         mainsumfile.flush()
                         me.equilCount = 1
                 minpath = syspath + '/' + me.prodName
-                for i in range(0, glo.cores):
-                    if os.path.exists(syspath + '/' + reacs[('reac_' + str(i))].ReacName + '/' + me.prodName):
-                        reacs[('reac_' + str(i))].newReac(
-                            syspath + '/' + reacs[('reac_' + str(i))].ReacName + '/' + me.prodName, me.prodName, False)
-                    else:
-                        try:
-                            reacs[('reac_' + str(i))].newReac(syspath + '/' + me.prodName, me.prodName, True)
-                        except:
-                            reacs[('reac_' + str(i))].newReacFromSMILE(me.prodName)
+                if os.path.exists(syspath + '/' + reac.ReacName + '/' + me.prodName):
+                    reac.newReac(syspath + '/' + reac.ReacName + '/' + me.prodName, me.prodName, False)
+                else:
+                    try:
+                        reac.newReac(syspath + '/' + me.prodName, me.prodName, True)
+                    except:
+                        reac.newReacFromSMILE(me.prodName)
                 io.update_me_start(me.prodName, me.ene, MESpath)
 
         me.newspeciesFound = False
