@@ -40,7 +40,7 @@ class MDIntegrator:
             warnings.warn('three or more BXD constraints have been hit simultaneously, currently only a maximum of two '
                           'can be dealt with')
         elif len(del_phi) == 2:
-            self.constrain1(del_phi[0])
+            self.constrain2(del_phi[0], del_phi[1])
         elif len(del_phi) == 1:
             self.constrain1(del_phi[0])
 
@@ -91,6 +91,7 @@ class VelocityVerlet(MDIntegrator):
 
         # Modify velocities
         self.current_velocities += (lagrangian * del_phi * (1/self.masses)[:, None])
+        #self.forces = del_phi * lagrangian
         self.constrained = True
 
     def constrain2(self, del_phi1, del_phi2):
@@ -247,7 +248,8 @@ class Langevin(MDIntegrator):
         self.discarded_velocities = self.current_velocities
 
         # Update velocities
-        self.current_velocities = self.current_velocities + (lagrangian * del_phi * (1/self.masses)[:, None])
+        self.current_velocities = (self.current_velocities + (lagrangian * del_phi * (1/self.masses)[:, None]))
+        self.half_step_velocity = self.current_velocities
         self.constrained = True
 
     def constrain2(self, del_phi1, del_phi2):
@@ -283,7 +285,7 @@ class Langevin(MDIntegrator):
 
         # Update velocities
         self.current_velocities = self.current_velocities + (lamb1 * del_phi1 * (1 / self.masses[:, None])) + (lamb2 * del_phi2 * (1 / self.masses[:, None]))
-
+        self.half_step_velocity = self.current_velocities
         # Let MDstep method know a constraint has occured and not to update the forces
         self.constrained = True
 
@@ -296,8 +298,8 @@ class Langevin(MDIntegrator):
         :return:
         """
 
-        # If we have been constrined then forces have already been reset
-        # Otherwise store foces provided to function
+        # If we have been constrained then forces have already been reset
+        # Otherwise store forces provided to function
         if self.constrained:
             self.constrained = False
         else:
@@ -317,6 +319,7 @@ class Langevin(MDIntegrator):
 
         # Then get the next half step velocity and update the position.
         # NB currentVel is one full MD step behind currentPos
+
         self.half_step_velocity = self.current_velocities + (self.c1 * accel - self.c2 * self.half_step_velocity + self.c3[:, None] * self.xi - self.c4[:, None] * self.eta)
         self.current_positions = self.current_positions + self.timestep * self.half_step_velocity + self.c5[:, None] * self.eta
 
@@ -356,7 +359,8 @@ class Langevin(MDIntegrator):
             :return:
             """
 
-            self.current_positions = self.very_old_positions
+            self.current_positions = mol.get_positions()
+
 
             # Get Acceleration from masses and forces
             accel = self.forces[:] / self.masses[:, None]
@@ -366,16 +370,16 @@ class Langevin(MDIntegrator):
             self.xi = standard_normal(size=(len(self.masses), 3))
             self.eta = standard_normal(size=(len(self.masses), 3))
 
+            changes = self.current_velocities - self.discarded_velocities
+
             # Then get the next half step velocity and update the position.
             # NB currentVel is one full MD step behind currentPos
-            self.half_step_velocity = self.current_velocities + (
-                        self.c1 * accel - self.c2 * self.half_step_velocity + self.c3[:, None] * self.xi - self.c4[:,
-                                                                                                           None] * self.eta)
-            self.current_positions = self.current_positions + self.timestep * self.half_step_velocity + self.c5[:,
-                                                                                                        None] * self.eta
+            self.half_step_velocity = self.current_velocities + (self.c1 * accel - self.c2 * self.half_step_velocity + self.c3[:, None] * self.xi - self.c4[:, None] * self.eta)
+            self.current_positions = self.current_positions + 0.1 * (self.timestep * self.half_step_velocity + self.c5[:,
+                        None] * self.eta)
 
-            # Return positions
             mol.set_positions(self.current_positions)
+            return
 
     def output(self, mol):
         """

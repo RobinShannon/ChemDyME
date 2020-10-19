@@ -204,9 +204,20 @@ class Trajectory:
             #Check whether we are stuck at a boundary
             new_hit = self.bxd.box_list[self.bxd.box].lower.hit(self.bxd.get_s(self.mol), 'down') or self.bxd.box_list[self.bxd.box].upper.hit(self.bxd.get_s(self.mol), 'up')
             while bounded and new_hit:
-                print('new positions after inversion still hot a boundary, trying inversion again')
+                up = self.bxd.box_list[self.bxd.box].upper.hit(self.bxd.get_s(self.mol), 'up')
+                low = self.bxd.box_list[self.bxd.box].lower.hit(self.bxd.get_s(self.mol), 'down')
+                print('new positions after inversion still hit a boundary, trying inversion again')
+                print('path bound hit?')
+                print(self.bxd.path_bound_hit)
+                self.mol.set_positions(self.md_integrator.old_positions)
+                old_hit = self.bxd.box_list[self.bxd.box].lower.hit(self.bxd.get_s(self.mol), 'down') or \
+                          self.bxd.box_list[self.bxd.box].upper.hit(self.bxd.get_s(self.mol), 'up')
+
+                print(str(self.bxd.get_s(self.mol)))
                 self.md_integrator.retry_pos(self.mol)
-                new_hit = self.bxd.box_list[self.bxd.box].lower.hit(self.bxd.get_s(self.mol), 'down') or self.bxd.box_list[self.bxd.box].upper.hit(self.bxd.get_s(self.mol), 'up')
+                new_hit = self.bxd.box_list[self.bxd.box].lower.hit(self.bxd.get_s(self.mol), 'down') or \
+                          self.bxd.box_list[self.bxd.box].upper.hit(self.bxd.get_s(self.mol), 'up')
+
             try:
                 self.forces = self.mol.get_forces()
             except:
