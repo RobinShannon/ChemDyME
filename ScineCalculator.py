@@ -9,7 +9,7 @@ from scine_sparrow import Calculation
 import scine_sparrow
 from ase.io import write, read
 import scine_readuct
-
+import time
 
 EV_PER_HARTREE = 27.2114
 ANG_PER_BOHR = 0.529177
@@ -27,14 +27,14 @@ class SparrowCalculator(Calculator):
         super().__init__(**kwargs)
         self.atoms = atoms
         self.method = method
-        self.calc =  Calculation(method = self.method)
+        #self.calc =  Calculation(method = self.method)
         if atoms is None:
             self.has_atoms = False
 
     def calculate(self, atoms: Optional[Atoms] = None,
                   properties=('energy', 'forces'),
                   system_changes=all_changes):
-
+        self.calc = Calculation(method=self.method)
         if atoms is None:
             atoms = self.atoms
         if atoms is None:
@@ -53,16 +53,19 @@ class SparrowCalculator(Calculator):
             else:
                 self.spin_mult = 1
                 self.unrestricted = False
+            t1 = time.clock()
+
             self.calc.set_elements(sym)
             settings = {}
             settings['spin_multiplicity'] = self.spin_mult
             settings['unrestricted_calculation'] = self.unrestricted
             self.calc.set_settings(settings)
-        self.has_atoms = True
+        self.has_atoms = False
         self._calculate_sparrow(atoms, properties)
+        t2 = time.clock()
+
 
     def _calculate_sparrow(self, atoms: Atoms, properties: Collection[str]):
-
         positions = atoms.positions
         self.calc.set_positions(positions)
         if 'energy' in properties:

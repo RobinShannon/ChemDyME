@@ -1,13 +1,15 @@
 from ase.calculators.nwchem import NWChem
 from ase.calculators.gaussian import Gaussian
-
+from xtb.ase.calculator import XTB
 from ChemDyME.ScineCalculator import SparrowCalculator
 
 def scine(mol,lab,level):
     mol.set_calculator(SparrowCalculator(method = level))
     return mol
 
-
+def xtb(mol):
+    mol.set_calculator(XTB(method="GFN2-xTB"))
+    return mol
 
 def nwchem(mol, lab, level):
     

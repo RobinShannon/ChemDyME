@@ -18,12 +18,12 @@ def getSMILES(mol, opt, partialOpt = False):
         min = BFGS(mol)
         if partialOpt:
             try:
-                min.run(fmax=0.1, steps=200)
+                min.run(fmax=0.1, steps=10)
             except:
                 min.run(fmax=0.1, steps=1)
         else:
             try:
-                min.run(fmax=0.1, steps=200)
+                min.run(fmax=0.1, steps=25)
             except:
                 min.run(fmax=0.1, steps=1)
 
@@ -601,6 +601,8 @@ def readGaussTSOutput(path):
 #Method to identify the code required for obtaining potential forces.
 #This call the correct method from Calculators.py and sets up an ASE calculator on Mol
 def setCalc(mol, lab, method, level):
+    if method == 'xtb':
+        mol.calc.xtb(mol)
     if method == 'scine':
         mol = calc.scine(mol,lab,level)
     if method == 'dftb':
