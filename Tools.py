@@ -602,7 +602,7 @@ def readGaussTSOutput(path):
 #This call the correct method from Calculators.py and sets up an ASE calculator on Mol
 def setCalc(mol, lab, method, level):
     if method == 'xtb':
-        mol = calc.xtb(mol)
+        mol = calc.xtb(mol,level)
     if method == 'scine':
         mol = calc.scine(mol,lab,level)
     if method == 'dftb':

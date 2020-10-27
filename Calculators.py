@@ -7,8 +7,8 @@ def scine(mol,lab,level):
     mol.set_calculator(SparrowCalculator(method = level))
     return mol
 
-def xtb(mol):
-    mol.set_calculator(XTB(method="GFN2-xTB"))
+def xtb(mol,level):
+    mol.set_calculator(XTB(method=level, max_iterations=1000, electronic_temperature=1000))
     return mol
 
 def nwchem(mol, lab, level):
