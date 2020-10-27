@@ -267,7 +267,7 @@ class Trajectory:
             if self.ReactionCountDown == 1:
                 pmol = self.Mol.copy()
                 pmol = tl.setCalc(pmol, 'Traj_' + str(self.procNum), self.method, self.level)
-                prod_smile = tl.getSMILES(pmol, True,True)
+                prod_smile = tl.getSMILES(pmol, True, True)
                 if self.endOnReac is True and prod_smile != reac_smile:
                     self.ReactionCountDown = 0
                     self.productGeom = self.Mol.get_positions()

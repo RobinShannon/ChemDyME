@@ -283,7 +283,7 @@ class Reaction:
     def optReac(self):
         self.is_bimol_reac = False
         self.CombReac = tl.setCalc(self.CombReac, self.lowString, self.lowMeth, self.lowLev)
-        self.ReacName = tl.getSMILES(self.CombReac, True)
+        self.ReacName = tl.getSMILES(self.CombReac, True, True)
         FullName = self.ReacName.split('____', 1)
         path = (self.workingDir + '/Raw/calcHigh' + self.procNum)
         if len(FullName) > 1:
