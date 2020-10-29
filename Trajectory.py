@@ -65,11 +65,11 @@ class Trajectory:
         try:
             self.window = gl.reactionWindow
             self.endOnReac = gl.endOnReaction
-            self.consistantWindow = 10
+            self.consistantWindow = gl.reactionWindow /2
         except:
             pass
         if self.biMolecular:
-            self.consistantWindow = 5
+            self.consistantWindow = gl.reactionWindow /4
         self.savePath = path
         self.ReactionCountDown = 0
         self.MolList = []
@@ -267,8 +267,8 @@ class Trajectory:
             if self.ReactionCountDown == 1:
                 pmol = self.Mol.copy()
                 pmol = tl.setCalc(pmol, 'Traj_' + str(self.procNum), self.method, self.level)
-                prod_smile = tl.getSMILES(pmol, True, True)
-                if self.endOnReac is True and prod_smile != reac_smile:
+                con2 = ChemDyME.Connectivity.NunezMartinez(pmol)
+                if np.array_equal(con.C,con2.C):
                     self.ReactionCountDown = 0
                     self.productGeom = self.Mol.get_positions()
                     os.chdir(workingDir)
