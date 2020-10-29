@@ -27,7 +27,7 @@ class Trajectory:
                        multiprocess
     """
 
-    def __init__(self, mol, bxd, md_integrator, geo_print_frequency=1000, data_print_freqency=100,
+    def __init__(self, mol, bxd, md_integrator, geo_print_frequency=1000, data_print_frequency=1000,log_print_frequency = 1000,
                  plot_update_frequency=100, no_text_output=False, plot_output=False, plotter=None, calc = 'openMM',
                  calcMethod = 'sys.xml', initialise_velocities = True, decorrelation_limit = 0, check_decorrelation=False,
                  decorrelation_length = 5000, number_of_decorrelation_runs = 5):
@@ -40,7 +40,8 @@ class Trajectory:
         self.calcMethod = calcMethod
         self.md_integrator = md_integrator
         self.geo_print_frequency = geo_print_frequency
-        self.data_print_freqency = data_print_freqency
+        self.data_print_freqency = data_print_frequency
+        self.log_print_frequency = log_print_frequency
         self.forces = np.zeros(mol.get_positions().shape)
         self.mol = mol.copy()
         self.mol._calc = mol.get_calculator()
@@ -104,7 +105,7 @@ class Trajectory:
            data_file = open(temp_dir+'/data.txt', 'w')
            geom_file = open(temp_dir+'/geom.xyz', 'w')
            bound_file = open(temp_dir+'/bound_file.txt', 'w')
-
+           log_file = open(temp_dir+'/logfile','w')
 
         # depending upon the type of BXD object this function does some initial setup
         self.bxd.initialise_files()
@@ -236,7 +237,7 @@ class Trajectory:
 
 
             # Now see if we are due to print the BXD current value of the collective variable to file.
-            if iterations % 10 == 0 and self.bxd.steps_since_any_boundary_hit > decorrelated:
+            if iterations % self.data_print_frequency == 0 and self.bxd.steps_since_any_boundary_hit > decorrelated:
                 if print_to_file:
                     string = str(self.bxd.s)
                     # remove all newline and tab characters
@@ -247,21 +248,12 @@ class Trajectory:
                     data_file.flush()
 
             # Check if we are due to print to stdout
-            if iterations % self.data_print_freqency == 0:
-                if not self.no_text_output:
-                    px = 0
-                    py = 0
-                    pz = 0
-                    for atom in self.mol:
-                        px += atom.momentum[0]
-                        py += atom.momentum[1]
-                        pz += atom.momentum[2]
-                    # Call md integrator and BXD to get the apropriate output string
+            if iterations % self.log_print_frequency == 0:
                     if bounded == False:
-                        print(self.md_integrator.output(self.mol) + self.bxd.output() + '\tMomenta\t' + str(px) + '\t' + str(py) +'\t' + str(pz))
+                        log_file.write(self.md_integrator.output(self.mol) + self.bxd.output())
                     else:
-                        print('HIT\t' + self.md_integrator.output(self.mol) + self.bxd.output() + '\tMomenta\t' + str(
-                            px) + '\t' + str(py) + '\t' + str(pz))
+                        log_file.write('HIT\t' + self.md_integrator.output(self.mol) + self.bxd.output())
+                    log_file.flush()
 
             # TODO this is confusing and need re-writing.
             # This section writes the boundary data to file but in a convoluted way
