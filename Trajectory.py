@@ -40,7 +40,7 @@ class Trajectory:
         self.calcMethod = calcMethod
         self.md_integrator = md_integrator
         self.geo_print_frequency = geo_print_frequency
-        self.data_print_freqency = data_print_frequency
+        self.data_print_frequency = data_print_frequency
         self.log_print_frequency = log_print_frequency
         self.forces = np.zeros(mol.get_positions().shape)
         self.mol = mol.copy()
