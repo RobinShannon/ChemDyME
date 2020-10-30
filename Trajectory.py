@@ -94,18 +94,18 @@ class Trajectory:
         # If print_to_file = True then setup an output directory. If the print_directory already exists then append
         # consecutive numbers to the "print_directory" prefix until a the name does not correspond to an existing
         # directory.
-        if print_to_file:
-           dir = str(print_directory)
-           i=1
-           temp_dir = dir
-           while os.path.isdir(temp_dir):
-               temp_dir = dir + ("_" + str(i))
-               i += 1
-           os.mkdir(temp_dir)
-           data_file = open(temp_dir+'/data.txt', 'w')
-           geom_file = open(temp_dir+'/geom.xyz', 'w')
-           bound_file = open(temp_dir+'/bound_file.txt', 'w')
-           log_file = open(temp_dir+'/logfile','w')
+
+        dir = str(print_directory)
+        i=1
+        temp_dir = dir
+        while os.path.isdir(temp_dir):
+            temp_dir = dir + ("_" + str(i))
+            i += 1
+        os.mkdir(temp_dir)
+        data_file = open(temp_dir+'/data.txt', 'w')
+        geom_file = open(temp_dir+'/geom.xyz', 'w')
+        bound_file = open(temp_dir+'/bound_file.txt', 'w')
+        log_file = open(temp_dir+'/logfile','w')
 
         # depending upon the type of BXD object this function does some initial setup
         self.bxd.initialise_files()
@@ -205,19 +205,18 @@ class Trajectory:
             #Check whether we are stuck at a boundary
             new_hit = self.bxd.box_list[self.bxd.box].lower.hit(self.bxd.get_s(self.mol), 'down') or self.bxd.box_list[self.bxd.box].upper.hit(self.bxd.get_s(self.mol), 'up')
             while bounded and new_hit:
-                up = self.bxd.box_list[self.bxd.box].upper.hit(self.bxd.get_s(self.mol), 'up')
-                low = self.bxd.box_list[self.bxd.box].lower.hit(self.bxd.get_s(self.mol), 'down')
-                print('new positions after inversion still hit a boundary, trying inversion again')
-                print('path bound hit?')
-                print(self.bxd.path_bound_hit)
-                self.mol.set_positions(self.md_integrator.old_positions)
-                old_hit = self.bxd.box_list[self.bxd.box].lower.hit(self.bxd.get_s(self.mol), 'down') or \
-                          self.bxd.box_list[self.bxd.box].upper.hit(self.bxd.get_s(self.mol), 'up')
-
-                print(str(self.bxd.get_s(self.mol)))
+                self.mol.set_positions(self.current_positions)
+                self.md_integrator.old_positions = self.md_integrator.very_old_positions
+                if self.bxd.path_bound_hit:
+                    del_phi = []
+                    del_phi.append(self.bxd.del_constraint(self.mol))
+                    del_phi.append(self.bxd.path_del_constraint(self.mol))
+                    # If we have hit a bound get the md object to modify the velocities / positions appropriately.
+                    self.md_integrator.constrain(del_phi)
+                else:
+                    self.mol.set_positions(self.md_integrator.old_positions)
                 self.md_integrator.retry_pos(self.mol)
-                new_hit = self.bxd.box_list[self.bxd.box].lower.hit(self.bxd.get_s(self.mol), 'down') or \
-                          self.bxd.box_list[self.bxd.box].upper.hit(self.bxd.get_s(self.mol), 'up')
+                new_hit = self.bxd.box_list[self.bxd.box].lower.hit(self.bxd.get_s(self.mol), 'down') or self.bxd.box_list[self.bxd.box].upper.hit(self.bxd.get_s(self.mol), 'up')
 
             try:
                 self.forces = self.mol.get_forces()
