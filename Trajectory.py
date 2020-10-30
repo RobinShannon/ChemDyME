@@ -268,12 +268,12 @@ class Trajectory:
                 pmol = self.Mol.copy()
                 pmol = tl.setCalc(pmol, 'Traj_' + str(self.procNum), self.method, self.level)
                 con2 = ChemDyME.Connectivity.NunezMartinez(pmol)
-                if np.array_equal(con.C,con2.C):
+                if not np.array_equal(con.C,con2.C):
                     self.ReactionCountDown = 0
                     self.productGeom = self.Mol.get_positions()
                     os.chdir(workingDir)
                     break
-                elif fails < 10:
+                elif fails < 5:
                     self.ReactionCountDown = self.window
                     fails +=1
                 else:
