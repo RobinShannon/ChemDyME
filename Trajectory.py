@@ -205,7 +205,7 @@ class Trajectory:
             #Check whether we are stuck at a boundary
             new_hit = self.bxd.box_list[self.bxd.box].lower.hit(self.bxd.get_s(self.mol), 'down') or self.bxd.box_list[self.bxd.box].upper.hit(self.bxd.get_s(self.mol), 'up')
             while bounded and new_hit:
-                self.mol.set_positions(self.current_positions)
+                self.mol.set_positions(self.md_integrator.old_positions)
                 self.md_integrator.old_positions = self.md_integrator.very_old_positions
                 if self.bxd.path_bound_hit:
                     del_phi = []
