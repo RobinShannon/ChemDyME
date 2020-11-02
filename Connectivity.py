@@ -18,11 +18,6 @@ class StructureMap:
     def update(self, mol):
         pass
 
-
-
-
-
-
 class NunezMartinez(StructureMap):
 
     def __init__(self,mol):

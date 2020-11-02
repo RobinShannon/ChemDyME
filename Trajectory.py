@@ -8,6 +8,7 @@ import ChemDyME.Tools as tl
 from ase.md.velocitydistribution import (MaxwellBoltzmannDistribution,Stationary, ZeroRotation)
 from ase import units
 from time import process_time
+from ase.optimize import BFGS
 
 
 class Trajectory:
@@ -267,6 +268,8 @@ class Trajectory:
             if self.ReactionCountDown == 1:
                 pmol = self.Mol.copy()
                 pmol = tl.setCalc(pmol, 'Traj_' + str(self.procNum), self.method, self.level)
+                min = BFGS(pmol)
+                min.run(fmax=0.1, steps=200)
                 con2 = ChemDyME.Connectivity.NunezMartinez(pmol)
                 if not np.array_equal(con.C,con2.C):
                     self.ReactionCountDown = 0
