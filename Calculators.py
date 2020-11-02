@@ -8,7 +8,7 @@ def scine(mol,lab,level):
     return mol
 
 def xtb(mol,level):
-    mol.set_calculator(XTB(method=level, max_iterations=1000, electronic_temperature=1000))
+    mol.set_calculator(XTB(method=level, max_iterations=1000, electronic_temperature=2000))
     return mol
 
 def nwchem(mol, lab, level):
