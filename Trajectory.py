@@ -219,6 +219,7 @@ class Trajectory:
                     self.md_integrator.md_step_pos(self.forces, self.mol)
                 else:
                     self.md_integrator.retry_pos(self.mol)
+                new_hit = False
             try:
                 self.forces = self.mol.get_forces()
             except:
