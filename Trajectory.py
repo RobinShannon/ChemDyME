@@ -212,6 +212,7 @@ class Trajectory:
                     self.bxd.bound_hit='upper'
                     self.mol.set_positions(self.md_integrator.old_positions)
                 if self.bxd.path_bound_hit:
+                    log_file.write("previous step hit path bound" + str('\n'))
                     del_phi = []
                     self.md_integrator.old_positions = self.md_integrator.very_old_positions
                     # If we have hit a bound get the md object to modify the velocities / positions appropriately.
