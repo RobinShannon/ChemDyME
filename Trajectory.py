@@ -205,6 +205,7 @@ class Trajectory:
             #Check whether we are stuck at a boundary
             new_hit = self.bxd.box_list[self.bxd.box].lower.hit(self.bxd.get_s(self.mol), 'down') or self.bxd.box_list[self.bxd.box].upper.hit(self.bxd.get_s(self.mol), 'up')
             while bounded and new_hit:
+                log_file.write("oops problem with inversion")
                 if self.bxd.box_list[self.bxd.box].lower.hit(self.bxd.get_s(self.mol), 'down'):
                     self.bxd.bound_hit='lower'
                 else:
@@ -217,11 +218,10 @@ class Trajectory:
                     del_phi.append(self.bxd.path_del_constraint(self.mol))
                     # If we have hit a bound get the md object to modify the velocities / positions appropriately.
                     self.md_integrator.constrain(del_phi)
+                    self.md_integrator.md_step_pos(self.forces, self.mol)
                 else:
                     self.mol.set_positions(self.md_integrator.old_positions)
-                self.md_integrator.retry_pos(self.mol)
-                new_hit = self.bxd.box_list[self.bxd.box].lower.hit(self.bxd.get_s(self.mol), 'down') or self.bxd.box_list[self.bxd.box].upper.hit(self.bxd.get_s(self.mol), 'up')
-
+                    self.md_integrator.retry_pos(self.mol)
             try:
                 self.forces = self.mol.get_forces()
             except:
