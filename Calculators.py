@@ -1,6 +1,7 @@
 from ase.calculators.nwchem import NWChem
 from ase.calculators.gaussian import Gaussian
 from xtb.ase.calculator import XTB
+from ase.calculators.dftb import Dftb
 from ChemDyME.ScineCalculator import SparrowCalculator
 
 def scine(mol,lab,level):
@@ -9,6 +10,229 @@ def scine(mol,lab,level):
 
 def xtb(mol,level):
     mol.set_calculator(XTB(method=level, max_iterations=1000, electronic_temperature=2000))
+    return mol
+
+
+def dftb(mol, lab, level):
+    symbols = mol.get_chemical_symbols()
+    if level == 'SCC':
+        scc = 'Yes'
+    else:
+        scc = 'No'
+
+    # Labourious process of looking at name of mole and setting the correct .skf files
+    if ('C' in symbols) and ('O' in symbols) and ('H' in symbols) and ('F' in symbols) and not ('N' in symbols):
+        mol.set_calculator(Dftb(label=lab,
+                                atoms=mol,
+                                Hamiltonian_Filling='Fermi{',
+                                Hamiltonian_Filling_Temperature=0.006,
+                                Hamiltonian_SCC=scc,
+                                Hamiltonian_SCCTolerance=1.00E-5,
+                                Hamiltonian_MaxSCCIterations=100,
+                                Hamiltonian_MaxAngularMomentum_='',
+                                Hamiltonian_MaxAngularMomentum_O='"p"',
+                                Hamiltonian_MaxAngularMomentum_C='"p"',
+                                Hamiltonian_MaxAngularMomentum_H='"s"',
+                                Hamiltonian_MaxAngularMomentum_F='"p"',
+                                ))
+    if ('C' in symbols) and not ('H' in symbols) and ('O' in symbols) and ('F' in symbols) and not ('N' in symbols):
+        mol.set_calculator(Dftb(label=lab,
+                                atoms=mol,
+                                Hamiltonian_Filling='Fermi{',
+                                Hamiltonian_Filling_Temperature=0.006,
+                                Hamiltonian_SCC=scc,
+                                Hamiltonian_SCCTolerance=1.00E-5,
+                                Hamiltonian_MaxSCCIterations=100,
+                                Hamiltonian_MaxAngularMomentum_='',
+                                Hamiltonian_MaxAngularMomentum_O='"p"',
+                                Hamiltonian_MaxAngularMomentum_C='"p"',
+                                Hamiltonian_MaxAngularMomentum_F='"p"',
+                                ))
+
+    if ('C' in symbols) and ('O' in symbols) and ('H' in symbols) and ('N' in symbols) and not ('F' in symbols):
+        mol.set_calculator(Dftb(label=lab,
+                                atoms=mol,
+                                Hamiltonian_Filling='Fermi{',
+                                Hamiltonian_Filling_Temperature=0.006,
+                                Hamiltonian_SCC=scc,
+                                Hamiltonian_SCCTolerance=1.00E-5,
+                                Hamiltonian_MaxSCCIterations=100,
+                                Hamiltonian_MaxAngularMomentum_='',
+                                Hamiltonian_MaxAngularMomentum_O='"p"',
+                                Hamiltonian_MaxAngularMomentum_C='"p"',
+                                Hamiltonian_MaxAngularMomentum_H='"s"',
+                                Hamiltonian_MaxAngularMomentum_N='"P"',
+                                ))
+
+    if ('C' in symbols) and ('O' in symbols) and ('H' in symbols) and not ('N' in symbols) and not ('F' in symbols):
+        mol.set_calculator(Dftb(label='lab',
+                                atoms=mol,
+                                Hamiltonian_Filling='Fermi{',
+                                Hamiltonian_Filling_Temperature=0.006,
+                                Hamiltonian_SCC=scc,
+                                Hamiltonian_SCCTolerance=1.00E-5,
+                                Hamiltonian_MaxSCCIterations=100,
+                                Hamiltonian_MaxAngularMomentum_='',
+                                Hamiltonian_MaxAngularMomentum_O='"p"',
+                                Hamiltonian_MaxAngularMomentum_C='"p"',
+                                Hamiltonian_MaxAngularMomentum_H='"s"',
+                                ))
+
+    if ('C' in symbols) and ('O' in symbols) and not ('H' in symbols) and ('N' in symbols) and not ('F' in symbols):
+        mol.set_calculator(Dftb(label='lab',
+                                atoms=mol,
+                                Hamiltonian_Filling='Fermi{',
+                                Hamiltonian_Filling_Temperature=0.006,
+                                Hamiltonian_SCC=scc,
+                                Hamiltonian_SCCTolerance=1.00E-5,
+                                Hamiltonian_MaxSCCIterations=100,
+                                Hamiltonian_MaxAngularMomentum_='',
+                                Hamiltonian_MaxAngularMomentum_O='"p"',
+                                Hamiltonian_MaxAngularMomentum_C='"p"',
+                                Hamiltonian_MaxAngularMomentum_N='"P"',
+                                ))
+
+    if ('C' in symbols) and not ('O' in symbols) and ('H' in symbols) and ('N' in symbols) and not ('F' in symbols):
+        mol.set_calculator(Dftb(label=lab,
+                                atoms=mol,
+                                Hamiltonian_Filling='Fermi{',
+                                Hamiltonian_Filling_Temperature=0.006,
+                                Hamiltonian_SCC=scc,
+                                Hamiltonian_SCCTolerance=1.00E-5,
+                                Hamiltonian_MaxSCCIterations=100,
+                                Hamiltonian_MaxAngularMomentum_='',
+                                Hamiltonian_MaxAngularMomentum_H='"s"',
+                                Hamiltonian_MaxAngularMomentum_C='"p"',
+                                Hamiltonian_MaxAngularMomentum_N='"P"',
+                                ))
+
+    if not ('C' in symbols) and ('O' in symbols) and ('H' in symbols) and ('N' in symbols) and not ('F' in symbols):
+        mol.set_calculator(Dftb(label=lab,
+                                atoms=mol,
+                                Hamiltonian_Filling='Fermi{',
+                                Hamiltonian_Filling_Temperature=0.006,
+                                Hamiltonian_SCC=scc,
+                                Hamiltonian_SCCTolerance=1.00E-5,
+                                Hamiltonian_MaxSCCIterations=100,
+                                Hamiltonian_MaxAngularMomentum_='',
+                                Hamiltonian_MaxAngularMomentum_O='"p"',
+                                Hamiltonian_MaxAngularMomentum_H='"s"',
+                                Hamiltonian_MaxAngularMomentum_N='"P"',
+                                ))
+
+    if ('C' in symbols) and ('O' in symbols) and not ('H' in symbols) and not ('N' in symbols) and not ('F' in symbols):
+        mol.set_calculator(Dftb(label=lab,
+                                atoms=mol,
+                                Hamiltonian_Filling='Fermi{',
+                                Hamiltonian_Filling_Temperature=0.006,
+                                Hamiltonian_SCC=scc,
+                                Hamiltonian_SCCTolerance=1.00E-5,
+                                Hamiltonian_MaxSCCIterations=100,
+                                Hamiltonian_MaxAngularMomentum_='',
+                                Hamiltonian_MaxAngularMomentum_O='"p"',
+                                Hamiltonian_MaxAngularMomentum_C='"p"',
+                                ))
+
+    if ('C' in symbols) and not ('O' in symbols) and ('H' in symbols) and not ('N' in symbols) and not ('F' in symbols):
+        mol.set_calculator(Dftb(label=lab,
+                                atoms=mol,
+                                Hamiltonian_Filling='Fermi{',
+                                Hamiltonian_Filling_Temperature=0.006,
+                                Hamiltonian_SCC=scc,
+                                Hamiltonian_SCCTolerance=1.00E-5,
+                                Hamiltonian_MaxSCCIterations=100,
+                                Hamiltonian_MaxAngularMomentum_='',
+                                Hamiltonian_MaxAngularMomentum_C='"p"',
+                                Hamiltonian_MaxAngularMomentum_H='"s"',
+                                ))
+
+    if not ('C' in symbols) and ('O' in symbols) and ('H' in symbols) and not ('N' in symbols) and not ('F' in symbols):
+        mol.set_calculator(Dftb(label=lab,
+                                atoms=mol,
+                                Hamiltonian_Filling='Fermi{',
+                                Hamiltonian_Filling_Temperature=0.006,
+                                Hamiltonian_SCC=scc,
+                                Hamiltonian_SCCTolerance=1.00E-5,
+                                Hamiltonian_MaxSCCIterations=100,
+                                Hamiltonian_MaxAngularMomentum_='',
+                                Hamiltonian_MaxAngularMomentum_O='"p"',
+                                Hamiltonian_MaxAngularMomentum_H='"s"',
+                                ))
+
+    if ('C' in symbols) and not ('O' in symbols) and not ('H' in symbols) and ('N' in symbols) and not ('F' in symbols):
+        mol.set_calculator(Dftb(label=lab,
+                                atoms=mol,
+                                Hamiltonian_Filling='Fermi{',
+                                Hamiltonian_Filling_Temperature=0.006,
+                                Hamiltonian_SCC=scc,
+                                Hamiltonian_SCCTolerance=1.00E-5,
+                                Hamiltonian_MaxSCCIterations=100,
+                                Hamiltonian_MaxAngularMomentum_='',
+                                Hamiltonian_MaxAngularMomentum_C='"p"',
+                                Hamiltonian_MaxAngularMomentum_N='"P"',
+                                ))
+
+    if not ('C' in symbols) and ('O' in symbols) and not ('H' in symbols) and ('N' in symbols) and not ('F' in symbols):
+        mol.set_calculator(Dftb(label=lab,
+                                atoms=mol,
+                                Hamiltonian_Filling='Fermi{',
+                                Hamiltonian_Filling_Temperature=0.006,
+                                Hamiltonian_SCC=scc,
+                                Hamiltonian_SCCTolerance=1.00E-5,
+                                Hamiltonian_MaxSCCIterations=100,
+                                Hamiltonian_MaxAngularMomentum_='',
+                                Hamiltonian_MaxAngularMomentum_O='"p"',
+                                Hamiltonian_MaxAngularMomentum_N='"P"',
+                                ))
+
+    if not ('C' in symbols) and not ('O' in symbols) and ('H' in symbols) and ('N' in symbols) and not ('F' in symbols):
+        mol.set_calculator(Dftb(label=lab,
+                                atoms=mol,
+                                Hamiltonian_Filling='Fermi{',
+                                Hamiltonian_Filling_Temperature=0.006,
+                                Hamiltonian_SCC=scc,
+                                Hamiltonian_SCCTolerance=1.00E-5,
+                                Hamiltonian_MaxSCCIterations=100,
+                                Hamiltonian_MaxAngularMomentum_='',
+                                Hamiltonian_MaxAngularMomentum_H='"s"',
+                                Hamiltonian_MaxAngularMomentum_N='"P"',
+                                ))
+    if not ('C' in symbols) and ('O' in symbols) and not ('H' in symbols) and not ('N' in symbols) and not (
+            'F' in symbols):
+        mol.set_calculator(Dftb(label=lab,
+                                atoms=mol,
+                                Hamiltonian_Filling='Fermi{',
+                                Hamiltonian_Filling_Temperature=0.006,
+                                Hamiltonian_SCC=scc,
+                                Hamiltonian_SCCTolerance=1.00E-5,
+                                Hamiltonian_MaxSCCIterations=100,
+                                Hamiltonian_MaxAngularMomentum_='',
+                                Hamiltonian_MaxAngularMomentum_O='"p"',
+                                ))
+    if not ('C' in symbols) and not ('O' in symbols) and ('H' in symbols) and not ('N' in symbols) and not (
+            'F' in symbols):
+        mol.set_calculator(Dftb(label=lab,
+                                atoms=mol,
+                                Hamiltonian_Filling='Fermi{',
+                                Hamiltonian_Filling_Temperature=0.006,
+                                Hamiltonian_SCC=scc,
+                                Hamiltonian_SCCTolerance=1.00E-5,
+                                Hamiltonian_MaxSCCIterations=100,
+                                Hamiltonian_MaxAngularMomentum_='',
+                                Hamiltonian_MaxAngularMomentum_H='"s"',
+                                ))
+    if not ('C' in symbols) and not ('O' in symbols) and not ('H' in symbols) and ('N' in symbols) and not (
+            'F' in symbols):
+        mol.set_calculator(Dftb(label=lab,
+                                atoms=mol,
+                                Hamiltonian_Filling='Fermi{',
+                                Hamiltonian_Filling_Temperature=0.006,
+                                Hamiltonian_SCC=scc,
+                                Hamiltonian_SCCTolerance=1.00E-5,
+                                Hamiltonian_MaxSCCIterations=100,
+                                Hamiltonian_MaxAngularMomentum_='',
+                                Hamiltonian_MaxAngularMomentum_N='"p"',
+                                ))
     return mol
 
 def nwchem(mol, lab, level):
