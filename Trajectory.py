@@ -252,9 +252,9 @@ class Trajectory:
             # Check if we are due to print to stdout
             if iterations % self.log_print_frequency == 0:
                     if bounded == False:
-                        log_file.write(self.md_integrator.output(self.mol) + self.bxd.output())
+                        log_file.write(self.md_integrator.output(self.mol) + self.bxd.output() + '\n')
                     else:
-                        log_file.write('HIT\t' + self.md_integrator.output(self.mol) + self.bxd.output())
+                        log_file.write('HIT\t' + self.md_integrator.output(self.mol) + self.bxd.output() + '\n')
                     log_file.flush()
 
             # TODO this is confusing and need re-writing.

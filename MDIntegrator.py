@@ -280,7 +280,7 @@ class Langevin(MDIntegrator):
         c5 = np.vdot(b, d)
         c6 = np.vdot(c, d)
 
-        lamb2 = (-2*c5*c3 + 2*c1**c6)/(c2*c3-c1*c4)
+        lamb2 = (-2*c5*c3 + 2*c1*c6)/(c2*c3-c1*c4)
         lamb1 = (-2*c5-c2*lamb2)/c1
 
         # Update velocities
