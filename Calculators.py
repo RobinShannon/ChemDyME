@@ -1,7 +1,6 @@
 from ase.calculators.nwchem import NWChem
 from ase.calculators.gaussian import Gaussian
-from xtb.ase.calculator import XTB
-from ase.calculators.dftb import Dftb
+from dftb_2 import Dftb2
 from ChemDyME.ScineCalculator import SparrowCalculator
 
 def scine(mol,lab,level):
@@ -22,7 +21,7 @@ def dftb(mol, lab, level):
 
     # Labourious process of looking at name of mole and setting the correct .skf files
     if ('C' in symbols) and ('O' in symbols) and ('H' in symbols) and ('F' in symbols) and not ('N' in symbols):
-        mol.set_calculator(Dftb(label=lab,
+        mol.set_calculator(Dftb2(label=lab,
                                 atoms=mol,
                                 Hamiltonian_Filling='Fermi{',
                                 Hamiltonian_Filling_Temperature=0.006,
@@ -36,7 +35,7 @@ def dftb(mol, lab, level):
                                 Hamiltonian_MaxAngularMomentum_F='"p"',
                                 ))
     if ('C' in symbols) and not ('H' in symbols) and ('O' in symbols) and ('F' in symbols) and not ('N' in symbols):
-        mol.set_calculator(Dftb(label=lab,
+        mol.set_calculator(Dftb2(label=lab,
                                 atoms=mol,
                                 Hamiltonian_Filling='Fermi{',
                                 Hamiltonian_Filling_Temperature=0.006,
@@ -50,7 +49,7 @@ def dftb(mol, lab, level):
                                 ))
 
     if ('C' in symbols) and ('O' in symbols) and ('H' in symbols) and ('N' in symbols) and not ('F' in symbols):
-        mol.set_calculator(Dftb(label=lab,
+        mol.set_calculator(Dftb2(label=lab,
                                 atoms=mol,
                                 Hamiltonian_Filling='Fermi{',
                                 Hamiltonian_Filling_Temperature=0.006,
@@ -65,7 +64,7 @@ def dftb(mol, lab, level):
                                 ))
 
     if ('C' in symbols) and ('O' in symbols) and ('H' in symbols) and not ('N' in symbols) and not ('F' in symbols):
-        mol.set_calculator(Dftb(label='lab',
+        mol.set_calculator(Dftb2(label='lab',
                                 atoms=mol,
                                 Hamiltonian_Filling='Fermi{',
                                 Hamiltonian_Filling_Temperature=0.006,
@@ -79,7 +78,7 @@ def dftb(mol, lab, level):
                                 ))
 
     if ('C' in symbols) and ('O' in symbols) and not ('H' in symbols) and ('N' in symbols) and not ('F' in symbols):
-        mol.set_calculator(Dftb(label='lab',
+        mol.set_calculator(Dftb2(label='lab',
                                 atoms=mol,
                                 Hamiltonian_Filling='Fermi{',
                                 Hamiltonian_Filling_Temperature=0.006,
@@ -93,7 +92,7 @@ def dftb(mol, lab, level):
                                 ))
 
     if ('C' in symbols) and not ('O' in symbols) and ('H' in symbols) and ('N' in symbols) and not ('F' in symbols):
-        mol.set_calculator(Dftb(label=lab,
+        mol.set_calculator(Dftb2(label=lab,
                                 atoms=mol,
                                 Hamiltonian_Filling='Fermi{',
                                 Hamiltonian_Filling_Temperature=0.006,
@@ -107,7 +106,7 @@ def dftb(mol, lab, level):
                                 ))
 
     if not ('C' in symbols) and ('O' in symbols) and ('H' in symbols) and ('N' in symbols) and not ('F' in symbols):
-        mol.set_calculator(Dftb(label=lab,
+        mol.set_calculator(Dftb2(label=lab,
                                 atoms=mol,
                                 Hamiltonian_Filling='Fermi{',
                                 Hamiltonian_Filling_Temperature=0.006,
@@ -121,7 +120,7 @@ def dftb(mol, lab, level):
                                 ))
 
     if ('C' in symbols) and ('O' in symbols) and not ('H' in symbols) and not ('N' in symbols) and not ('F' in symbols):
-        mol.set_calculator(Dftb(label=lab,
+        mol.set_calculator(Dftb2(label=lab,
                                 atoms=mol,
                                 Hamiltonian_Filling='Fermi{',
                                 Hamiltonian_Filling_Temperature=0.006,
@@ -134,7 +133,7 @@ def dftb(mol, lab, level):
                                 ))
 
     if ('C' in symbols) and not ('O' in symbols) and ('H' in symbols) and not ('N' in symbols) and not ('F' in symbols):
-        mol.set_calculator(Dftb(label=lab,
+        mol.set_calculator(Dftb2(label=lab,
                                 atoms=mol,
                                 Hamiltonian_Filling='Fermi{',
                                 Hamiltonian_Filling_Temperature=0.006,
@@ -147,7 +146,7 @@ def dftb(mol, lab, level):
                                 ))
 
     if not ('C' in symbols) and ('O' in symbols) and ('H' in symbols) and not ('N' in symbols) and not ('F' in symbols):
-        mol.set_calculator(Dftb(label=lab,
+        mol.set_calculator(Dftb2(label=lab,
                                 atoms=mol,
                                 Hamiltonian_Filling='Fermi{',
                                 Hamiltonian_Filling_Temperature=0.006,
@@ -160,7 +159,7 @@ def dftb(mol, lab, level):
                                 ))
 
     if ('C' in symbols) and not ('O' in symbols) and not ('H' in symbols) and ('N' in symbols) and not ('F' in symbols):
-        mol.set_calculator(Dftb(label=lab,
+        mol.set_calculator(Dftb2(label=lab,
                                 atoms=mol,
                                 Hamiltonian_Filling='Fermi{',
                                 Hamiltonian_Filling_Temperature=0.006,
@@ -186,7 +185,7 @@ def dftb(mol, lab, level):
                                 ))
 
     if not ('C' in symbols) and not ('O' in symbols) and ('H' in symbols) and ('N' in symbols) and not ('F' in symbols):
-        mol.set_calculator(Dftb(label=lab,
+        mol.set_calculator(Dftb2(label=lab,
                                 atoms=mol,
                                 Hamiltonian_Filling='Fermi{',
                                 Hamiltonian_Filling_Temperature=0.006,
@@ -199,7 +198,7 @@ def dftb(mol, lab, level):
                                 ))
     if not ('C' in symbols) and ('O' in symbols) and not ('H' in symbols) and not ('N' in symbols) and not (
             'F' in symbols):
-        mol.set_calculator(Dftb(label=lab,
+        mol.set_calculator(Dftb2(label=lab,
                                 atoms=mol,
                                 Hamiltonian_Filling='Fermi{',
                                 Hamiltonian_Filling_Temperature=0.006,
@@ -211,7 +210,7 @@ def dftb(mol, lab, level):
                                 ))
     if not ('C' in symbols) and not ('O' in symbols) and ('H' in symbols) and not ('N' in symbols) and not (
             'F' in symbols):
-        mol.set_calculator(Dftb(label=lab,
+        mol.set_calculator(Dftb2(label=lab,
                                 atoms=mol,
                                 Hamiltonian_Filling='Fermi{',
                                 Hamiltonian_Filling_Temperature=0.006,
@@ -223,7 +222,7 @@ def dftb(mol, lab, level):
                                 ))
     if not ('C' in symbols) and not ('O' in symbols) and not ('H' in symbols) and ('N' in symbols) and not (
             'F' in symbols):
-        mol.set_calculator(Dftb(label=lab,
+        mol.set_calculator(Dftb2(label=lab,
                                 atoms=mol,
                                 Hamiltonian_Filling='Fermi{',
                                 Hamiltonian_Filling_Temperature=0.006,

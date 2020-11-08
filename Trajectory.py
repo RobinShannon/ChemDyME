@@ -48,10 +48,6 @@ class Trajectory:
         self.LangFric = gl.LFric
         self.LangTemp = self.initialT
         self.Mol = Atoms(symbols=mol.get_chemical_symbols(), positions = mol.get_positions())
-        if self.method == "openMM":
-            self.Mol = tl.setCalc(self.Mol,'calcMopac' + str(self.procNum) + '/Traj', self.method, gl)
-        else:
-            self.Mol = tl.setCalc(self.Mol,'calcMopac' + str(self.procNum) + '/Traj', self.method, self.level)
         MaxwellBoltzmannDistribution(self.Mol, self.initialT * units.kB, force_temp=True)
         Stationary(self.Mol)
         ZeroRotation(self.Mol)
@@ -88,9 +84,10 @@ class Trajectory:
     def runTrajectory(self):
         # Create specific directory
         fails = 0
-        rmol= self.Mol.copy()
-        rmol =tl.setCalc(rmol, 'Traj_' + str(self.procNum), self.method, self.level)
-        reac_smile = tl.getSMILES(rmol,True)
+        self.Mol =tl.setCalc(self.Mol, 'Traj_' + str(self.procNum), self.method, self.level)
+        coords = self.Mol.get_positions()
+        reac_smile = tl.getSMILES(self.Mol,True)
+        self.Mol.set_positions(coords)
         workingDir = os.getcwd()
         newpath = workingDir + '/Raw/traj' + str(self.procNum)
         print("making directory " + newpath)
@@ -126,11 +123,6 @@ class Trajectory:
         eBounded= False
         comBounded = False
 
-        # Get potential type
-        if (self.method == 'nwchem'):
-            self.Mol =tl.setCalc(self.Mol,'Traj_' + str(self.procNum), 'nwchem2', self.level)
-            self.Mol.get_forces()
-        self.Mol =tl.setCalc(self.Mol, 'Traj_' + str(self.procNum), self.method, self.level)
         print("getting first forces")
         try:
             self.forces = self.Mol.get_forces()
@@ -266,15 +258,17 @@ class Trajectory:
             if not self.ReactionCountDown == 0:
                 self.ReactionCountDown -= 1
             if self.ReactionCountDown == 1:
-                pmol = self.Mol.copy()
-                pmol = tl.setCalc(pmol, 'Traj_' + str(self.procNum), self.method, self.level)
-                min = BFGS(pmol)
-                min.run(fmax=0.1, steps=200)
-                con2 = ChemDyME.Connectivity.NunezMartinez(pmol)
+                coords = self.Mol.get_positions()
+                min = BFGS(self.Mol)
+                min.run(fmax=0.1, steps=10)
+                con2 = ChemDyME.Connectivity.NunezMartinez(self.Mol)
+                pmol_name = tl.getSMILES(self.Mol,False)
+                self.Mol.set_positions(coords)
                 if not np.array_equal(con.C,con2.C):
                     self.ReactionCountDown = 0
                     self.productGeom = self.Mol.get_positions()
                     os.chdir(workingDir)
+                    self.Mol._calc.close()
                     break
                 elif fails < 5:
                     self.ReactionCountDown = self.window
@@ -297,10 +291,6 @@ class Trajectory:
         workingDir = os.getcwd()
         file = open("geo.xyz","w")
 
-        # Get potential type
-        if (self.method == 'nwchem'):
-            self.Mol =tl.setCalc(self.Mol,'calcMopac' + str(self.procNum) + '/Traj', 'nwchem2', self.level)
-            self.Mol.get_forces()
 
 
         #Get MDintegrator type
@@ -329,12 +319,8 @@ class Trajectory:
             print('forces error')
 
 
-        # Get potential type
-        if (self.method == 'nwchem'):
-            self.Mol =tl.setCalc(self.Mol,'calcMopac' + str(self.procNum) + '/Traj', 'nwchem2', self.level)
-            self.Mol.get_forces()
-        else:
-            self.Mol =tl.setCalc(self.Mol,'calcMopac' + str(self.procNum) + '/Traj', self.method, self.level)
+
+
 
         #Get MDintegrator type
         if self.MDIntegrator == 'VelocityVerlet':
@@ -437,10 +423,7 @@ class Trajectory:
         sfile = open("plotData.txt", "w")
 
 
-        # Get potential type
-        if (self.method == 'nwchem'):
-            self.Mol =tl.setCalc(self.Mol,'calcMopac' + str(self.procNum) + '/Traj', 'nwchem2', self.level)
-            self.Mol.get_forces()
+
 
 
         #Get MDintegrator type

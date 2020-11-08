@@ -109,7 +109,8 @@ class SparrowCalculator(Calculator):
         os.remove('temp.xyz')
         os.chdir(current_dir)
 
-
+    def close(self):
+        self.calc = None
 
     def minimise_ts(self,path, atoms: Optional[Atoms] = None ):
         current_dir = os.getcwd()
