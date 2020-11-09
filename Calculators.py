@@ -1,6 +1,6 @@
 from ase.calculators.nwchem import NWChem
 from ase.calculators.gaussian import Gaussian
-from dftb_2 import Dftb2
+from ChemDyME.dftb_2 import Dftb2
 from ChemDyME.ScineCalculator import SparrowCalculator
 
 def scine(mol,lab,level):
