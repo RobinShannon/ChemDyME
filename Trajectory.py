@@ -9,6 +9,7 @@ from ase.md.velocitydistribution import (MaxwellBoltzmannDistribution,Stationary
 from ase import units
 from time import process_time
 from ase.optimize import BFGS
+from ase.io import write as awrite
 
 
 class Trajectory:
@@ -258,6 +259,7 @@ class Trajectory:
             if not self.ReactionCountDown == 0:
                 self.ReactionCountDown -= 1
             if self.ReactionCountDown == 1:
+                awrite('temp.xyz', self.Mol)
                 coords = self.Mol.get_positions()
                 min = BFGS(self.Mol)
                 min.run(fmax=0.1, steps=10)
@@ -268,7 +270,10 @@ class Trajectory:
                     self.ReactionCountDown = 0
                     self.productGeom = self.Mol.get_positions()
                     os.chdir(workingDir)
-                    self.Mol._calc.close()
+                    try:
+                        self.Mol._calc.close()
+                    except:
+                        pass
                     break
                 elif fails < 5:
                     self.ReactionCountDown = self.window

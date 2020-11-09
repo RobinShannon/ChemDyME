@@ -87,7 +87,10 @@ class Reaction:
         FullName = Name.split('____')
         if len(FullName) > 1:
             FullName = FullName[0]
-        rmol._calc.close()
+        try:
+            rmol._calc.close()
+        except:
+            pass
         pmol = tl.setCalc(pmol, self.lowString, self.lowMeth, self.lowLev)
         min = BFGS(pmol)
         try:
@@ -104,7 +107,10 @@ class Reaction:
         else:
             TScorrect = False
             print('TS1 try does not connect reactants and products')
-        pmol._calc.close()
+        try:
+            pmol._calc.close()
+        except:
+            pass
         return TScorrect
 
     def characteriseMinExt(self, mol, high):
@@ -285,7 +291,10 @@ class Reaction:
         self.ReacName = tl.getSMILES(self.CombReac, True, True)
         FullName = self.ReacName.split('____', 1)
         path = (self.workingDir + '/Raw/calcHigh' + self.procNum)
-        self.CombReac._calc.close()
+        try:
+            self.CombReac._calc.close()
+        except:
+            pass
         if len(FullName) > 1:
             self.is_bimol_reac = True
             self.ReacName = FullName[0].strip('\n\t')
@@ -299,14 +308,20 @@ class Reaction:
         self.ReacFreqs, zpe = self.characteriseFreqInternal(self.Reac)
         self.Reac = tl.setCalc(self.Reac, self.singleString, self.singleMeth, self.singleLev)
         self.reactantEnergy = self.Reac.get_potential_energy() + zpe
-        self.Reac._calc.close()
+        try:
+            self.Reac._calc.close()
+        except:
+            pass
         if self.is_bimol_reac == True:
             self.biReac = tl.setCalc(self.biReac, self.highString, self.highMeth, self.highLev)
             self.biReac._calc.minimise_stable(path, self.biReac)
             self.biReacFreqs, zpe = self.characteriseFreqInternal(self.biReac)
             self.biReac = tl.setCalc(self.biReac, self.singleString, self.singleMeth, self.singleLev)
             self.reactantEnergy += (self.biReac.get_potential_energy() + zpe)
-            self.biReac._calc.close()
+            try:
+                self.biReac._calc.close()
+            except:
+                pass
 
     def optProd(self, cart, alt):
         print('optimising product')
@@ -315,7 +330,10 @@ class Reaction:
             self.CombProd = self.AltProd.copy()
         else:
             self.CombProd.set_positions(cart)
-        self.CombProd._calc.close()
+        try:
+            self.CombProd._calc.close()
+        except:
+            pass
         path = (self.workingDir + '/Raw/calcHigh' + self.procNum)
         self.CombProd = tl.setCalc(self.CombProd, self.lowString, self.lowMeth, self.lowLev)
         self.ProdName = tl.getSMILES(self.CombProd, True, partialOpt=True)
@@ -333,14 +351,20 @@ class Reaction:
         self.ProdFreqs, zpe = self.characteriseFreqInternal(self.Prod)
         self.Prod = tl.setCalc(self.Prod, self.singleString, self.singleMeth, self.singleLev)
         self.productEnergy = self.Prod.get_potential_energy() + zpe
-        self.Prod._calc.close()
+        try:
+            self.Prod._calc.close()
+        except:
+            pass
         if self.is_bimol_prod == True:
             self.biProd = tl.setCalc(self.biProd, self.highString, self.highMeth, self.highLev)
             self.biProd._calc.minimise_stable(path, self.biProd)
             self.biProdFreqs, zpe = self.characteriseFreqInternal(self.biProd)
             self.biProd = tl.setCalc(self.biProd, self.singleString, self.singleMeth, self.singleLev)
             self.productEnergy += (self.biProd.get_potential_energy() + zpe)
-            self.biProd._calc.close()
+            try:
+                self.biProd._calc.close()
+            except:
+                pass
 
 
 
@@ -412,7 +436,10 @@ class Reaction:
             self.TScorrect = self.compareRandP(rmol, pmol)
         except:
             self.TScorrect = False
-        self.TS._calc.close
+        try:
+            self.TS._calc.close
+        except:
+            pass
         try:
             inc = - 10
             while self.TScorrect == False and inc <= 10:
@@ -431,7 +458,10 @@ class Reaction:
                 except:
                     self.TScorrect = False
                 inc += 1
-                self.TS._calc.close
+                try:
+                    self.TS._calc.close
+                except:
+                    pass
         except:
             pass
 
@@ -441,11 +471,17 @@ class Reaction:
             for i in irc_rev:
                 i = tl.setCalc(i, self.lowString, self.lowMeth, self.lowLev)
                 irc_ene.append(i.get_potential_energy)
-                self.i._calc.close
+                try:
+                    self.i._calc.close
+                except:
+                    pass
             for i in irc_for:
                 i = tl.setCalc(i, self.lowString, self.lowMeth, self.lowLev)
                 irc_ene.append(i.get_potential_energy)
-                self.i._calc.close
+                try:
+                    self.i._calc.close
+                except:
+                    pass
             write(path + '/Data/IRC.xyz', irc)
 
 
@@ -453,19 +489,34 @@ class Reaction:
 
         self.TS = tl.setCalc(self.TS, self.lowString, self.lowMeth, self.lowLev)
         self.TSFreqs, zpe, self.imaginaryFreq = self.characteriseTSFreqInternal(self.TS)
-        self.TS._calc.close
+        try:
+            self.TS._calc.close
+        except:
+            pass
         self.TS = tl.setCalc(self.TS, self.singleString, self.singleMeth, self.singleLev)
         self.forwardBarrier = self.TS.get_potential_energy() + zpe
-        self.TS._calc.close
+        try:
+            self.TS._calc.close
+        except:
+            pass
         self.TS = tl.setCalc(self.TS, self.lowString, self.lowMeth, self.lowLev)
         spline = self.TS._calc.minimise_bspline(raw_path, self.CombReac, self.CombProd)
-        self.TS._calc.close
+        try:
+            self.TS._calc.close
+        except:
+            pass
         spline_ene = []
-        self.TS._calc.close
+        try:
+            self.TS._calc.close
+        except:
+            pass
         for sp in spline:
             sp = tl.setCalc(sp, self.lowString, self.lowMeth, self.lowLev)
             spline_ene.append(float(sp.get_potential_energy()))
-            self.sp._calc.close
+            try:
+                self.sp._calc.close
+            except:
+                pass
         max_value = max(spline_ene)
         ind = spline_ene.index(max_value)
         write(path + '/Data/TS2.xyz', spline[ind])
@@ -480,10 +531,16 @@ class Reaction:
         self.TS2 = tl.setCalc(self.TS2, self.lowString, self.lowMeth, self.lowLev)
         self.TS2, rmol, pmol, irc_for, irc_rev = self.TS2._calc.minimise_ts(raw_path, self.TS2)
         self.TS2Freqs, zpe, self.imaginaryFreq2 = self.characteriseTSFreqInternal(self.TS2)
-        self.TS2._calc.close
+        try:
+            self.TS2._calc.close
+        except:
+            pass
         self.TS2 = tl.setCalc(self.TS2, self.singleString, self.singleMeth, self.singleLev)
         self.forwardBarrier2 = self.TS2.get_potential_energy() + zpe
-        self.TS2._calc.close
+        try:
+            self.TS2._calc.close
+        except:
+            pass
 
         if self.TScorrect == False:
             try:
