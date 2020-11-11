@@ -69,7 +69,7 @@ class Trajectory:
         return Trajectory(mol, copy.deepcopy(self.bxd), copy.deepcopy(self.md_integrator), calcMethod = self.calcMethod)
 
 
-    def run_trajectory(self, max_steps = np.inf, parallel = False, print_to_file = False, print_directory = 'BXD_data'):
+    def run_trajectory(self, max_steps = np.inf, parallel = False, print_to_file = True, print_directory = 'BXD_data'):
         """
         Runs a bxd trajectory until either the attached BXDconstraint indicates sufficient information has been obtained
         or the max_steps parameter is exceeded

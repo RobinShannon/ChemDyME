@@ -67,7 +67,7 @@ class bxd_plotter_2d:
         self.path_data = path_data
         self.fig = plt.figure()
         self.ax = self.fig.add_subplot(111)
-        self.scatter = self.ax.scatter([], [], s=3, color=self.point_colour, alpha=0.01)
+        self.scatter = self.ax.scatter([], [], s=3, color=self.point_colour, alpha=0.5)
         self.scatter2 = self.ax.scatter([], [], s=3, color="red", alpha=1)
         self.bound_lines = []
         b1 = self.ax.plot([], [], color=self.bound_colour)
