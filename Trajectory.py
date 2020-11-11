@@ -63,7 +63,7 @@ class Trajectory:
         try:
             self.window = gl.reactionWindow
             self.endOnReac = gl.endOnReaction
-            self.consistantWindow = gl.reactionWindow /2
+            self.consistantWindow = gl.reactionWindow
         except:
             pass
         if self.biMolecular:
@@ -247,6 +247,7 @@ class Trajectory:
                 elif consistantChange > 0:
                     if consistantChange == 1:
                         self.ReactionCountDown = self.window
+                        eneBXDon = False
                         consistantChange -= 2
                     else:
                         consistantChange -= 1
@@ -262,7 +263,7 @@ class Trajectory:
                 awrite('temp.xyz', self.Mol)
                 coords = self.Mol.get_positions()
                 min = BFGS(self.Mol)
-                min.run(fmax=0.1, steps=10)
+                min.run(fmax=0.1, steps=50)
                 con2 = ChemDyME.Connectivity.NunezMartinez(self.Mol)
                 pmol_name = tl.getSMILES(self.Mol,False)
                 self.Mol.set_positions(coords)
