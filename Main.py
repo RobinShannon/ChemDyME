@@ -278,8 +278,8 @@ def run(glo):
                             glo.InitialBi = False
 
 
-            glo.restart = False
-            glo.InitialBi = False
+        glo.restart = False
+        glo.InitialBi = False
 
         while me.newSpeciesFound == False:
             me.runTillReac(MESpath)

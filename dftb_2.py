@@ -85,7 +85,7 @@ class Dftb2(Calculator):
                 slako_dir += '/'
 
         self.slako_dir = slako_dir
-        self.lib = os.environ.get('DFTB_PREFIX', './')
+        self.lib = os.environ.get('DFTB_LIB', './')
 
         self.default_parameters = dict(
             Hamiltonian_='DFTB',
