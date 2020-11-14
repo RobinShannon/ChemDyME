@@ -351,6 +351,7 @@ class Reaction:
         self.ProdFreqs, zpe = self.characteriseFreqInternal(self.Prod)
         self.Prod = tl.setCalc(self.Prod, self.singleString, self.singleMeth, self.singleLev)
         self.productEnergy = self.Prod.get_potential_energy() + zpe
+        self.ProdName = tl.getSMILES(self.Prod, False, partialOpt=False)
         try:
             self.Prod._calc.close()
         except:
@@ -361,6 +362,7 @@ class Reaction:
             self.biProdFreqs, zpe = self.characteriseFreqInternal(self.biProd)
             self.biProd = tl.setCalc(self.biProd, self.singleString, self.singleMeth, self.singleLev)
             self.productEnergy += (self.biProd.get_potential_energy() + zpe)
+            self.biProdName = tl.getSMILES(self.biProd, False, partialOpt=False)
             try:
                 self.biProd._calc.close()
             except:
