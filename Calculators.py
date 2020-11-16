@@ -2,6 +2,7 @@ from ase.calculators.nwchem import NWChem
 from ase.calculators.gaussian import Gaussian
 from ChemDyME.dftb_2 import Dftb2
 from ChemDyME.ScineCalculator import SparrowCalculator
+from xtb.ase.calculator import XTB
 
 def scine(mol,lab,level):
     mol.set_calculator(SparrowCalculator(method = level))
