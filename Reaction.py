@@ -85,8 +85,6 @@ class Reaction:
             min.run(fmax=0.1, steps=5)
         Name = tl.getSMILES(rmol, False).strip('\n\t')
         FullName = Name.split('____')
-        if len(FullName) > 1:
-            FullName = FullName[0]
         try:
             rmol._calc.close()
         except:
@@ -99,10 +97,8 @@ class Reaction:
             min.run(fmax=0.1, steps=50)
         Name2 = tl.getSMILES(pmol, False).strip('\n\t')
         FullName2 = Name2.split('____')
-        if len(FullName2) > 1:
-            FullName2 = FullName2[0]
         if ((FullName == self.ReacName and FullName2 == self.ProdName) or (
-                FullName2 == self.ReacName and FullName == self.ProdName)):
+                FullName2[0] == self.ReacName and FullName[0] == self.ProdName)):
             TScorrect = True
         else:
             TScorrect = False
