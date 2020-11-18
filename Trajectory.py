@@ -224,6 +224,18 @@ class Trajectory:
 
 
             mdInt.md_step_pos(self.forces, timeStep, self.Mol)
+
+            if eBounded and eneBXD.boxList[eneBXD.box].lower.hit( self.Mol.get_potential_energy(), 'down'):
+                ene = self.Mol.get_potential_energy()
+                self.Mol.set_positions(mdInt.old_positions)
+                mdInt.current_positions = mdInt.old_positions
+                ene1 = self.Mol.get_potential_energy()
+                hit1 = eneBXD.boxList[eneBXD.box].lower.hit(ene1, 'down')
+                mdInt.constrained = True
+                mdInt.md_step_pos(self.forces, timeStep*0.0000001, self.Mol)
+                ene2 = self.Mol.get_potential_energy()
+                hit2 = eneBXD.boxList[eneBXD.box].lower.hit(ene2, 'down')
+
             try:
                 self.forces = self.Mol.get_forces()
             except:
@@ -283,6 +295,8 @@ class Trajectory:
                     fails = 0
                     self.ReactionCountDown = 0
                     consistantChange = 0
+                    while eneBXD.boxList[eneBXD.box].lower.hit( self.Mol.get_potential_energy(), 'down'):
+                        eneBXD.box -=1
         namefile.close()
         os.chdir(workingDir)
 

@@ -94,9 +94,9 @@ class Reaction:
         pmol = tl.setCalc(pmol, self.lowString, self.lowMeth, self.lowLev)
         min = BFGS(pmol)
         try:
-            min.run(fmax=0.1, steps=5)
+            min.run(fmax=0.1, steps=50)
         except:
-            min.run(fmax=0.1, steps=5)
+            min.run(fmax=0.1, steps=50)
         Name2 = tl.getSMILES(pmol, False).strip('\n\t')
         FullName2 = Name2.split('____')
         if len(FullName2) > 1:
@@ -474,14 +474,14 @@ class Reaction:
                 i = tl.setCalc(i, self.lowString, self.lowMeth, self.lowLev)
                 irc_ene.append(i.get_potential_energy)
                 try:
-                    self.i._calc.close
+                    i._calc.close
                 except:
                     pass
             for i in irc_for:
                 i = tl.setCalc(i, self.lowString, self.lowMeth, self.lowLev)
                 irc_ene.append(i.get_potential_energy)
                 try:
-                    self.i._calc.close
+                    i._calc.close
                 except:
                     pass
             write(path + '/Data/IRC.xyz', irc)
@@ -557,7 +557,7 @@ class Reaction:
             for i in irc:
                 i = tl.setCalc(i, self.lowString, self.lowMeth, self.lowLev)
                 irc_ene.append(i.get_potential_energy)
-                self.i._calc.close
+                i._calc.close
             write(path + '/Data/IRC.xyz', irc)
             with open(path + '/Data/irc_ene.txt', 'w') as f:
                 for ir in irc_ene:

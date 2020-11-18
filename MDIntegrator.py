@@ -176,6 +176,7 @@ class Langevin(MDIntegrator):
 
         # Update velocities
         self.current_velocities = self.current_velocities + (lagrangian * del_phi * (1/self.masses)[:, None])
+        self.half_step_velocity = self.current_velocities
         self.constrained = True
 
     def constrain2(self, del_phi1, del_phi2):

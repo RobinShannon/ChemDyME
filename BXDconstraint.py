@@ -6,7 +6,7 @@ import numpy as np
 # Class to track constraints and calculate required derivatives for BXD constraints
 # Inversion procedure occurs in MDintegrator class
 class Constraint:
-    def __init__(self, mol, start,  end, hitLimit = 100, adapMax = 100, activeS = [], topBox = 500, hist = 1, decorrelationSteps = 10, path = 0, pathType = 'linear',runType = 'adaptive', stuckLimit = 20, numberOfBoxes = 10000, endType = 'RMSD', endDistance = 100000000, fixToPath = False, pathDistCutOff = 100, epsilon = 0.95 ):
+    def __init__(self, mol, start,  end, hitLimit = 100, adapMax = 100, activeS = [], topBox = 500, hist = 1, decorrelationSteps = 10, path = 0, pathType = 'linear',runType = 'adaptive', stuckLimit = 20, numberOfBoxes = 10000, endType = 'RMSD', endDistance = 100000000, fixToPath = False, pathDistCutOff = 100, epsilon = 0.8 ):
         self.decorrelationSteps = decorrelationSteps
         self.pathStuckCountdown = 0
         self.boundFile = open("bounds.txt","w")
