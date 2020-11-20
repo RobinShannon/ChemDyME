@@ -375,7 +375,7 @@ class Langevin(MDIntegrator):
             # Then get the next half step velocity and update the position.
             # NB currentVel is one full MD step behind currentPos
             self.half_step_velocity = self.current_velocities + (self.c1 * accel - self.c2 * self.half_step_velocity + self.c3[:, None] * self.xi - self.c4[:, None] * self.eta)
-            self.current_positions = self.current_positions + 0.01 * (self.timestep * self.half_step_velocity + self.c5[:,
+            self.current_positions = self.current_positions + 0.0001 * (self.timestep * self.half_step_velocity + self.c5[:,
                         None] * self.eta)
 
             mol.set_positions(self.current_positions)

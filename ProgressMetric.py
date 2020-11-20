@@ -372,7 +372,7 @@ class Line(ProgressMetric):
         super(Line, self).__init__(start_mol, collective_variable, end_point,  end_type=end_type, number_of_boxes=number_of_boxes)
         self.max_distance_from_path = max_distance_from_path
 
-    def project_point_on_path(self, s):
+    def project_point_on_path(self, s, min_segment = None, max_segment = None):
         """
         Get projected distance along the path for a given geometry with collective variable s
         :param s: collective variable value for current MD frame
