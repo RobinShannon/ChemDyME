@@ -215,7 +215,9 @@ class Trajectory:
                     log_file.write("previous step hit path bound" + str('\n'))
                     del_phi = []
                     self.md_integrator.old_positions = self.md_integrator.very_old_positions
+                    del_phi.append(self.bxd.path_del_constraint(self.mol))
                     # If we have hit a bound get the md object to modify the velocities / positions appropriately.
+                    del_phi.append(self.bxd.del_constraint(self.mol))
                     self.md_integrator.constrain(del_phi)
                     self.md_integrator.md_step_pos(self.forces, self.mol)
                 else:
