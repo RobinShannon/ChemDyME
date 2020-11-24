@@ -283,10 +283,6 @@ class Trajectory:
                     self.ReactionCountDown = 0
                     self.productGeom = self.Mol.get_positions()
                     os.chdir(workingDir)
-                    try:
-                        self.Mol._calc.close()
-                    except:
-                        pass
                     break
                 elif fails < 5:
                     self.ReactionCountDown = self.window
@@ -297,6 +293,10 @@ class Trajectory:
                     consistantChange = 0
                     while eneBXD.boxList[eneBXD.box].lower.hit( self.Mol.get_potential_energy(), 'down'):
                         eneBXD.box -=1
+        try:
+            self.Mol._calc.close()
+        except:
+            pass
         namefile.close()
         os.chdir(workingDir)
 

@@ -435,7 +435,7 @@ class Reaction:
         except:
             self.TScorrect = False
         try:
-            self.TS._calc.close
+            self.TS._calc.close()
         except:
             pass
         try:
@@ -457,7 +457,7 @@ class Reaction:
                     self.TScorrect = False
                 inc += 1
                 try:
-                    self.TS._calc.close
+                    self.TS._calc.close()
                 except:
                     pass
         except:
@@ -468,16 +468,16 @@ class Reaction:
             irc = irc_rev.reverse() + irc_for
             for i in irc_rev:
                 i = tl.setCalc(i, self.lowString, self.lowMeth, self.lowLev)
-                irc_ene.append(i.get_potential_energy)
+                irc_ene.append(i.get_potential_energy())
                 try:
-                    i._calc.close
+                    i._calc.close()
                 except:
                     pass
             for i in irc_for:
                 i = tl.setCalc(i, self.lowString, self.lowMeth, self.lowLev)
-                irc_ene.append(i.get_potential_energy)
+                irc_ene.append(i.get_potential_energy())
                 try:
-                    i._calc.close
+                    i._calc.close()
                 except:
                     pass
             write(path + '/Data/IRC.xyz', irc)
@@ -488,31 +488,31 @@ class Reaction:
         self.TS = tl.setCalc(self.TS, self.lowString, self.lowMeth, self.lowLev)
         self.TSFreqs, zpe, self.imaginaryFreq = self.characteriseTSFreqInternal(self.TS)
         try:
-            self.TS._calc.close
+            self.TS._calc.close()
         except:
             pass
         self.TS = tl.setCalc(self.TS, self.singleString, self.singleMeth, self.singleLev)
         self.forwardBarrier = self.TS.get_potential_energy() + zpe
         try:
-            self.TS._calc.close
+            self.TS._calc.close()
         except:
             pass
         self.TS = tl.setCalc(self.TS, self.lowString, self.lowMeth, self.lowLev)
         spline = self.TS._calc.minimise_bspline(raw_path, self.CombReac, self.CombProd)
         try:
-            self.TS._calc.close
+            self.TS._calc.close()
         except:
             pass
         spline_ene = []
         try:
-            self.TS._calc.close
+            self.TS._calc.close()
         except:
             pass
         for sp in spline:
             sp = tl.setCalc(sp, self.lowString, self.lowMeth, self.lowLev)
             spline_ene.append(float(sp.get_potential_energy()))
             try:
-                self.sp._calc.close
+                self.sp._calc.close()
             except:
                 pass
         max_value = max(spline_ene)
@@ -530,13 +530,13 @@ class Reaction:
         self.TS2, rmol, pmol, irc_for, irc_rev = self.TS2._calc.minimise_ts(raw_path, self.TS2)
         self.TS2Freqs, zpe, self.imaginaryFreq2 = self.characteriseTSFreqInternal(self.TS2)
         try:
-            self.TS2._calc.close
+            self.TS2._calc.close()
         except:
             pass
         self.TS2 = tl.setCalc(self.TS2, self.singleString, self.singleMeth, self.singleLev)
         self.forwardBarrier2 = self.TS2.get_potential_energy() + zpe
         try:
-            self.TS2._calc.close
+            self.TS2._calc.close()
         except:
             pass
 
@@ -552,8 +552,11 @@ class Reaction:
             irc = irc_rev + irc_for
             for i in irc:
                 i = tl.setCalc(i, self.lowString, self.lowMeth, self.lowLev)
-                irc_ene.append(i.get_potential_energy)
-                i._calc.close
+                irc_ene.append(i.get_potential_energy())
+                try:
+                    i._calc.close()
+                except:
+                    pass
             write(path + '/Data/IRC.xyz', irc)
             with open(path + '/Data/irc_ene.txt', 'w') as f:
                 for ir in irc_ene:
