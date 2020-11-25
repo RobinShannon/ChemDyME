@@ -465,15 +465,9 @@ class Reaction:
 
         if self.TScorrect:
             irc_ene = []
-            irc = irc_rev.reverse() + irc_for
-            for i in irc_rev:
-                i = tl.setCalc(i, self.lowString, self.lowMeth, self.lowLev)
-                irc_ene.append(i.get_potential_energy())
-                try:
-                    i._calc.close()
-                except:
-                    pass
-            for i in irc_for:
+            irc_rev.reverse()
+            irc = irc_rev + irc_for
+            for i in irc:
                 i = tl.setCalc(i, self.lowString, self.lowMeth, self.lowLev)
                 irc_ene.append(i.get_potential_energy())
                 try:
