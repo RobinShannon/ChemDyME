@@ -245,7 +245,7 @@ def run(glo):
                 for i in range(0, len(glo.BiList)):
                     print("getting chemical symbols")
                     baseXYZ = reac.CombReac.get_chemical_symbols()
-                    if me.time > (1 / float(glo.BiRates[i])):
+                    if me.time > (1.0 / float(glo.BiRates[i])):
                         print("assessing whether or not to look for bimolecular channel. Rate = " + str(
                             float(glo.BiRates[i])) + " Mesmer reaction time = " + str(me.time))
                         glo.InitialBi = True

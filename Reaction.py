@@ -822,7 +822,6 @@ class Reaction:
         self.barrierlessReaction = False
         self.forwardBarrier = 0.0
         self.forwardBarrier2 = 0.0
-        self.reactantEnergy = self.Reac.get_potential_energy()
         self.have_reactant = True
         self.is_IntermediateProd = False
         self.AltProd = self.Reac.copy()
