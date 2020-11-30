@@ -42,8 +42,10 @@ def runNormal(p):
         prodpath = p[2] + '/' + str(p[0].ProdName)
 
         # Get the indicies of the bonds which have either formed or broken over the course of the reaction
-        changedBonds = CT.getChangedBonds(p[0].CombReac, p[0].CombProd)
-
+        try:
+            changedBonds = CT.getChangedBonds(p[0].CombReac, p[0].CombProd)
+        except:
+            changedBonds =[]
         data = open(('AllData.txt'), "a")
         data.write('Reactant = ' + str(p[0].ReacName) + ' Product = ' + str(
             p[0].ProdName) + ' MD Steps = ' + str(p[1].numberOfSteps) + '\n')
@@ -235,8 +237,13 @@ def run(glo):
                 results1 = runNormal([reac,traj,minpath , MESpath, 0, glo])
 
 
+
             # run a master eqution to estimate the lifetime of the current species
-            me.runTillReac(MESpath)
+            try:
+                me.runTillReac(MESpath)
+            except:
+                me.time = np.inf
+
             me.newSpeciesFound = False
 
             # check whether there is a possible bimolecular rection for current intermediate
@@ -256,7 +263,7 @@ def run(glo):
                         reac.re_init_bi(xyz, spec)
                         io.writeMinXML(reac, MESpath, True, True)
                         for r in range(0, glo.ReactIters):
-                            bitempPath = "bitempPath_" + str(0), minpath + '/temp' + str(0) + '_' + str(r)
+                            bitempPath = minpath + '/temp' + str(0) + '_' + str(r)
                             # Now set up tmp directory for each thread
                             if not os.path.exists(bitempPath):
                                 os.makedirs(bitempPath)
