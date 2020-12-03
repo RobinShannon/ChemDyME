@@ -25,7 +25,7 @@ def runNormal(p):
         if len(p) > 6:
             print("correcting baseline for bi reaction")
             sym = "".join(p[6].get_chemical_symbols())
-            TotSym = "".join(p[0].CombReac.get_chemical_symbols())
+            TotSym = "".join(p[0].Reac.get_chemical_symbols())
             print(str(sym) + " " + str(TotSym))
             base = p[0].energyDictionary[TotSym]
             p[0].energyDictionary[TotSym + sym] = p[0].TempBiEne(p[6]) + base
@@ -92,7 +92,7 @@ def runNormal(p):
                     printXML = True
 
                 # Then check barrier isnt ridiculous
-                if (((p[0].forwardBarrier - p[0].reactantEnergy) * 96.45) > 400):
+                if  p[0].barrierlessReaction == False and (((p[0].forwardBarrier - p[0].reactantEnergy) * 96.45) > 400):
                     printXML = False
                     print('channel barrier too large')
 
@@ -116,8 +116,8 @@ def runNormal(p):
                         if p[0].is_bimol_prod == True:
                             io.writeMinXML(p[0], p[3], False, True)
                     if not os.path.exists(tmppath + "/" + p[0].ReacName):
-                        if p[0].is_bimol_prod == False:
-                            io.writeReactionXML(p[0], p[3], False)
+                        #if p[0].is_bimol_prod == False:
+                        io.writeReactionXML(p[0], p[3], False)
                         io.writeReactionXML(p[0], p[3].replace('.xml', 'Full.xml'), False)
 
         if (p[5].InitialBi == True):
@@ -261,7 +261,6 @@ def run(glo):
                         combinedMol = Atoms(symbols=spec, positions=xyz)
                         # Set reaction instance
                         reac.re_init_bi(xyz, spec)
-                        io.writeMinXML(reac, MESpath, True, True)
                         for r in range(0, glo.ReactIters):
                             bitempPath = minpath + '/temp' + str(0) + '_' + str(r)
                             # Now set up tmp directory for each thread
@@ -292,7 +291,6 @@ def run(glo):
             me.runTillReac(MESpath)
             mechanismRunTime += me.time
             out = me.prodName + '     ' + str(mechanismRunTime) + '\n'
-            me.visitedList.append(me.prodName)
             mainsumfile.write(out)
             mainsumfile.flush()
             if not os.path.exists(syspath + '/' + me.prodName):
@@ -314,7 +312,9 @@ def run(glo):
                     if me.equilCount >= 20:
                         mainsumfile.write(
                             'lumping' + ' ' + str(reac.ReacName) + ' ' + str(me.prodName) + '\n')
-                        me.prodName = io.lumpSpecies(reac, me.prodName, MESpath, MESpath)
+                        me.prodName = io.lumpSpecies(reac.ReacName, me.prodName, MESpath, MESpath)
+                        if reac.ReacName == me.prodName:
+                            me.ene = me.eneList[-2]
                         mainsumfile.flush()
                         me.equilCount = 1
                 minpath = syspath + '/' + me.prodName

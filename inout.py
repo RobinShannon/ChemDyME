@@ -304,7 +304,7 @@ def lumpSpecies(rName, pName, iPath, oPath):
                     ene = prop.getElementsByTagName("scalar")
                     e1 = float(ene[0].firstChild.nodeValue)
                     if rName_bi == True:
-                        e1 -= 10000.0
+                        e1 -= 1000000.0
         elif nid == pName:
             props = name.getElementsByTagName("property")
             for prop in props:
@@ -313,7 +313,7 @@ def lumpSpecies(rName, pName, iPath, oPath):
                     ene = prop.getElementsByTagName("scalar")
                     e2 = float(ene[0].firstChild.nodeValue)
                     if pName_bi == True:
-                        e2 -= 10000.0
+                        e2 -= 1000000.0
 
     if (e1 < e2):
         rName = rName
@@ -321,7 +321,6 @@ def lumpSpecies(rName, pName, iPath, oPath):
     else:
         lName = rName
         rName = pName
-
 
     aLump = ""
     names = doc.getElementsByTagName("molecule")

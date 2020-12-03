@@ -851,6 +851,8 @@ class Reaction:
         self.TScorrect = False
 
     def re_init_bi(self, cartesians, species):
+        self.Reac = Atoms(symbols=species, positions=cartesians)
+        self.CombReac = self.Reac.copy()
         self.TS = Atoms(symbols=species, positions=cartesians)
         self.TSFreqs = []
         self.spline_ene = []
