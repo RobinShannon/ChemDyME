@@ -78,11 +78,6 @@ class Reaction:
     def compareRandP(self, rmol, pmol):
         # Check if TS links reac and prod
         rmol = tl.setCalc(rmol, self.lowString, self.lowMeth, self.lowLev)
-        min = BFGS(rmol)
-        try:
-            min.run(fmax=0.1, steps=5)
-        except:
-            min.run(fmax=0.1, steps=5)
         Name = tl.getSMILES(rmol, False).strip('\n\t')
         FullName = Name.split('____')
         try:
@@ -91,10 +86,6 @@ class Reaction:
             pass
         pmol = tl.setCalc(pmol, self.lowString, self.lowMeth, self.lowLev)
         min = BFGS(pmol)
-        try:
-            min.run(fmax=0.1, steps=50)
-        except:
-            min.run(fmax=0.1, steps=50)
         Name2 = tl.getSMILES(pmol, False).strip('\n\t')
         FullName2 = Name2.split('____')
         if ((FullName == self.ReacName and FullName2 == self.ProdName) or (

@@ -116,9 +116,12 @@ def runNormal(p):
                         if p[0].is_bimol_prod == True:
                             io.writeMinXML(p[0], p[3], False, True)
                     if not os.path.exists(tmppath + "/" + p[0].ReacName):
-                        #if p[0].is_bimol_prod == False:
-                        io.writeReactionXML(p[0], p[3], False)
-                        io.writeReactionXML(p[0], p[3].replace('.xml', 'Full.xml'), False)
+                        if p[0].is_bimol_prod == False:
+                            io.writeReactionXML(p[0], p[3], False)
+                            io.writeReactionXML(p[0], p[3].replace('.xml', 'Full.xml'), False)
+                        if p[0].is_bimol_prod == True and (p[0].TScorrect or p[0].TS2correct):
+                            io.writeReactionXML(p[0], p[3], False)
+                            io.writeReactionXML(p[0], p[3].replace('.xml', 'Full.xml'), False)
 
         if (p[5].InitialBi == True):
             p[0].re_init_bi(p[5].cartesians, p[5].species)
