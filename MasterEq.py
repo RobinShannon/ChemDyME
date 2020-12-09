@@ -11,6 +11,7 @@ class MasterEq:
         self.ene = 0
         self.prodName = 'none'
         self.visitedList = []
+        self.eneList = []
         self.equilCount = 0
         self.MESCommand = os.environ['CHEMDYME_ME_PATH']
         #self.MESCommand = '/Users/RobinS/Documents/mesmerStoch/src/mesmer'
@@ -22,11 +23,12 @@ class MasterEq:
         lines = str(out).split('\n')
         words = lines[len(lines)-5].split(' ')
         self.ene = float(words[1])
+        self.eneList.append(self.ene)
         words = lines[len(lines)-4].split(' ')
         self.time = float(words[1])
         words = lines[len(lines)-3].split(' ')
         self.prodName = words[1]
-
+        self.visitedList.append(self.prodName)
 
     def repeated(self):
         length = len(self.visitedList)

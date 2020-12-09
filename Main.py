@@ -8,6 +8,7 @@ from shutil import copyfile
 import multiprocessing
 import numpy as np
 from ase import Atoms
+import pickle
 
 
 # Function to minimise the reactant geometry
@@ -29,6 +30,8 @@ def runNormal(p):
             print(str(sym) + " " + str(TotSym))
             base = p[0].energyDictionary[TotSym]
             p[0].energyDictionary[TotSym + sym] = p[0].TempBiEne(p[6]) + base
+            with open('dict.pkl', 'wb') as handle:
+                pickle.dump(p[0].energyDictionary, handle)
             print(str(base))
         # Run Trajectory
         p[1].runTrajectory()
@@ -190,12 +193,23 @@ def run(glo):
         # Copy MESMER file from mes folder
         MESpath = syspath + '/MESMER/'
         symb = "".join(reac.CombReac.get_chemical_symbols())
+        try:
+            with open('dict.pkl', 'rb') as handle:
+                reac.energyDictionary = pickle.loads(handle.read())
+        except:
+            pass
         if symb not in reac.energyDictionary:
-            d = {symb: base_ene}
+            rsymb = next(iter(reac.energyDictionary))
+            if len(symb) != len(rsymb):
+                d = {symb: reac.reactantEnergy}
+            else:
+                d = {symb: base_ene}
             reac.energyDictionary.update(d)
         if reac.energyDictionary[symb] == 0.0:
             d = {symb: reac.reactantEnergy}
             reac.energyDictionary.update(d)
+        with open('dict.pkl', 'wb') as handle:
+            pickle.dump(reac.energyDictionary, handle)
         # If a MESMER file has not been created for the current minima then create one
         if not os.path.exists(MESpath):
             os.makedirs(MESpath)
