@@ -49,7 +49,7 @@ class Molpro(FileIOCalculator):
         f.close()
 
     def read_results(self):
-        f = open("Molpro.log", "r")
+        f = open("Molpro.out", "r")
         for line in f:
             if re.search("!CCSD(T)-F12b total energy", line):
                 energy_hartree = float(line.split()[3])

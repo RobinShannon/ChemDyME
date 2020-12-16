@@ -292,7 +292,10 @@ class Reaction:
             self.Reac = self.CombReac
         self.Reac = tl.setCalc(self.Reac, self.highString, self.highMeth, self.highLev)
         self.Reac._calc.minimise_stable(path, self.Reac)
-        self.ReacFreqs, zpe = self.characteriseFreqInternal(self.Reac)
+        try:
+            self.ReacFreqs, zpe = self.Reac._calc.read_vibs(self.Reac)
+        except:
+            self.ReacFreqs, zpe = self.characteriseFreqInternal(self.Reac)
         self.Reac = tl.setCalc(self.Reac, self.singleString, self.singleMeth, self.singleLev)
         self.reactantEnergy = self.Reac.get_potential_energy() + zpe
         try:
@@ -302,7 +305,10 @@ class Reaction:
         if self.is_bimol_reac == True:
             self.biReac = tl.setCalc(self.biReac, self.highString, self.highMeth, self.highLev)
             self.biReac._calc.minimise_stable(path, self.biReac)
-            self.biReacFreqs, zpe = self.characteriseFreqInternal(self.biReac)
+            try:
+                self.biReacFreqs, zpe = self.biReac._calc.read_vibs(self.biReac)
+            except:
+                self.biReacFreqs, zpe = self.characteriseFreqInternal(self.biReac)
             self.biReac = tl.setCalc(self.biReac, self.singleString, self.singleMeth, self.singleLev)
             self.reactantEnergy += (self.biReac.get_potential_energy() + zpe)
             try:
@@ -335,7 +341,10 @@ class Reaction:
             self.Prod = self.CombProd
         self.Prod = tl.setCalc(self.Prod, self.highString, self.highMeth, self.highLev)
         self.Prod._calc.minimise_stable(path, self.Prod)
-        self.ProdFreqs, zpe = self.characteriseFreqInternal(self.Prod)
+        try:
+            self.ProdFreqs, zpe = self.Prod._calc.read_vibs(self.Prod)
+        except:
+            self.ProdFreqs, zpe = self.characteriseFreqInternal(self.Prod)
         self.ProdName = tl.getSMILES(self.Prod, False, partialOpt=False)
         self.Prod = tl.setCalc(self.Prod, self.singleString, self.singleMeth, self.singleLev)
         self.productEnergy = self.Prod.get_potential_energy() + zpe
@@ -346,7 +355,10 @@ class Reaction:
         if self.is_bimol_prod == True:
             self.biProd = tl.setCalc(self.biProd, self.highString, self.highMeth, self.highLev)
             self.biProd._calc.minimise_stable(path, self.biProd)
-            self.biProdFreqs, zpe = self.characteriseFreqInternal(self.biProd)
+            try:
+                self.biProdFreqs, zpe = self.biProd._calc.read_vibs(self.biProd)
+            except:
+                self.biProdFreqs, zpe = self.characteriseFreqInternal(self.biProd)
             self.biProd = tl.setCalc(self.biProd, self.singleString, self.singleMeth, self.singleLev)
             self.biProdName = tl.getSMILES(self.biProd, False, partialOpt=False)
             self.productEnergy += (self.biProd.get_potential_energy() + zpe)
@@ -472,7 +484,10 @@ class Reaction:
 
         self.TS = tl.setCalc(self.TS, self.highString, self.highMeth, self.highLev)
         self.TS._calc.minimise_ts_only(self.TS)
-        self.TSFreqs, zpe, self.imaginaryFreq = self.characteriseTSFreqInternal(self.TS)
+        try:
+            self.TSFreqs, zpe, self.imaginaryFreq = self.TS._calc.read_ts_vibs(self.TS)
+        except:
+            self.TSFreqs, zpe, self.imaginaryFreq = self.characteriseFreqInternal(self.TS)
         try:
             self.TS._calc.close()
         except:
@@ -516,7 +531,10 @@ class Reaction:
         self.TS2, rmol, pmol, irc_for, irc_rev = self.TS2._calc.minimise_ts(raw_path, self.TS2)
         self.TS2 = tl.setCalc(self.TS2, self.highString, self.highMeth, self.highLev)
         self.TS2._calc.minimise_ts_only(self.TS2)
-        self.TS2Freqs, zpe, self.imaginaryFreq2 = self.characteriseTSFreqInternal(self.TS2)
+        try:
+            self.TS2Freqs, zpe, self.imaginaryFreq2 = self.TS2._calc.read_ts_vibs(self.TS2)
+        except:
+            self.TS2Freqs, zpe, self.imaginaryFreq2 = self.characteriseFreqInternal(self.TS2)
         try:
             self.TS2._calc.close()
         except:

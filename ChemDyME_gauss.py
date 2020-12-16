@@ -6,7 +6,7 @@ from typing import Dict, Optional
 from ase import Atoms
 from ase.io import read, write
 from ase.calculators.calculator import FileIOCalculator, EnvironmentError
-
+import re
 
 class GaussianDynamics:
     calctype = 'optimizer'
@@ -139,11 +139,65 @@ class Gaussian(FileIOCalculator):
 
     def minimise_stable(self, path = os.getcwd(), atoms: Optional[Atoms] = None):
         opt = GaussianOptimizer(atoms, self)
-        opt.run(fmax='tight', steps=100, opt='calcfc')
+        opt.run(fmax='tight', steps=100, opt='calcfc, freq')
 
 
 
     def minimise_ts_only(self, atoms):
         opt = GaussianOptimizer(atoms, self)
-        opt.run(fmax='tight', steps=10, opt='calcfc, ts, noeigentest')
+        opt.run(fmax='tight', steps=10, opt='calcfc, freq, ts, noeigentest')
 
+    def read_vibs(self):
+        vibs = []
+        zpe = 0
+        inp = open(self.label + '.log', "r")
+        for line in inp:
+            if re.search("Frequencies", line):
+                l = line.split()
+                vibs.append(float(l[2]))
+                zpe += float(l[2])
+                try:
+                    vibs.append(float(l[3]))
+                    zpe += float(float(l[3]))
+                except:
+                    pass
+                try:
+                    vibs.append(float(l[4]))
+                    zpe += float(float(l[4]))
+                except:
+                    pass
+        zpe *= 0.00012
+        zpe /= 2
+        return vibs, zpe
+
+    def read_ts_vibs(self):
+        vibs = []
+        zpe = 0
+        inp = open(self.label + '.log', "r")
+        for line in inp:
+            if re.search("Frequencies", line):
+                try:
+                    l = line.split()
+                    vibs.append(float(l[2]))
+                    zpe += float(l[2])
+                    vibs.append(float(l[3]))
+                    zpe += float(l[3])
+                    vibs.append(l[4])
+                    zpe += float(float(l[4]))
+                except:
+                    pass
+            if re.search("Error termination"):
+                return 0
+        if vibs[0] > -250:
+            print("GaussianTS has no imaginary Frequency")
+            return
+        if vibs[1] < 0:
+            print("GaussianTS has more than 1 imaginary Frequency")
+            return
+
+        zpe -= vibs[0]
+        imaginaryFreq = abs((vibs[0]))
+        vibs.pop(0)
+        zpe *= 0.00012
+        zpe /= 2
+        return vibs, zpe, imaginaryFreq
