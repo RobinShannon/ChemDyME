@@ -4,6 +4,7 @@ from collections.abc import Iterable
 from shutil import which
 from typing import Dict, Optional
 import openbabel, pybel
+import re
 from ase.io import read, write
 from ase.calculators.calculator import FileIOCalculator, EnvironmentError
 
@@ -49,7 +50,9 @@ class Molpro(FileIOCalculator):
 
     def read_results(self):
         f = open("Molpro.log", "r")
-        energy_hartree = 1.0
+        for line in f:
+            if re.search("!CCSD(T)-F12b total energy", line):
+                energy_hartree = float(line.split()[3])
         self.results['energy'] = energy_hartree * EV_PER_HARTREE
         f.close()
 
