@@ -139,7 +139,7 @@ class Gaussian(FileIOCalculator):
 
     def minimise_stable(self, path = os.getcwd(), atoms: Optional[Atoms] = None):
         opt = GaussianOptimizer(atoms, self)
-        opt.run(fmax='tight', steps=100, opt='calcall, freq')
+        opt.run(fmax='tight', steps=100, opt='calcall')
 
 
 
