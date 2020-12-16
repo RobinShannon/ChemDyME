@@ -631,6 +631,8 @@ def setCalc(mol, lab, method, level):
         mol = calc.mopacIRC2(mol, lab, level)
     if method == 'gaussian':
         mol = calc.gaussian(mol, lab, level)
+    if method == 'molpro':
+        mol = calc.molpro(mol, lab, level)
     if method =='openMM':
         mol.set_calculator(OpenMMCalculator(atomTypes=level.atomTypes, input="test.pdb", ASEmol = mol, fileType = level.MMfile))
     return mol

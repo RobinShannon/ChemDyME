@@ -470,7 +470,8 @@ class Reaction:
 
         write(path + '/TS1.xyz', self.TS)
 
-        self.TS = tl.setCalc(self.TS, self.lowString, self.lowMeth, self.lowLev)
+        self.TS = tl.setCalc(self.TS, self.highString, self.highMeth, self.highLev)
+        self.TS._calc.minimise_ts_only(self.TS)
         self.TSFreqs, zpe, self.imaginaryFreq = self.characteriseTSFreqInternal(self.TS)
         try:
             self.TS._calc.close()
@@ -513,6 +514,8 @@ class Reaction:
 
         self.TS2 = tl.setCalc(self.TS2, self.lowString, self.lowMeth, self.lowLev)
         self.TS2, rmol, pmol, irc_for, irc_rev = self.TS2._calc.minimise_ts(raw_path, self.TS2)
+        self.TS2 = tl.setCalc(self.TS2, self.highString, self.highMeth, self.highLev)
+        self.TS2._calc.minimise_ts_only(self.TS2)
         self.TS2Freqs, zpe, self.imaginaryFreq2 = self.characteriseTSFreqInternal(self.TS2)
         try:
             self.TS2._calc.close()

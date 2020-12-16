@@ -91,7 +91,6 @@ def runNormal(p):
                 # Check some criteria before printing to xml
                 # if Isomerisation check there is a TS
                 if p[0].is_bimol_prod == False and p[0].is_bimol_reac == False and p[0].barrierlessReaction == True:
-                    p[0].barrierlessReaction = False
                     printXML = True
 
                 # Then check barrier isnt ridiculous
@@ -119,6 +118,8 @@ def runNormal(p):
                         if p[0].is_bimol_prod == True:
                             io.writeMinXML(p[0], p[3], False, True)
                     if not os.path.exists(tmppath + "/" + p[0].ReacName):
+                        if p[0].is_bimol_prod == False and p[0].is_bimol_reac == False and p[0].barrierlessReaction == True:
+                            print('Isomerisation reaction does not have defined barrier')
                         if p[0].is_bimol_prod == False:
                             io.writeReactionXML(p[0], p[3], False)
                             io.writeReactionXML(p[0], p[3].replace('.xml', 'Full.xml'), False)

@@ -2,6 +2,8 @@ from ase.calculators.nwchem import NWChem
 from ase.calculators.gaussian import Gaussian
 from ChemDyME.dftb_2 import Dftb2
 from ChemDyME.ScineCalculator import SparrowCalculator
+from ChemDyME.ChemDyME_gauss import Gaussian
+from ChemDyME.MolproCacluator import Molpro
 try:
     from xtb.ase.calculator import XTB
 except:
@@ -732,6 +734,19 @@ def gaussian2(mol, lab, level):
             ))
     return mol
 
+def molpro(mol, lab, level):
+    level = level.split('_')
+    lev = level[0]
+    lev = lev.strip()
+    bas = level[1]
+    bas = bas.strip()
+    mol.calc = Molpro(
+               method=str(lev),
+               basis=str(bas),
+           )
+
+    return mol
+
 def gaussian(mol, lab, level):
     level = level.split('_')
     lev = level[0]
@@ -755,7 +770,8 @@ def gaussian(mol, lab, level):
                method=str(lev),
                basis=str(bas),
                scf='qc',
-               mult=int(m)
+               mult=int(m),
+               extra='int = ultrafine'
            )
 
     return mol
