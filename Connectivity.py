@@ -54,23 +54,6 @@ class NunezMartinez(StructureMap):
                 self.transitionIndices = [a_1, i, a_2]
                 print(self.transitionIndices)
                 break
-        for i in range(0, size):
-            for j in range(0, size):
-                # Get distances between all atoms bonded to i
-                if self.C[i][j] == 1:
-                    length = mol.get_distance(i, j)
-                    # Store Index corresponding to current largest bond
-                    if length > (self.dRef[i][j]* 1.2):
-                        self.criteriaMet = True
-                        self.transitionIndices = [i, j]
-                        break
-                elif self.C[i][j] == 0:
-                    length = mol.get_distance(i, j)
-                    # Store Index corresponding to current largest bond
-                    if length < (self.dRef[i][j] * 0.8):
-                        self.criteriaMet = True
-                        self.transitionIndices = [i, j]
-                        break
 
 
 
