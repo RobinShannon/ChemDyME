@@ -150,7 +150,7 @@ class Gaussian(FileIOCalculator):
     def read_vibs(self):
         vibs = []
         zpe = 0
-        inp = open(self.label + '.log', "r")
+        inp = open(str(self.label) + '.log', "r")
         for line in inp:
             if re.search("Frequencies", line):
                 l = line.split()
@@ -173,7 +173,7 @@ class Gaussian(FileIOCalculator):
     def read_ts_vibs(self):
         vibs = []
         zpe = 0
-        inp = open(self.label + '.log', "r")
+        inp = open(str(self.label) + '.log', "r")
         for line in inp:
             if re.search("Frequencies", line):
                 try:
