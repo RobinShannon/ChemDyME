@@ -19,7 +19,10 @@ class Molpro(FileIOCalculator):
         FileIOCalculator.__init__(self, *args, label=label, **kwargs)
 
     def calculate(self, *args, **kwargs):
-        FileIOCalculator.calculate(self, *args, **kwargs)
+        try:
+            FileIOCalculator.calculate(self, *args, **kwargs)
+        except:
+            pass
 
     def write_input(self, atoms, properties=None, system_changes=None):
         FileIOCalculator.write_input(self, atoms, properties, system_changes)
@@ -48,10 +51,11 @@ class Molpro(FileIOCalculator):
         f.write(str(name))
         f.close()
 
+
     def read_results(self):
         f = open("Molpro.out", "r")
         for line in f:
-            if re.search("!CCSD(T)-F12b total energy", line):
+            if re.search("!CCSD\(T\)-F12b total energy", line):
                 energy_hartree = float(line.split()[3])
         self.results['energy'] = energy_hartree * EV_PER_HARTREE
         f.close()
