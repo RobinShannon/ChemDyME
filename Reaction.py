@@ -293,7 +293,7 @@ class Reaction:
         self.Reac = tl.setCalc(self.Reac, self.highString, self.highMeth, self.highLev)
         self.Reac._calc.minimise_stable(path, self.Reac)
         try:
-            self.ReacFreqs, zpe = self.Reac._calc.read_vibs(self.Reac)
+            self.ReacFreqs, zpe = self.Reac._calc.read_vibs()
         except:
             self.ReacFreqs, zpe = self.characteriseFreqInternal(self.Reac)
         self.Reac = tl.setCalc(self.Reac, self.singleString, self.singleMeth, self.singleLev)
@@ -306,7 +306,7 @@ class Reaction:
             self.biReac = tl.setCalc(self.biReac, self.highString, self.highMeth, self.highLev)
             self.biReac._calc.minimise_stable(path, self.biReac)
             try:
-                self.biReacFreqs, zpe = self.biReac._calc.read_vibs(self.biReac)
+                self.biReacFreqs, zpe = self.biReac._calc.read_vibs()
             except:
                 self.biReacFreqs, zpe = self.characteriseFreqInternal(self.biReac)
             self.biReac = tl.setCalc(self.biReac, self.singleString, self.singleMeth, self.singleLev)
@@ -342,7 +342,7 @@ class Reaction:
         self.Prod = tl.setCalc(self.Prod, self.highString, self.highMeth, self.highLev)
         self.Prod._calc.minimise_stable(path, self.Prod)
         try:
-            self.ProdFreqs, zpe = self.Prod._calc.read_vibs(self.Prod)
+            self.ProdFreqs, zpe = self.Prod._calc.read_vibs()
         except:
             self.ProdFreqs, zpe = self.characteriseFreqInternal(self.Prod)
         self.ProdName = tl.getSMILES(self.Prod, False, partialOpt=False)
@@ -356,7 +356,7 @@ class Reaction:
             self.biProd = tl.setCalc(self.biProd, self.highString, self.highMeth, self.highLev)
             self.biProd._calc.minimise_stable(path, self.biProd)
             try:
-                self.biProdFreqs, zpe = self.biProd._calc.read_vibs(self.biProd)
+                self.biProdFreqs, zpe = self.biProd._calc.read_vibs()
             except:
                 self.biProdFreqs, zpe = self.characteriseFreqInternal(self.biProd)
             self.biProd = tl.setCalc(self.biProd, self.singleString, self.singleMeth, self.singleLev)
@@ -485,7 +485,7 @@ class Reaction:
         self.TS = tl.setCalc(self.TS, self.highString, self.highMeth, self.highLev)
         self.TS._calc.minimise_ts_only(self.TS)
         try:
-            self.TSFreqs, zpe, self.imaginaryFreq = self.TS._calc.read_ts_vibs(self.TS)
+            self.TSFreqs, zpe, self.imaginaryFreq = self.TS._calc.read_ts_vibs()
         except:
             self.TSFreqs, zpe, self.imaginaryFreq = self.characteriseFreqInternal(self.TS)
         try:
@@ -532,7 +532,7 @@ class Reaction:
         self.TS2 = tl.setCalc(self.TS2, self.highString, self.highMeth, self.highLev)
         self.TS2._calc.minimise_ts_only(self.TS2)
         try:
-            self.TS2Freqs, zpe, self.imaginaryFreq2 = self.TS2._calc.read_ts_vibs(self.TS2)
+            self.TS2Freqs, zpe, self.imaginaryFreq2 = self.TS2._calc.read_ts_vibs()
         except:
             self.TS2Freqs, zpe, self.imaginaryFreq2 = self.characteriseFreqInternal(self.TS2)
         try:
