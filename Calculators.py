@@ -740,9 +740,16 @@ def molpro(mol, lab, level):
     lev = lev.strip()
     bas = level[1]
     bas = bas.strip()
+    atom_num = mol.get_atomic_numbers()
+    s = sum(atom_num)
+    if s % 2 == 0:
+        m = 1
+    else:
+        m = 2
     mol.calc = Molpro(
                method=str(lev),
                basis=str(bas),
+               multiplicity=str(m)
            )
 
     return mol
