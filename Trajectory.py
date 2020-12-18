@@ -67,7 +67,7 @@ class Trajectory:
         except:
             pass
         if self.biMolecular:
-            self.consistantWindow = gl.reactionWindow /4
+            self.consistantWindow = int(gl.reactionWindow /4)
         self.savePath = path
         self.ReactionCountDown = 0
         self.MolList = []
