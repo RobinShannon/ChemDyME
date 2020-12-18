@@ -64,6 +64,8 @@ class Molpro(FileIOCalculator):
                 energy_hartree = float(line.split()[2])
         self.results['energy'] = energy_hartree * EV_PER_HARTREE
         f.close()
+        os.remove("Molpro.out")
+        os.remove("Molpro.xml")
 
     # Method(s) defined in the old calculator, added here for
     # backwards compatibility
