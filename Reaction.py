@@ -291,7 +291,11 @@ class Reaction:
         else:
             self.Reac = self.CombReac
         self.Reac = tl.setCalc(self.Reac, self.highString, self.highMeth, self.highLev)
-        self.Reac._calc.minimise_stable(path, self.Reac)
+        try:
+            self.Reac._calc.minimise_stable(path, self.Reac)
+        except:
+            self.Reac = tl.setCalc(self.Reac, self.lowString, self.lowhMeth, self.lowLev)
+            self.Reac._calc.minimise_stable(path, self.Reac)
         try:
             self.ReacFreqs, zpe = self.Reac._calc.read_vibs()
         except:
