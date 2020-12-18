@@ -308,7 +308,11 @@ class Reaction:
             pass
         if self.is_bimol_reac == True:
             self.biReac = tl.setCalc(self.biReac, self.highString, self.highMeth, self.highLev)
-            self.biReac._calc.minimise_stable(path, self.biReac)
+            try:
+                self.biReac._calc.minimise_stable(path, self.biReac)
+            except:
+                self.biReac = tl.setCalc(self.biReac, self.lowString, self.lowhMeth, self.lowLev)
+                self.biReac._calc.minimise_stable(path, self.biReac)
             try:
                 self.biReacFreqs, zpe = self.biReac._calc.read_vibs()
             except:
@@ -343,8 +347,12 @@ class Reaction:
             self.biProd = tl.getMolFromSmile(self.biProdName)
         else:
             self.Prod = self.CombProd
-        self.Prod = tl.setCalc(self.Prod, self.highString, self.highMeth, self.highLev)
-        self.Prod._calc.minimise_stable(path, self.Prod)
+        try:
+            self.Prod = tl.setCalc(self.Prod, self.highString, self.highMeth, self.highLev)
+            self.Prod._calc.minimise_stable(path, self.Prod)
+        except:
+            self.Prod = tl.setCalc(self.Prod, self.lowString, self.lowMeth, self.lowLev)
+            self.Prod._calc.minimise_stable(path, self.Prod)
         try:
             self.ProdFreqs, zpe = self.Prod._calc.read_vibs()
         except:
@@ -357,8 +365,12 @@ class Reaction:
         except:
             pass
         if self.is_bimol_prod == True:
-            self.biProd = tl.setCalc(self.biProd, self.highString, self.highMeth, self.highLev)
-            self.biProd._calc.minimise_stable(path, self.biProd)
+            try:
+                self.biProd = tl.setCalc(self.biProd, self.highString, self.highMeth, self.highLev)
+                self.biProd._calc.minimise_stable(path, self.biProd)
+            except:
+                self.biProd = tl.setCalc(self.biProd, self.lowString, self.lowMeth, self.lowLev)
+                self.biProd._calc.minimise_stable(path, self.biProd)
             try:
                 self.biProdFreqs, zpe = self.biProd._calc.read_vibs()
             except:

@@ -777,8 +777,8 @@ def gaussian(mol, lab, level):
                method=str(lev),
                basis=str(bas),
                mult=int(m),
-               extra='int = ultrafine  Symmetry=None',
-               scf='xqc'
+               extra='int = ultrafine  NoSymm',
+               scf='qc'
            )
 
     return mol
