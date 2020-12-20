@@ -506,7 +506,7 @@ class Reaction:
         try:
             self.TSFreqs, zpe, self.imaginaryFreq = self.TS._calc.read_ts_vibs()
         except:
-            self.TSFreqs, zpe, self.imaginaryFreq = self.characteriseFreqInternal(self.TS)
+            self.TSFreqs, zpe, self.imaginaryFreq = self.characteriseTSFreqInternal(self.TS)
         try:
             self.TS._calc.close()
         except:
@@ -532,7 +532,7 @@ class Reaction:
             sp = tl.setCalc(sp, self.lowString, self.lowMeth, self.lowLev)
             spline_ene.append(float(sp.get_potential_energy()))
             try:
-                self.sp._calc.close()
+                sp._calc.close()
             except:
                 pass
         max_value = max(spline_ene)
@@ -550,13 +550,13 @@ class Reaction:
         self.TS2, rmol, pmol, irc_for, irc_rev = self.TS2._calc.minimise_ts(raw_path, self.TS2)
         self.TS2 = tl.setCalc(self.TS2, self.highString, self.highMeth, self.highLev)
         try:
-            self.TS._calc.minimise_ts_only(self.TS)
+            self.TS2._calc.minimise_ts_only(self.TS)
         except:
-            self.TS = tl.setCalc(self.TS, self.lowString, self.lowMeth, self.lowLev)
+            self.TS2 = tl.setCalc(self.TS2, self.lowString, self.lowMeth, self.lowLev)
         try:
             self.TS2Freqs, zpe, self.imaginaryFreq2 = self.TS2._calc.read_ts_vibs()
         except:
-            self.TS2Freqs, zpe, self.imaginaryFreq2 = self.characteriseFreqInternal(self.TS2)
+            self.TS2Freqs, zpe, self.imaginaryFreq2 = self.characteriseTSFreqInternal(self.TS2)
         try:
             self.TS2._calc.close()
         except:
