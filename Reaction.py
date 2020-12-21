@@ -294,7 +294,7 @@ class Reaction:
         try:
             self.Reac._calc.minimise_stable(path, self.Reac)
         except:
-            self.Reac = tl.setCalc(self.Reac, self.lowString, self.lowhMeth, self.lowLev)
+            self.Reac = tl.setCalc(self.Reac, self.lowString, self.lowMeth, self.lowLev)
             self.Reac._calc.minimise_stable(path, self.Reac)
         try:
             self.ReacFreqs, zpe = self.Reac._calc.read_vibs()
@@ -311,7 +311,7 @@ class Reaction:
             try:
                 self.biReac._calc.minimise_stable(path, self.biReac)
             except:
-                self.biReac = tl.setCalc(self.biReac, self.lowString, self.lowhMeth, self.lowLev)
+                self.biReac = tl.setCalc(self.biReac, self.lowString, self.lowMeth, self.lowLev)
                 self.biReac._calc.minimise_stable(path, self.biReac)
             try:
                 self.biReacFreqs, zpe = self.biReac._calc.read_vibs()
