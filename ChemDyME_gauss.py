@@ -6,6 +6,7 @@ from typing import Dict, Optional
 from ase import Atoms
 from ase.io import read, write
 from ase.calculators.calculator import FileIOCalculator, EnvironmentError
+from pathlib import Path
 import re
 
 class GaussianDynamics:
@@ -122,8 +123,16 @@ class Gaussian(FileIOCalculator):
 
     def read_results(self):
         output = read(self.label + '.log', format='gaussian-out')
-        self.calc = output.calc
-        self.results = output.calc.results
+        try:
+            self.calc = output.calc
+            self.results = output.calc.results
+        except:
+            print('Gaussian error')
+            i = 0
+            while Path('gauserror'+str(i)+'.log').exists():
+                i += 1
+            os.rename(self.label + '.log', 'gauserror.log')
+
 
     # Method(s) defined in the old calculator, added here for
     # backwards compatibility

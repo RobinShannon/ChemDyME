@@ -7,6 +7,7 @@ import openbabel, pybel
 import re
 from ase.io import read, write
 from ase.calculators.calculator import FileIOCalculator, EnvironmentError
+from pathlib import Path
 
 EV_PER_HARTREE = 27.2114
 
@@ -47,6 +48,7 @@ class Molpro(FileIOCalculator):
         obConversion = openbabel.OBConversion()
         obConversion.SetInAndOutFormats("xyz", "mp")
         name = (obConversion.WriteString(BABmol))
+        name = name.replace("!memory,INSERT MEMORY HERE", "!memory,2M")
         name = name.replace("!hf", str(self.parameters['method']))
         name = name.replace("!INSERT QM METHODS HERE", "hf")
         name = name.replace("!basis,INSERT BASIS SET HERE", "basis," + str(self.parameters['basis']))
@@ -57,7 +59,7 @@ class Molpro(FileIOCalculator):
 
     def read_results(self):
         f = open("Molpro.out", "r")
-        energy_hartree = 1999.1
+        energy_hartree = 1000
         for line in f:
             if re.search("!CCSD\(T\)-F12b total energy", line):
                 energy_hartree = float(line.split()[3])
@@ -65,6 +67,12 @@ class Molpro(FileIOCalculator):
                 energy_hartree = float(line.split()[2])
         self.results['energy'] = energy_hartree * EV_PER_HARTREE
         f.close()
+        if energy_hartree == 1000:
+            print('molpro error')
+            i = 0
+            while Path('molerror'+str(i)+'.out').exists():
+                i += 1
+            os.rename('molpro.out', 'molerror.out')
         os.remove("Molpro.out")
         os.remove("Molpro.xml")
 
