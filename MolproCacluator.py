@@ -26,7 +26,13 @@ class Molpro(FileIOCalculator):
         try:
             FileIOCalculator.calculate(self, *args, **kwargs)
         except:
-            pass
+            print('molpro error')
+            i = 0
+            while Path('molerror' + str(i) + '.out').exists():
+                i += 1
+                os.rename('molpro.out', 'molerror.out')
+            os.remove("Molpro.out")
+            os.remove("Molpro.xml")
 
     def write_input(self, atoms, properties=None, system_changes=None):
         FileIOCalculator.write_input(self, atoms, properties, system_changes)
