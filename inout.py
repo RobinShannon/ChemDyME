@@ -123,7 +123,7 @@ def writeMinXML(React, path, isReactant, isBi):
         cml = ChemDyME.Tools.getCML(React.Prod,React.ProdName)
         spinMult = ChemDyME.Tools.getSpinMult(React.Prod, React.ProdName)
         freqs = str(React.ProdFreqs)
-        symb  = "".join(React.CombReac.get_chemical_symbols())
+        symb  = "".join(React.CombProd.get_chemical_symbols())
         potE = React.productEnergy - React.energyDictionary[symb]
 
     #Convert from ev to kJ
@@ -187,6 +187,74 @@ def writeMinXML(React, path, isReactant, isBi):
     # ...so we'll use minidom to make the output a little prettier
     dom = minidom.parseString(out)
     ChemDyME.Tools.prettyPrint(dom, path)
+
+def writeCombXML(React, path):
+
+    spinMult = 2
+    cml = ChemDyME.Tools.getCML(React.combProd,React.combProdName)
+    spinMult = ChemDyME.Tools.getSpinMult(React.combProd, React.combProdName)
+    freqs = str(React.combProdFreqs)
+    symb = "".join(React.CombProd.get_chemical_symbols())
+    potE = React.combProductEnergy - React.energyDictionary[symb]
+
+
+    #Convert from ev to kJ
+    potE = potE * 96.485
+
+    freqs = freqs[1:-1]
+    freqs = freqs.replace(',','')
+
+    ET.register_namespace('me', 'http://www.chem.leeds.ac.uk/mesmer')
+    ET.register_namespace('xsi', 'http://www.w3.org/2001/XMLSchema-instance')
+    ET.register_namespace('', 'http://www.xml-cml.org/schema')
+
+    with open(path, 'r') as myfile:
+        data=myfile.read().replace('\n', '')
+
+    tree = ET.fromstring(cml)
+    bigTree = ET.fromstring(data)
+
+    prop = ET.Element("propertyList")
+    lumpedSpecies = ET.SubElement(prop, "property", dictRef ="me:lumpedSpecies")
+    lumpArrays = ET.SubElement(lumpedSpecies,"array")
+    lumpArrays.text = " "
+    vib = ET.SubElement(prop, "property", dictRef ="me:vibFreqs")
+    vibarrays = ET.SubElement(vib,"array", units="cm-1")
+    vibarrays.text = str(freqs)
+    ene = ET.SubElement(prop, "property", dictRef ="me:ZPE")
+    enedata = ET.SubElement(ene,"scalar", units="kJ/mol")
+    enedata.text = str(potE)
+    Mult = ET.SubElement(prop, "property", dictRef ="me:spinMultiplicity")
+    multi = ET.SubElement(Mult,"scalar", units="cm-1")
+    multi.text = str(spinMult)
+    epsilon = ET.SubElement(prop, "property", dictRef ="me:epsilon")
+    epsilondata = ET.SubElement(epsilon,"scalar")
+    epsilondata.text = '473.17'
+    sigma = ET.SubElement(prop, "property", dictRef ="me:sigma")
+    sigmadata = ET.SubElement(sigma,"scalar")
+    sigmadata.text = '5.09'
+
+    eneTrans = ET.Element('me:energyTransferModel')
+    eneTrans.set("{http://www.w3.org/2001/XMLSchema-instance}type","me:ExponentialDown")
+    eTran = ET.SubElement(eneTrans,"scalar", units="cm-1")
+    eTran.text = '250'
+
+    # Append the new "data" elements to the root element of the XML document
+    tree.append(prop)
+    tree.append(eneTrans)
+
+    children = bigTree.getchildren()
+    children[1] = children[1].append(tree)
+
+
+
+    # Now we have a new well-formed XML document. It is not very nicely formatted...
+    out = ET.tostring(bigTree)
+
+    # ...so we'll use minidom to make the output a little prettier
+    dom = minidom.parseString(out)
+    ChemDyME.Tools.prettyPrint(dom, path)
+
 
 def writeReactionXML(React,path, printTS2):
 

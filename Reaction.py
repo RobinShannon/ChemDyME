@@ -54,6 +54,7 @@ class Reaction:
         self.biReacName = tl.getSMILES(self.Reac, False)
         self.biReacFreqs = []
         self.CombProd = Atoms(symbols=species, positions=cartesians)
+        self.combProdFreqs = []
         self.CombReac = Atoms(symbols=species, positions=cartesians)
         self.is_bimol_prod = False
         self.is_bimol_reac = False
@@ -75,6 +76,7 @@ class Reaction:
         self.is_IntermediateProd = False
         self.TScorrect = False
         self.TS2correct = False
+        self.combProductEnergy = 0
 
     def compareRandP(self, rmol, pmol):
         # Check if TS links reac and prod
@@ -381,6 +383,23 @@ class Reaction:
             self.productEnergy += (self.biProd.get_potential_energy() + zpe)
             try:
                 self.biProd._calc.close()
+            except:
+                pass
+            try:
+                self.combProd = tl.setCalc(self.combProd, self.highString, self.highMeth, self.highLev)
+                self.combProd._calc.minimise_stable(path, self.biProd)
+            except:
+                self.combProd = tl.setCalc(self.combProd, self.lowString, self.lowMeth, self.lowLev)
+                self.combProd._calc.minimise_stable(path, self.combProd)
+            try:
+                self.combProdFreqs, zpe = self.combProd._calc.read_vibs()
+            except:
+                self.combProdFreqs, zpe = self.characteriseFreqInternal(self.combProd)
+            self.combProd = tl.setCalc(self.combProd, self.singleString, self.singleMeth, self.singleLev)
+            self.combProdName = tl.getSMILES(self.combProd, False, partialOpt=False)
+            self.combProductEnergy = (self.combProd.get_potential_energy() + zpe)
+            try:
+                self.combProd._calc.close()
             except:
                 pass
 
