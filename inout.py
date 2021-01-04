@@ -192,10 +192,10 @@ def writeCombXML(React, path):
 
     spinMult = 2
     cml = ChemDyME.Tools.getCML(React.combProd,React.combProdName)
-    spinMult = ChemDyME.Tools.getSpinMult(React.combProd, React.combProdName)
-    freqs = str(React.combProdFreqs)
+    spinMult = ChemDyME.Tools.getSpinMult(React.CombProd, React.CombProdName)
+    freqs = str(React.CombProdFreqs)
     symb = "".join(React.CombProd.get_chemical_symbols())
-    potE = React.combProductEnergy - React.energyDictionary[symb]
+    potE = React.CombProductEnergy - React.energyDictionary[symb]
 
 
     #Convert from ev to kJ

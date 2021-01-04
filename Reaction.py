@@ -54,7 +54,7 @@ class Reaction:
         self.biReacName = tl.getSMILES(self.Reac, False)
         self.biReacFreqs = []
         self.CombProd = Atoms(symbols=species, positions=cartesians)
-        self.combProdFreqs = []
+        self.CombProdFreqs = []
         self.CombReac = Atoms(symbols=species, positions=cartesians)
         self.is_bimol_prod = False
         self.is_bimol_reac = False
@@ -76,7 +76,7 @@ class Reaction:
         self.is_IntermediateProd = False
         self.TScorrect = False
         self.TS2correct = False
-        self.combProductEnergy = 0
+        self.CombProductEnergy = 0
 
     def compareRandP(self, rmol, pmol):
         # Check if TS links reac and prod
@@ -386,22 +386,26 @@ class Reaction:
             except:
                 pass
             try:
-                self.combProd = tl.setCalc(self.combProd, self.highString, self.highMeth, self.highLev)
-                self.combProd._calc.minimise_stable(path, self.biProd)
-            except:
-                self.combProd = tl.setCalc(self.combProd, self.lowString, self.lowMeth, self.lowLev)
-                self.combProd._calc.minimise_stable(path, self.combProd)
-            try:
-                self.combProdFreqs, zpe = self.combProd._calc.read_vibs()
-            except:
-                self.combProdFreqs, zpe = self.characteriseFreqInternal(self.combProd)
-            self.combProd = tl.setCalc(self.combProd, self.singleString, self.singleMeth, self.singleLev)
-            self.combProdName = tl.getSMILES(self.combProd, False, partialOpt=False)
-            self.combProductEnergy = (self.combProd.get_potential_energy() + zpe)
-            try:
-                self.combProd._calc.close()
+                try:
+                    self.CombProd = tl.setCalc(self.CombProd, self.highString, self.highMeth, self.highLev)
+                    self.CombProd._calc.minimise_stable(path, self.CombProd)
+                except:
+                    self.CombProd = tl.setCalc(self.CombProd, self.lowString, self.lowMeth, self.lowLev)
+                    self.CombProd._calc.minimise_stable(path, self.CombProd)
+                try:
+                    self.CombProdFreqs, zpe = self.CombProd._calc.read_vibs()
+                except:
+                    self.CombProdFreqs, zpe = self.characteriseFreqInternal(self.CombProd)
+                self.CombProd = tl.setCalc(self.CombProd, self.singleString, self.singleMeth, self.singleLev)
+                self.CombProdName = tl.getSMILES(self.CombProd, False, partialOpt=False)
+                self.CombProductEnergy = (self.CombProd.get_potential_energy() + zpe)
+                try:
+                    self.CombProd._calc.close()
+                except:
+                    pass
             except:
                 pass
+
 
 
 
