@@ -58,7 +58,7 @@ class Molpro(FileIOCalculator):
         name = name.replace("!memory,INSERT MEMORY HERE", "!memory,4M")
         name = name.replace("!hf", str(self.parameters['method']))
         name = name.replace("!INSERT QM METHODS HERE", "hf")
-        name = name.replace("!basis,INSERT BASIS SET HERE", "basis," + str(self.parameters['basis']))
+        name = name.replace("!basis,INSERT BASIS SET HERE", "basis," + str(self.parameters['basis']+'\nNOSYM\n'))
         f = open("Molpro.inp", "w")
         f.write(str(name))
         f.close()
