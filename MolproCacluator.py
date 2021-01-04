@@ -8,6 +8,7 @@ import re
 from ase.io import read, write
 from ase.calculators.calculator import FileIOCalculator, EnvironmentError
 from pathlib import Path
+from shutil import copyfile
 
 EV_PER_HARTREE = 27.2114
 
@@ -30,7 +31,7 @@ class Molpro(FileIOCalculator):
             i = 0
             while Path('molerror' + str(i) + '.out').exists():
                 i += 1
-                os.rename('molpro.out', 'molerror.out')
+                copyfile('Molpro.out', 'molerror' + str(i) + '.out')
             os.remove("Molpro.out")
             os.remove("Molpro.xml")
 
@@ -54,7 +55,7 @@ class Molpro(FileIOCalculator):
         obConversion = openbabel.OBConversion()
         obConversion.SetInAndOutFormats("xyz", "mp")
         name = (obConversion.WriteString(BABmol))
-        name = name.replace("!memory,INSERT MEMORY HERE", "!memory,6M")
+        name = name.replace("!memory,INSERT MEMORY HERE", "!memory,4M")
         name = name.replace("!hf", str(self.parameters['method']))
         name = name.replace("!INSERT QM METHODS HERE", "hf")
         name = name.replace("!basis,INSERT BASIS SET HERE", "basis," + str(self.parameters['basis']))
@@ -78,7 +79,7 @@ class Molpro(FileIOCalculator):
             i = 0
             while Path('molerror'+str(i)+'.out').exists():
                 i += 1
-            os.rename('molpro.out', 'molerror.out')
+            copyfile('Molpro.out', 'molerror'+str(i)+'.out')
         os.remove("Molpro.out")
         os.remove("Molpro.xml")
 

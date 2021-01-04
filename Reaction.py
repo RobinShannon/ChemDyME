@@ -512,8 +512,8 @@ class Reaction:
         except:
             pass
         self.TS = tl.setCalc(self.TS, self.singleString, self.singleMeth, self.singleLev)
-        self.forwardBarrier = self.TS.get_potential_energy() + zpe
         try:
+            self.forwardBarrier = self.TS.get_potential_energy() + zpe
             self.TS._calc.close()
         except:
             pass
@@ -562,8 +562,8 @@ class Reaction:
         except:
             pass
         self.TS2 = tl.setCalc(self.TS2, self.singleString, self.singleMeth, self.singleLev)
-        self.forwardBarrier2 = self.TS2.get_potential_energy() + zpe
         try:
+            self.forwardBarrier2 = self.TS2.get_potential_energy() + zpe
             self.TS2._calc.close()
         except:
             pass

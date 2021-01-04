@@ -7,6 +7,7 @@ from ase import Atoms
 from ase.io import read, write
 from ase.calculators.calculator import FileIOCalculator, EnvironmentError
 from pathlib import Path
+from shutil import copyfile
 import re
 
 class GaussianDynamics:
@@ -113,9 +114,14 @@ class Gaussian(FileIOCalculator):
             else:
                 raise EnvironmentError('Missing Gaussian executable {}'
                                        .format(gaussians))
-
-        FileIOCalculator.calculate(self, *args, **kwargs)
-
+        try:
+            FileIOCalculator.calculate(self, *args, **kwargs)
+        except:
+            print('Gaussian error')
+            i = 0
+            while Path('gauserror'+str(i)+'.log').exists():
+                i += 1
+            copyfile(self.label + '.log', 'gauserror'+str(i)+'.log')
     def write_input(self, atoms, properties=None, system_changes=None):
         FileIOCalculator.write_input(self, atoms, properties, system_changes)
         write(self.label + '.com', atoms, properties=properties,
@@ -131,7 +137,7 @@ class Gaussian(FileIOCalculator):
             i = 0
             while Path('gauserror'+str(i)+'.log').exists():
                 i += 1
-            os.rename(self.label + '.log', 'gauserror.log')
+            copyfile(self.label + '.log', 'gauserror'+str(i)+'.log')
 
 
     # Method(s) defined in the old calculator, added here for

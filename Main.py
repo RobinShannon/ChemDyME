@@ -115,8 +115,10 @@ def runNormal(p):
 
                     if not os.path.exists(tmppath):
                         io.writeMinXML(p[0], p[3], False, False)
+                        io.writeMinXML(p[0], p[3].replace('.xml', 'Full.xml'), False, False)
                         if p[0].is_bimol_prod == True:
                             io.writeMinXML(p[0], p[3], False, True)
+                            io.writeMinXML(p[0], p[3].replace('.xml', 'Full.xml'), False, True)
                     if not os.path.exists(tmppath + "/" + p[0].ReacName):
                         if p[0].is_bimol_prod == False and p[0].is_bimol_reac == False and p[0].barrierlessReaction == True:
                             print('Isomerisation reaction does not have defined barrier')
