@@ -30,12 +30,13 @@ class Trajectory:
     def __init__(self, mol, bxd, md_integrator, geo_print_frequency=1000, data_print_frequency=1000,log_print_frequency = 1000,
                  plot_update_frequency=100, no_text_output=False, plot_output=False, plotter=None, calc = 'openMM',
                  calcMethod = 'sys.xml', initialise_velocities = True, decorrelation_limit = 0, check_decorrelation=False,
-                 decorrelation_length = 5000, number_of_decorrelation_runs = 5):
+                 decorrelation_length = 5000, number_of_decorrelation_runs = 5, max_runs = 1):
         self.decorrelation_length = decorrelation_length
         self.number_of_decorrelation_runs = number_of_decorrelation_runs
         self.check_decorrelation = check_decorrelation
         self.decorrelation_limit = decorrelation_limit
         self.bxd = bxd
+        self.max_runs = max_runs
         self.calc = calc
         self.calcMethod = calcMethod
         self.md_integrator = md_integrator
@@ -85,10 +86,11 @@ class Trajectory:
         :return:
         """
         hit = False
-        if parallel:
-            self.mol.set_calculator(OpenMMCalculator(self.calcMethod, self.mol, parallel=True))
-        else:
-            self.mol.set_calculator(OpenMMCalculator(self.calcMethod, self.mol))
+        if self.calc=='openMM':
+            if parallel:
+                self.mol.set_calculator(OpenMMCalculator(self.calcMethod, self.mol, parallel=True))
+            else:
+                self.mol.set_calculator(OpenMMCalculator(self.calcMethod, self.mol))
 
         print(str(self.mol.get_potential_energy))
         # If print_to_file = True then setup an output directory. If the print_directory already exists then append
@@ -279,7 +281,7 @@ class Trajectory:
                     self.bxd_plotter.plot_bxd_from_array(self.points, self.bounds)
 
             # Check whether BXD has gathered all the info it needs, if so signal that the trajectory should stop
-            if self.bxd.completed_runs == 1 or iterations > max_steps:
+            if self.bxd.completed_runs == self.max_runs or iterations > max_steps:
                 keep_going = False
                 try:
                     self.bxd.final_printing(temp_dir,self.mol)

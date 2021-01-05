@@ -684,7 +684,8 @@ class Converging(BXD):
                 self.box_skip_limit = np.inf
         elif self.convert_fixed_boxes:
             self.generate_output_files()
-            self.create_fixed_boxes(self.box_width, self.number_of_boxes, progress_metric.start)
+            self.box_list=self.create_fixed_boxes(self.box_width, self.number_of_boxes, progress_metric.start_s, decorrelation_limit)
+            self.generate_output_files()
         self.old_s = 0
         self.number_of_hits = bound_hits
         self.decorrelation_limit = decorrelation_limit
@@ -886,8 +887,17 @@ class Converging(BXD):
             self.hit_file = open(self.box_list[self.box].hit_path, 'a')
 
 
-    def create_fixed_boxes(self, width, number_of_boxes, start_s):
-        pass
+    def create_fixed_boxes(self, width, number_of_boxes, start_s, decorrelation_limit):
+        box_list = []
+        s = deepcopy(start_s)
+        lower_bound = BXDBound(1.0,-1.0*deepcopy(s))
+        for i in range(0,number_of_boxes):
+            s += width
+            upper_bound = BXDBound(1.0,-1.0*deepcopy(s))
+            box = BXDBox(lower_bound, upper_bound, "fixed", True, decorrelation_time=decorrelation_limit)
+            box_list.append(box)
+            lower_bound = deepcopy(upper_bound)
+        return box_list
 
     def read_exsisting_boundaries(self,file, decorrelation_limit):
         """

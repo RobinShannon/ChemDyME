@@ -47,11 +47,14 @@ class ProgressMetric:
 
         if end_type == 'distance':
             self.end_type = end_type
-            self.end_point = self.project_point_on_path(self.target_mol)
+            self.end_point = self.target_mol
         elif end_type == 'boxes':
             self.end_type = end_type
             self.end_point = number_of_boxes
         self.path_segment = 0
+
+    def outside_path(self):
+        pass
 
     def get_start_s(self):
         return self.start_s, self.target_mol
@@ -65,10 +68,9 @@ class ProgressMetric:
 
     # Get the current distance of BXD trajectory along defined path
     @abstractmethod
-    def project_point_on_path(self, s):
-        if self.distance_type == 'distance':
-            line = s - self.start_s
-            p = np.linalg.norm(line)
+    def project_point_on_path(self, s, min_segment = 0, max_segment = np.inf):
+        line = s - self.start_s
+        p = np.linalg.norm(line)
         return p
 
     # This method returns a bool signifying whether the current max distance from the path has been exceeded
