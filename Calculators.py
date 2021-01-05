@@ -4,7 +4,7 @@ from ChemDyME.dftb_2 import Dftb2
 from ChemDyME.ScineCalculator import SparrowCalculator
 from ChemDyME.ChemDyME_gauss import Gaussian
 from ChemDyME.MolproCacluator import Molpro
-import ChemDyME.tools as tl
+import ChemDyME.Tools as tl
 try:
     from xtb.ase.calculator import XTB
 except:
