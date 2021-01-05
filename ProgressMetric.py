@@ -85,6 +85,9 @@ class ProgressMetric:
     def get_delta(self,mol,bound):
         return self.collective_variable.get_delta(mol, bound)
 
+    def set_bxd_reverse(self, reverse):
+        pass
+
 
 class Curve(ProgressMetric):
     """
