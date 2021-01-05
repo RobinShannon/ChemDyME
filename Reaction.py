@@ -531,6 +531,7 @@ class Reaction:
         try:
             self.TSFreqs, zpe, self.imaginaryFreq = self.TS._calc.read_ts_vibs()
         except:
+            self.TS = tl.setCalc(self.TS, self.lowString, self.lowMeth, self.lowLev)
             self.TSFreqs, zpe, self.imaginaryFreq = self.characteriseTSFreqInternal(self.TS)
         try:
             self.TS._calc.close()
@@ -582,6 +583,7 @@ class Reaction:
         try:
             self.TS2Freqs, zpe, self.imaginaryFreq2 = self.TS2._calc.read_ts_vibs()
         except:
+            self.TS2 = tl.setCalc(self.TS2, self.lowString, self.lowMeth, self.lowLev)
             self.TS2Freqs, zpe, self.imaginaryFreq2 = self.characteriseTSFreqInternal(self.TS2)
         try:
             self.TS2._calc.close()

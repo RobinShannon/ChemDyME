@@ -4,6 +4,7 @@ from ChemDyME.dftb_2 import Dftb2
 from ChemDyME.ScineCalculator import SparrowCalculator
 from ChemDyME.ChemDyME_gauss import Gaussian
 from ChemDyME.MolproCacluator import Molpro
+import ChemDyME.tools as tl
 try:
     from xtb.ase.calculator import XTB
 except:
@@ -772,14 +773,22 @@ def gaussian(mol, lab, level):
             m = 1
         else:
             m = 2
-
-    mol.calc = Gaussian(
-               method=str(lev),
-               basis=str(bas),
-               mult=int(m),
-               extra='NoSymm',
-               scf='qc'
-           )
+    name = tl.getSMILES(mol,False)
+    if '#' in name:
+        mol.calc = Gaussian(
+                method=str(lev),
+                basis=str(bas),
+                mult=int(m),
+                extra='NoSymm',
+                scf='qc'
+            )
+    else:
+        mol.calc = Gaussian(
+                method=str(lev),
+                basis=str(bas),
+                mult=int(m),
+                scf='qc'
+            )
 
     return mol
 

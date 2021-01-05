@@ -72,7 +72,6 @@ class Molpro(FileIOCalculator):
                 energy_hartree = float(line.split()[3])
             if re.search("!RHF-UCCSD\(T\)-F12b energy", line):
                 energy_hartree = float(line.split()[2])
-        self.results['energy'] = energy_hartree * EV_PER_HARTREE
         f.close()
         if energy_hartree == 1000:
             print('molpro error')
@@ -80,6 +79,7 @@ class Molpro(FileIOCalculator):
             while Path('molerror'+str(i)+'.out').exists():
                 i += 1
             copyfile('Molpro.out', 'molerror'+str(i)+'.out')
+        self.results['energy'] = energy_hartree * EV_PER_HARTREE
         os.remove("Molpro.out")
         os.remove("Molpro.xml")
 
