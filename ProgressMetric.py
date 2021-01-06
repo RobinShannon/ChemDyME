@@ -52,6 +52,8 @@ class ProgressMetric:
             self.end_type = end_type
             self.end_point = number_of_boxes
         self.path_segment = 0
+        self.distance_from_path = 0
+        self.old_distance_from_path = 0
 
     def outside_path(self):
         pass
