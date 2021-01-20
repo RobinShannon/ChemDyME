@@ -86,6 +86,7 @@ class Trajectory:
         :return:
         """
         hit = False
+        previous_hit = 'none'
         if self.calc=='openMM':
             if parallel:
                 self.mol.set_calculator(OpenMMCalculator(self.calcMethod, self.mol, parallel=True))
@@ -128,7 +129,7 @@ class Trajectory:
         first_run = True
         steps_since_last_hit = 0
         iterations = 0
-
+        Ts = []
         # Run MD trajectory for specified number of steps or until BXD reaches its end point
         while keep_going:
 
@@ -185,15 +186,19 @@ class Trajectory:
                 if self.bxd.bound_hit != 'none':
                     del_phi.append(self.bxd.del_constraint(self.mol))
                     decorrelated = True
-                if self.bxd.path_bound_hit:
+                if self.bxd.path_bound_hit and previous_hit == 'none':
                     del_phi.append(self.bxd.path_del_constraint(self.mol))
                     steps_since_last_hit = 0
                     decorrelated = False
                 # If we have hit a bound get the md object to modify the velocities / positions appropriately.
                 self.md_integrator.constrain(del_phi)
 
-
-
+            if self.bxd.path_bound_hit and self.bxd.bound_hit != 'none' and previous_hit == 'none':
+                previous_hit = 'path and ' + str(self.bxd.bound_hit)
+            elif self.bxd.path_bound_hit and previous_hit == 'none':
+                previous_hit = 'path'
+            else:
+                previous_hit = str(self.bxd.bound_hit)
             # Now we have gone through the first inversion section we can set first_run to false
             first_run = False
 
@@ -208,11 +213,11 @@ class Trajectory:
             new_hit = self.bxd.box_list[self.bxd.box].lower.hit(self.bxd.get_s(self.mol), 'down') or self.bxd.box_list[self.bxd.box].upper.hit(self.bxd.get_s(self.mol), 'up')
             while bounded and new_hit:
                 log_file.write("oops problem with inversion" +str('\n'))
+                self.mol.set_positions(self.md_integrator.old_positions)
                 if self.bxd.box_list[self.bxd.box].lower.hit(self.bxd.get_s(self.mol), 'down'):
                     self.bxd.bound_hit='lower'
                 else:
                     self.bxd.bound_hit='upper'
-                    self.mol.set_positions(self.md_integrator.old_positions)
                 if self.bxd.path_bound_hit:
                     log_file.write("previous step hit path bound" + str('\n'))
                     del_phi = []
@@ -223,8 +228,9 @@ class Trajectory:
                     self.md_integrator.constrain(del_phi)
                     self.md_integrator.md_step_pos(self.forces, self.mol)
                 else:
+                    new_hit = self.bxd.box_list[self.bxd.box].lower.hit(self.bxd.get_s(self.mol), 'down') or self.bxd.box_list[self.bxd.box].upper.hit(self.bxd.get_s(self.mol), 'up')
                     self.md_integrator.retry_pos(self.mol)
-                new_hit = False
+                new_hit = self.bxd.box_list[self.bxd.box].lower.hit(self.bxd.get_s(self.mol), 'down') or self.bxd.box_list[self.bxd.box].upper.hit(self.bxd.get_s(self.mol), 'up')
             try:
                 self.forces = self.mol.get_forces()
             except:
