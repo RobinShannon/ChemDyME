@@ -826,7 +826,7 @@ class Reaction:
         if self.is_bimol_reac:
             write(path + '/biReac.xyz', self.biReac)
 
-    def newReac(self, path, name, Reac):
+    def newReac(self, path, name, Reac, opt):
         if Reac == True:
             self.Reac = read(path + '/Reac.xyz')
         else:
@@ -852,12 +852,13 @@ class Reaction:
         self.barrierlessReaction = False
         self.forwardBarrier = 0.0
         self.forwardBarrier2 = 0.0
-        self.reactantEnergy = self.Reac.get_potential_energy()
         self.have_reactant = True
         self.is_IntermediateProd = False
         self.AltProd = self.Reac.copy()
         self.TScorrect = False
-        self.optReac()
+        if opt:
+            self.reactantEnergy = self.Reac.get_potential_energy()
+            self.optReac()
 
     def newReacFromSMILE(self, SMILE):
         self.ReacName = SMILE
