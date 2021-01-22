@@ -187,7 +187,7 @@ def run(glo):
         # Minimise starting Geom and write summary xml for channel
         if reacs['reac_0'].have_reactant == False:
             outputs = []
-            if __name__ == 'Main':
+            if __name__ == 'ChemDyME.Main':
                 arguments = []
                 for i in range(0,glo.cores):
                     name = 'reac_' + str(i)
@@ -279,7 +279,7 @@ def run(glo):
                     trajs = dict(("traj_" + str(i), ChemDyME.Trajectory.Trajectory(reacs[('reac_' + str(i))].CombReac, glo, tempPaths[('tempPath_' + str(i))], str(i),False)) for i in range(glo.cores))
 
                 outputs2=[]
-                if __name__ == "Main":
+                if __name__ == "ChemDyME.Main":
                     arguments1 = []
                     arguments2 = []
                     for i in range(0,glo.cores):
@@ -335,7 +335,7 @@ def run(glo):
                                 biTrajs['traj_'+str(i)] = (len(baseXYZ), len(xyz))
 
                             outputs2 = []
-                            if __name__ == "Main":
+                            if __name__ == "ChemDyME.Main":
                                 arguments1 = []
                                 arguments2 = []
                                 for i in range(0, glo.cores):
