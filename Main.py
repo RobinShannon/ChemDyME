@@ -138,13 +138,13 @@ def runNormal(p):
             p[0].re_init_bi(p[5].cartesians, p[5].species)
         else:
             p[0].re_init(p[2])
-        return p[0], p[1]
+
     except:
         if (p[5].InitialBi == True):
             p[0].re_init_bi(p[5].cartesians, p[5].species)
         else:
             p[0].re_init(p[2])
-        return p[0], p[1]
+
 
 
 def run(glo):
@@ -289,7 +289,7 @@ def run(glo):
                         arguments2.append(trajs[name2])
                     arguments = list(zip(arguments1, arguments2, [minpath] * glo.cores, [MESpath] * glo.cores, range(glo.cores), [glo] * glo.cores))
                     p = multiprocessing.Pool(glo.cores)
-                    results2 = p.map(runNormal, arguments)
+                    p.map(runNormal, arguments)
 
 
             # run a master eqution to estimate the lifetime of the current species
@@ -334,7 +334,7 @@ def run(glo):
                             for i in range(0, glo.cores):
                                 biTrajs['traj_'+str(i)] = (len(baseXYZ), len(xyz))
 
-                            outputs2 = []
+
                             if __name__ == "ChemDyME.Main":
                                 arguments1 = []
                                 arguments2 = []
@@ -347,8 +347,8 @@ def run(glo):
                                     zip(arguments1, arguments2, [minpath] * glo.cores, [MESpath] * glo.cores,
                                         range(glo.cores), [glo] * glo.cores), [glo.BiList[i]] * glo.cores)
                                 p = multiprocessing.Pool(glo.cores)
-                                results2 = p.map(runNormal, arguments)
-                                outputs2 = [result for result in results2]
+                                p.map(runNormal, arguments)
+
 
 
                             glo.InitialBi = False
