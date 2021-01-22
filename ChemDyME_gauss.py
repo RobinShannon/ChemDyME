@@ -101,7 +101,8 @@ class Gaussian(FileIOCalculator):
     command = 'GAUSSIAN < PREFIX.com > PREFIX.log'
     discard_results_on_any_change = True
 
-    def __init__(self, *args, label='Gaussian', **kwargs):
+    def __init__(self, *args, label='', **kwargs):
+        label = label + 'gaussian.gjf'
         FileIOCalculator.__init__(self, *args, label=label, **kwargs)
 
     def calculate(self, *args, **kwargs):

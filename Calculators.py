@@ -748,6 +748,7 @@ def molpro(mol, lab, level):
     else:
         m = 2
     mol.calc = Molpro(
+               label = lab,
                method=str(lev),
                basis=str(bas),
                multiplicity=str(m)
@@ -776,6 +777,7 @@ def gaussian(mol, lab, level):
     name = tl.getSMILES(mol,False)
     if '#' in name:
         mol.calc = Gaussian(
+                label = lab,
                 method=str(lev),
                 basis=str(bas),
                 mult=int(m),
