@@ -314,7 +314,8 @@ def run(glo):
                         spec = np.append(baseXYZ, np.array(glo.BiList[i].get_chemical_symbols()))
                         combinedMol = Atoms(symbols=spec, positions=xyz)
                         # Set reaction instance
-                        reacs['reac_0'].re_init_bi(xyz, spec)
+                        for i in range(glo.cores):
+                            reacs['reac_'+str(i)].re_init_bi(xyz, spec)
                         for r in range(0, glo.ReactIters):
                             bitempPaths = dict(("bitempPath_" + str(i), minpath + '/temp' + str(i) + '_' + str(r)) for i in range(glo.cores))
                             # Now set up tmp directory for each thread
@@ -343,9 +344,7 @@ def run(glo):
                                     name2 = 'traj_' + str(i)
                                     arguments1.append(reacs[name])
                                     arguments2.append(biTrajs[name2])
-                                arguments = list(
-                                    zip(arguments1, arguments2, [minpath] * glo.cores, [MESpath] * glo.cores,
-                                        range(glo.cores), [glo] * glo.cores), [glo.BiList[i]] * glo.cores)
+                                arguments = list(zip(arguments1, arguments2, [minpath] * glo.cores, [MESpath] * glo.cores, range(glo.cores), [glo] * glo.cores, [glo.BiList[i]] * glo.cores))
                                 p = multiprocessing.Pool(glo.cores)
                                 p.map(runNormal, arguments)
 
@@ -366,14 +365,17 @@ def run(glo):
             if not os.path.exists(syspath + '/' + me.prodName):
                 os.makedirs(syspath + '/' + me.prodName)
                 if os.path.exists(syspath + '/' + reacs['reac_0'].ReacName + '/' + me.prodName):
-                    reacs['reac_0'].newReac(syspath + '/' + reacs['reac_0'].ReacName + '/' + me.prodName, me.prodName, False)
+                    for i in range(glo.cores):
+                        reacs['reac_'+str(i)].newReac(syspath + '/' + reacs['reac_0'].ReacName + '/' + me.prodName, me.prodName, False)
                 else:
                     print("cant find path " + str(
                         syspath + '/' + reacs['reac_0'].ReacName + '/' + me.prodName))
                     try:
-                        reacs['reac_0'].newReac(syspath + '/' + me.prodName, me.prodName, True, False)
+                        for i in range(glo.cores):
+                            reacs['reac_'+str(i)].newReac(syspath + '/' + me.prodName, me.prodName, True, False)
                     except:
-                        reacs['reac_0'].newReacFromSMILE(me.prodName)
+                        for i in range(glo.cores):
+                            reacs['reac_'+str(i)].newReacFromSMILE(me.prodName)
                 io.update_me_start(me.prodName, me.ene, MESpath)
                 me.newSpeciesFound = True
             else:
@@ -389,12 +391,15 @@ def run(glo):
                         me.equilCount = 1
                 minpath = syspath + '/' + me.prodName
                 if os.path.exists(syspath + '/' + reacs['reac_0'].ReacName + '/' + me.prodName):
-                    reacs['reac_0'].newReac(syspath + '/' + reacs['reac_0'].ReacName + '/' + me.prodName, me.prodName, False, False)
+                    for i in range(glo.cores):
+                        reacs['reac_'+str(i)].newReac(syspath + '/' + reacs['reac_0'].ReacName + '/' + me.prodName, me.prodName, False, False)
                 else:
                     try:
-                        reacs['reac_0'].newReac(syspath + '/' + me.prodName, me.prodName, True, True)
+                        for i in range(glo.cores):
+                            reacs['reac_'+str(i)].newReac(syspath + '/' + me.prodName, me.prodName, True, True)
                     except:
-                        reacs['reac_0'].newReacFromSMILE(me.prodName)
+                        for i in range(glo.cores):
+                            reacs['reac_'+str(i)].newReacFromSMILE(me.prodName)
                 io.update_me_start(me.prodName, me.ene, MESpath)
 
         me.newspeciesFound = False
