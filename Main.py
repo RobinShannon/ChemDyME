@@ -312,7 +312,7 @@ def run(glo):
                         glo.InitialBi = True
                         xyz = CT.get_bi_xyz(reacs['reac_0'].Reac, glo.BiList[i])
                         spec = np.append(baseXYZ, np.array(glo.BiList[i].get_chemical_symbols()))
-                        combinedMol = Atoms(symbols=spec, positions=xyz)
+                        combinedMols = [Atoms(symbols=spec, positions=xyz) for i in range(glo.cores)]
                         # Set reaction instance
                         for i in range(glo.cores):
                             reacs['reac_'+str(i)].re_init_bi(xyz, spec)
@@ -330,7 +330,7 @@ def run(glo):
                                 glo.trajMethod = glo.trajMethod2
                                 glo.trajLevel = glo.trajLevel2
 
-                            biTrajs = dict(("traj_" + str(i), ChemDyME.Trajectory.Trajectory(reacs[('reac_' + str(i))].CombReac, glo, bitempPaths[('bitempPath_' + str(i))], str(i),True)) for i in range(glo.cores))
+                            biTrajs = dict(("traj_" + str(i), ChemDyME.Trajectory.Trajectory(combinedMols[i], glo, bitempPaths[('bitempPath_' + str(i))], str(i),True)) for i in range(glo.cores))
 
                             for i in range(0, glo.cores):
                                 biTrajs['traj_'+str(i)] = (len(baseXYZ), len(xyz))
