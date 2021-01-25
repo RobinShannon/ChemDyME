@@ -379,7 +379,7 @@ def run(glo):
             else:
                 if me.repeated() == True:
                     me.equilCount += 1
-                    if me.equilCount >= 20:
+                    if me.equilCount >= 250:
                         mainsumfile.write(
                             'lumping' + ' ' + str(reacs['reac_0'].ReacName) + ' ' + str(me.prodName) + '\n')
                         me.prodName = io.lumpSpecies(reacs['reac_0'].ReacName, me.prodName, MESpath, MESpath)
