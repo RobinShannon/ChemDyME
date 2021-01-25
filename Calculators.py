@@ -775,22 +775,14 @@ def gaussian(mol, lab, level):
         else:
             m = 2
     name = tl.getSMILES(mol,False)
-    if '#' in name:
-        mol.calc = Gaussian(
-                label = lab,
-                method=str(lev),
-                basis=str(bas),
-                mult=int(m),
-                extra='NoSymm',
-                scf='qc'
-            )
-    else:
-        mol.calc = Gaussian(
-                method=str(lev),
-                basis=str(bas),
-                mult=int(m),
-                scf='qc'
-            )
+    mol.calc = Gaussian(
+        label=lab,
+        method=str(lev),
+        basis=str(bas),
+        mult=int(m),
+        extra='NoSymm',
+        scf='qc'
+    )
 
     return mol
 
