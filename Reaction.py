@@ -28,13 +28,13 @@ class Reaction:
         self.eneBaseline = 0.0
         self.workingDir = os.getcwd()
         self.procNum = str(i)
-        self.lowString = 'Raw/calcLow' + str(i) + '/calc'
+        self.lowString = 'Raw/calcLow' + str(i) + '/'
         self.lowLev = glo.lowerLevel
         self.lowMeth = glo.lowerMethod
         self.highLev = glo.higherLevel
         self.highMeth = glo.higherMethod
-        self.highString = 'Raw/calcHigh' + str(i) + '/calc'
-        self.singleString = 'Raw/calcSingle' + str(i) + '/calc'
+        self.highString = 'Raw/calcHigh' + str(i) + '/'
+        self.singleString = 'Raw/calcSingle' + str(i) + '/'
         self.singleMeth = glo.singleMethod
         self.singleLev = glo.singleLevel
         self.ReacFreqs = []

@@ -102,7 +102,7 @@ class Gaussian(FileIOCalculator):
     discard_results_on_any_change = True
 
     def __init__(self, *args, label='', **kwargs):
-        label = label + 'gaussian.gjf'
+        label = label + 'gaussian'
         FileIOCalculator.__init__(self, *args, label=label, **kwargs)
 
     def calculate(self, *args, **kwargs):

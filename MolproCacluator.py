@@ -18,7 +18,7 @@ class Molpro(FileIOCalculator):
     discard_results_on_any_change = True
 
     def __init__(self, *args, label='', **kwargs):
-        label = label + Molpro
+        label = label + 'Molpro'
         FileIOCalculator.__init__(self, *args, label=label, **kwargs)
         if int(self.parameters['multiplicity']) ==2:
             self.parameters['method'] = 'u'+str(self.parameters['method'])
@@ -32,9 +32,9 @@ class Molpro(FileIOCalculator):
             i = 0
             while Path('molerror' + str(i) + '.out').exists():
                 i += 1
-                copyfile(self.label+'Molpro.out', 'molerror' + str(i) + '.out')
-            os.remove(self.label+"Molpro.out")
-            os.remove(self.label+"Molpro.xml")
+                copyfile(self.label+'.out', 'molerror' + str(i) + '.out')
+            os.remove(self.label+".out")
+            os.remove(self.label+".xml")
 
     def write_input(self, atoms, properties=None, system_changes=None):
         FileIOCalculator.write_input(self, atoms, properties, system_changes)
@@ -60,13 +60,13 @@ class Molpro(FileIOCalculator):
         name = name.replace("!hf", str(self.parameters['method']))
         name = name.replace("!INSERT QM METHODS HERE", "hf")
         name = name.replace("!basis,INSERT BASIS SET HERE", "basis," + str(self.parameters['basis']+'\nNOSYM\n'))
-        f = open("Molpro.inp", "w")
+        f = open(self.label+".inp", "w")
         f.write(str(name))
         f.close()
 
 
     def read_results(self):
-        f = open("Molpro.out", "r")
+        f = open(self.label+".out", "r")
         energy_hartree = 1000
         for line in f:
             if re.search("!CCSD\(T\)-F12b total energy", line):
@@ -79,10 +79,10 @@ class Molpro(FileIOCalculator):
             i = 0
             while Path(self.label+'molerror'+str(i)+'.out').exists():
                 i += 1
-            copyfile(self.label+'Molpro.out', 'molerror'+str(i)+'.out')
+            copyfile(self.label+'.out', 'molerror'+str(i)+'.out')
         self.results['energy'] = energy_hartree * EV_PER_HARTREE
-        os.remove(self.label+"Molpro.out")
-        os.remove(self.label+"Molpro.xml")
+        os.remove(self.label+".out")
+        os.remove(self.label+".xml")
 
     # Method(s) defined in the old calculator, added here for
     # backwards compatibility
