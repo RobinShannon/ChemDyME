@@ -19,7 +19,7 @@ class Dftb2(Calculator):
     implemented_properties = ['energy', 'forces']
 
     def __init__(self, restart=None, ignore_bad_restart_file=False,
-                 label='dftb', atoms=None, kpts=None,
+                 label='', atoms=None, kpts=None,
                  slako_dir=None,
                  **kwargs):
         """
@@ -103,13 +103,15 @@ class Dftb2(Calculator):
         self.temp_atoms = atoms
         self.atoms_input = None
         self.do_forces = True
+        self.root = str(label)
+        label =str(label) + 'dftb'
         Calculator.__init__(self, restart, ignore_bad_restart_file, label,
                             atoms, **kwargs)
-        self.outfilename = 'dftb.out'
-        self.write_dftb_in('dftb_in.hsd')
+        self.outfilename = str(self.root)+'dftb.out'
+        self.write_dftb_in(str(self.root)+'dftb_in.hsd')
         self.calc = dftbplus.DftbPlus(libpath=self.lib,
-                                  hsdpath='dftb_in.hsd',
-                                  logfile='dftb_out.log')
+                                  hsdpath=str(self.root)+'dftb_in.hsd',
+                                  logfile=str(self.root)+'dftb_out.log')
         self.BOHR__AA = 0.529177249
         self.AA__BOHR = 1 / self.BOHR__AA
 
@@ -118,10 +120,10 @@ class Dftb2(Calculator):
         """ Write the input file for the dftb+ calculation.
             Geometry is taken always from the file 'geo_end.gen'.
         """
-        write('geo_end.gen', self.temp_atoms, format='gen')
+        write(str(self.root)+'geo_end.gen', self.temp_atoms, format='gen')
         outfile = open(filename, 'w')
         outfile.write('Geometry = GenFormat { \n')
-        outfile.write('    <<< "geo_end.gen" \n')
+        outfile.write('    <<<' + str(self.root) + '"geo_end.gen" \n')
         outfile.write('} \n')
         outfile.write(' \n')
 
