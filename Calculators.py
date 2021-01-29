@@ -786,7 +786,7 @@ def gaussian(mol, lab, level):
     name = tl.getSMILES(mol,False)
     if mix==True:
         mol.calc = Gaussian(
-            NProcShared = proc,
+            nprocshared = proc,
             label=lab,
             method=str(lev),
             basis=str(bas),
