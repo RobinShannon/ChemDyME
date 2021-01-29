@@ -327,6 +327,30 @@ class Reaction:
             except:
                 pass
 
+    def quickOptProd(self, cart,alt):
+        self.is_bimol_prod = False
+        if alt == True:
+            self.CombProd = self.AltProd.copy()
+        else:
+            self.CombProd.set_positions(cart)
+        try:
+            self.CombProd._calc.close()
+        except:
+            pass
+        path = (self.workingDir + '/Raw/calcHigh' + self.procNum)
+        self.CombProd = tl.setCalc(self.CombProd, self.lowString, self.lowMeth, self.lowLev)
+        self.ProdName = tl.getSMILES(self.CombProd, True, partialOpt=True)
+        FullName = self.ProdName.split('____', 1)
+        if len(FullName) > 1:
+            self.is_bimol_prod = True
+            self.ProdName = FullName[0].strip('\n\t')
+            self.biProdName = FullName[1].strip('\n\t')
+            self.Prod = tl.getMolFromSmile(self.ProdName)
+            self.biProd = tl.getMolFromSmile(self.biProdName)
+        else:
+            self.Prod = self.CombProd
+            self.ProdName = tl.getSMILES(self.Prod, False, partialOpt=False)
+
     def optProd(self, cart, alt):
         print('optimising product')
         self.is_bimol_prod = False

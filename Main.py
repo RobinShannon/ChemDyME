@@ -4,6 +4,7 @@ import ChemDyME.Trajectory
 import ChemDyME.inout as io
 import ChemDyME.MasterEq
 import ChemDyME.ConnectTools as CT
+import ChemDyME
 from shutil import copyfile
 import multiprocessing
 import numpy as np
@@ -39,7 +40,9 @@ def runNormal(p):
         print(p[1].productGeom)
         # Geom opt part
         # Optimise Product
-        p[0].optProd(p[1].productGeom, False)
+        p[0].quickOptProd(p[1].productGeom, False)
+        if p[0].ProdName != p[0].ReacName:
+            p[0].optProd(p[1].productGeom, False)
 
         # Get prod Name and create directory
         prodpath = p[2] + '/' + str(p[0].ProdName)
