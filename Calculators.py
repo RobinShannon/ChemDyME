@@ -796,7 +796,7 @@ def gaussian(mol, lab, level):
         )
     else:
         mol.calc = Gaussian(
-            NProcShared=proc,
+            nprocshared=proc,
             label=lab,
             method=str(lev),
             basis=str(bas),
