@@ -763,6 +763,8 @@ def gaussian(mol, lab, level):
     lev = lev.strip()
     bas = level[1]
     bas = bas.strip()
+    if str(bas) == str('n'):
+        bas = None
     mix = False
     proc = 1
     for l in level:
