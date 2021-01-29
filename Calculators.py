@@ -802,7 +802,7 @@ def gaussian(mol, lab, level):
             nprocshared=proc,
             label=lab,
             method=str(lev),
-            basis=str(bas),
+            basis=bas,
             mult=int(m),
             extra='NoSymm',
             scf='qc'
