@@ -14,7 +14,8 @@ def scine(mol,lab,level):
     return mol
 
 def xtb(mol,level):
-    mol.set_calculator(XTB(method=level, max_iterations=100, electronic_temperature=500))
+    level = level.split('_')
+    mol.set_calculator(XTB(method=str(level[0]), electronic_temperature=int(level[1])))
     return mol
 
 
