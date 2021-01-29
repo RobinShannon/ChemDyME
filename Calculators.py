@@ -762,10 +762,15 @@ def gaussian(mol, lab, level):
     lev = lev.strip()
     bas = level[1]
     bas = bas.strip()
-    if len(lev) >2:
-        mix =True
-    else:
-        mix = False
+    mix = False
+    proc = 1
+    for l in level:
+        if str(l) =='mix':
+            mix = True
+        if 'proc' in l:
+            l = l.replace('proc', '')
+            proc = int(l)
+
     sym = mol.get_chemical_symbols()
     is_O = len(sym) == 1 and sym[0] == 'O'
     is_OO = len(sym) == 2 and sym[0] == 'O' and sym[1] =='O'
@@ -781,6 +786,7 @@ def gaussian(mol, lab, level):
     name = tl.getSMILES(mol,False)
     if mix==True:
         mol.calc = Gaussian(
+            NProcShared = proc,
             label=lab,
             method=str(lev),
             basis=str(bas),
@@ -790,6 +796,7 @@ def gaussian(mol, lab, level):
         )
     else:
         mol.calc = Gaussian(
+            NProcShared=proc,
             label=lab,
             method=str(lev),
             basis=str(bas),
