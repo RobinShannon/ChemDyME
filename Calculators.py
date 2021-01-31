@@ -10,7 +10,11 @@ try:
 except:
     pass
 def scine(mol,lab,level):
-    mol.set_calculator(SparrowCalculator(method = level))
+    level = level.split('_')
+    trip = False
+    if len(level) >1:
+        trip = True
+    mol.set_calculator(SparrowCalculator(method = level[0], triplet=trip ))
     return mol
 
 def xtb(mol,level):
@@ -763,6 +767,7 @@ def gaussian(mol, lab, level):
     lev = lev.strip()
     bas = level[1]
     bas = bas.strip()
+    trip=False
     if str(bas) == str('n'):
         bas = None
     mix = False
@@ -773,11 +778,13 @@ def gaussian(mol, lab, level):
         if 'proc' in l:
             l = l.replace('proc', '')
             proc = int(l)
+        if 'trip' in l:
+            trip = True
 
     sym = mol.get_chemical_symbols()
     is_O = len(sym) == 1 and sym[0] == 'O'
     is_OO = len(sym) == 2 and sym[0] == 'O' and sym[1] =='O'
-    if is_OO or is_O:
+    if is_OO or is_O or trip:
         m = 3
     else:
         atom_num = mol.get_atomic_numbers()

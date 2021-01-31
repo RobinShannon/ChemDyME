@@ -23,10 +23,11 @@ class SparrowCalculator(Calculator):
     """
     implemented_properties = ['energy', 'forces']
 
-    def __init__(self, atoms: Optional[Atoms] = None, method='PM6', **kwargs):
+    def __init__(self, atoms: Optional[Atoms] = None, method='PM6', triplet=False, **kwargs):
         super().__init__(**kwargs)
         self.atoms = atoms
         self.method = method
+        self.triplet = triplet
         #self.calc =  Calculation(method = self.method)
         if atoms is None:
             self.has_atoms = False
@@ -47,7 +48,7 @@ class SparrowCalculator(Calculator):
             if s % 2 != 0:
                 self.spin_mult = 2
                 self.unrestricted = True
-            elif is_O or is_OO:
+            elif is_O or is_OO or self.triplet:
                 self.spin_mult = 3
                 self.unrestricted = False
             else:
