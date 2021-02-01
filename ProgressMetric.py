@@ -218,9 +218,8 @@ class Curve(ProgressMetric):
         dist = 0
         p = 0
         # Use self.max_nodes_skipped to set up the start and end points for looping over path segments.
-        if (self.path_segment - self.max_nodes_skipped) < min_segment:
-            self.path_segment = min_segment + self.max_nodes_skipped
         start = self.path_segment - self.max_nodes_skipped
+        start = max(start,0)
         end = min(self.path_segment + (self.max_nodes_skipped+1), max_segment)
         # If the one_direction flag is True then only consider nodes in one direction
         if self.one_direction:
