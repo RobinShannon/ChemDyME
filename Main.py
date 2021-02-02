@@ -41,11 +41,12 @@ def runNormal(p):
         # Geom opt part
         # Optimise Product
         p[0].quickOptProd(p[1].productGeom, False)
-        if p[0].ProdName != p[0].ReacName:
-            p[0].optProd(p[1].productGeom, False)
-
         # Get prod Name and create directory
         prodpath = p[2] + '/' + str(p[0].ProdName)
+
+        if p[0].ProdName != p[0].ReacName and not os.path.exists(prodpath):
+            p[0].optProd(p[1].productGeom, False)
+
 
         # Get the indicies of the bonds which have either formed or broken over the course of the reaction
         try:
@@ -336,7 +337,7 @@ def run(glo):
                             biTrajs = dict(("traj_" + str(i), ChemDyME.Trajectory.Trajectory(combinedMols[i], glo, bitempPaths[('bitempPath_' + str(i))], str(i),True)) for i in range(glo.cores))
 
                             for i in range(0, glo.cores):
-                                biTrajs['traj_'+str(i)] = (len(baseXYZ), len(xyz))
+                                biTrajs['traj_'+str(i)].fragIdx = (len(baseXYZ), len(xyz))
 
 
                             if __name__ == "ChemDyME.Main":
