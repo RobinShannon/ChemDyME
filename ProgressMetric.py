@@ -337,7 +337,12 @@ class Curve(ProgressMetric):
         seg_start = self.path.s[self.path_segment]
         seg_end = self.path.s[self.path_segment+1]
         norm = self.vector_to_segment(s,seg_end,seg_start)
+        #check norm
+        seg = seg_end - seg_start
+        n = np.dot(seg,norm)
         return self.collective_variable.get_delta(mol, norm)
+
+
 
     def get_norm_to_path(self, s):
         """

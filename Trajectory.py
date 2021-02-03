@@ -186,10 +186,15 @@ class Trajectory:
                 if self.bxd.bound_hit != 'none':
                     del_phi.append(self.bxd.del_constraint(self.mol))
                     decorrelated = True
-                if self.bxd.path_bound_hit and previous_hit == 'none':
-                    del_phi.append(self.bxd.path_del_constraint(self.mol))
-                    steps_since_last_hit = 0
-                    decorrelated = False
+                if self.bxd.path_bound_hit:
+                    if previous_hit == 'none':
+                        del_phi.append(self.bxd.path_del_constraint(self.mol))
+                        steps_since_last_hit = 0
+                        decorrelated = False
+                    else:
+                        print("path bound hit after bound hit on previous step")
+                        if self.bxd.bound_hit == 'none':
+                            bounded = False
                 # If we have hit a bound get the md object to modify the velocities / positions appropriately.
                 self.md_integrator.constrain(del_phi)
 
@@ -212,25 +217,18 @@ class Trajectory:
             #Check whether we are stuck at a boundary
             new_hit = self.bxd.box_list[self.bxd.box].lower.hit(self.bxd.get_s(self.mol), 'down') or self.bxd.box_list[self.bxd.box].upper.hit(self.bxd.get_s(self.mol), 'up')
             while bounded and new_hit:
-                log_file.write("oops problem with inversion" +str('\n'))
-                self.mol.set_positions(self.md_integrator.old_positions)
-                if self.bxd.box_list[self.bxd.box].lower.hit(self.bxd.get_s(self.mol), 'down'):
-                    self.bxd.bound_hit='lower'
+                if previous_hit == 'path and lower' or previous_hit == 'path and upper':
+                    log_file.write("oops problem with inversion at multiple boundaries" +str('\n'))
+                    self.md_integrator.retry_constraint(del_phi[0])
+                    self.mol.set_positions(self.md_integrator.current_positions)
+                    new_hit = self.bxd.box_list[self.bxd.box].lower.hit(self.bxd.get_s(self.mol), 'down') or self.bxd.box_list[self.bxd.box].upper.hit(self.bxd.get_s(self.mol), 'up')
+                    self.md_integrator.md_small_step_pos(self.forces, self.mol)
+                    new_hit = self.bxd.box_list[self.bxd.box].lower.hit(self.bxd.get_s(self.mol), 'down') or self.bxd.box_list[self.bxd.box].upper.hit(self.bxd.get_s(self.mol), 'up')
                 else:
-                    self.bxd.bound_hit='upper'
-                if self.bxd.path_bound_hit:
-                    log_file.write("previous step hit path bound" + str('\n'))
-                    del_phi = []
-                    self.md_integrator.old_positions = self.md_integrator.very_old_positions
-                    del_phi.append(self.bxd.path_del_constraint(self.mol))
-                    # If we have hit a bound get the md object to modify the velocities / positions appropriately.
-                    del_phi.append(self.bxd.del_constraint(self.mol))
-                    self.md_integrator.constrain(del_phi)
-                    self.md_integrator.md_step_pos(self.forces, self.mol)
-                else:
+                    self.mol.set_positions(self.md_integrator.old_positions)
                     new_hit = self.bxd.box_list[self.bxd.box].lower.hit(self.bxd.get_s(self.mol), 'down') or self.bxd.box_list[self.bxd.box].upper.hit(self.bxd.get_s(self.mol), 'up')
                     self.md_integrator.retry_pos(self.mol)
-                new_hit = self.bxd.box_list[self.bxd.box].lower.hit(self.bxd.get_s(self.mol), 'down') or self.bxd.box_list[self.bxd.box].upper.hit(self.bxd.get_s(self.mol), 'up')
+                    new_hit = self.bxd.box_list[self.bxd.box].lower.hit(self.bxd.get_s(self.mol), 'down') or self.bxd.box_list[self.bxd.box].upper.hit(self.bxd.get_s(self.mol), 'up')
             try:
                 self.forces = self.mol.get_forces()
             except:
