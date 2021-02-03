@@ -549,7 +549,7 @@ class Reaction:
         self.TS = tl.setCalc(self.TS, self.highString, self.highMeth, self.highLev)
         try:
             self.TS._calc.minimise_ts_only(self.TS)
-            copyfile(str(self.highString)+'Gaussian.log',path + '/G1.xyz')
+            copyfile(str(self.highString)+'gaussian.log',path + '/G1.xyz')
         except:
             self.TS = tl.setCalc(self.TS, self.lowString, self.lowMeth, self.lowLev)
         try:
@@ -601,7 +601,7 @@ class Reaction:
         self.TS2 = tl.setCalc(self.TS2, self.highString, self.highMeth, self.highLev)
         try:
             self.TS2._calc.minimise_ts_only(self.TS)
-            copyfile(str(self.highString)+'Gaussian.log', path + '/G2.xyz')
+            copyfile(str(self.highString)+'gaussian.log', path + '/G2.xyz')
         except:
             self.TS2 = tl.setCalc(self.TS2, self.lowString, self.lowMeth, self.lowLev)
         try:
