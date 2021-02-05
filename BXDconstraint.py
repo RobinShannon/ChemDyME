@@ -213,16 +213,7 @@ class Adaptive(BXD):
 
         # get the current value of the collective variable and the progress data
         self.s = self.get_s(mol)
-        if self.box == 0:
-            min_seg = 0
-        else:
-            min_seg = self.box_list[self.box-1].max_segment
 
-        if self.box == len(self.box_list) -1:
-            max_seg = np.inf
-        else:
-            max_seg = self.box_list[self.box+1].min_segment
-        #projected_data = self.progress_metric.project_point_on_path(self.s, min_segment = min_seg, max_segment = max_seg)
         projected_data = self.progress_metric.project_point_on_path(self.s)
         distance_from_bound = self.progress_metric.get_dist_from_bound(self.s, self.box_list[self.box].lower)
 
