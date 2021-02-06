@@ -98,7 +98,7 @@ def runNormal(p):
                     printXML = True
 
                 # Then check barrier isnt ridiculous
-                if  p[0].barrierlessReaction == False and (((p[0].forwardBarrier - p[0].reactantEnergy) * 96.45) > 400):
+                if  p[0].barrierlessReaction == False and (((p[0].forwardBarrier - p[0].reactantEnergy) * 96.45) > 800):
                     printXML = False
                     print('channel barrier too large')
 
@@ -110,6 +110,10 @@ def runNormal(p):
                     try:
                         io.writeTSXML(p[0], p[3])
                         io.writeTSXML(p[0], p[3].replace('.xml', 'Full.xml'))
+                        try:
+                            io.writeTSXML2(p[0], p[3].replace('.xml', 'Full.xml'))
+                        except:
+                            pass
                     except:
                         print('Couldnt print TS1')
 
@@ -131,10 +135,10 @@ def runNormal(p):
                     if not os.path.exists(tmppath + "/" + p[0].ReacName):
                         if p[0].is_bimol_prod == False and p[0].is_bimol_reac == False and p[0].barrierlessReaction == True:
                             print('Isomerisation reaction does not have defined barrier')
-                        if p[0].is_bimol_prod == False:
+                        elif p[0].is_bimol_prod == False:
                             io.writeReactionXML(p[0], p[3], False)
                             io.writeReactionXML(p[0], p[3].replace('.xml', 'Full.xml'), False)
-                        if p[0].is_bimol_prod == True and (p[0].TScorrect or p[0].TS2correct):
+                        elif p[0].is_bimol_prod == True and (p[0].TScorrect or p[0].TS2correct):
                             io.writeReactionXML(p[0], p[3], False)
                             io.writeReactionXML(p[0], p[3].replace('.xml', 'Full.xml'), False)
 

@@ -578,55 +578,60 @@ class Reaction:
             self.TS._calc.close()
         except:
             pass
-        for sp in spline:
-            sp = tl.setCalc(sp, self.lowString, self.lowMeth, self.lowLev)
-            spline_ene.append(float(sp.get_potential_energy()))
+
+        try:
+            for sp in spline:
+                sp = tl.setCalc(sp, self.lowString, self.lowMeth, self.lowLev)
+                spline_ene.append(float(sp.get_potential_energy()))
+                try:
+                    sp._calc.close()
+                except:
+                    pass
+            max_value = max(spline_ene)
+            ind = spline_ene.index(max_value)
+            write(path + '/Data/TS2.xyz', spline[ind])
+            self.TS2 = spline[ind].copy()
+            write(path + '/Data/spline.xyz', spline)
+            with open(path + '/Data/spline_ene.txt', 'w') as f:
+                for sp in spline_ene:
+                    f.write(str(sp) + "\n")
+                f.close()
+            self.spline = spline_ene
+
+            self.TS2 = tl.setCalc(self.TS2, self.lowString, self.lowMeth, self.lowLev)
+            self.TS2, rmol, pmol, irc_for, irc_rev = self.TS2._calc.minimise_ts(raw_path, self.TS2)
+            self.TS2 = tl.setCalc(self.TS2, self.highString, self.highMeth, self.highLev)
             try:
-                sp._calc.close()
+                self.TS2._calc.minimise_ts_only(self.TS)
+                copyfile(str(self.highString) + 'gaussian.log', path + '/G2.xyz')
+            except:
+                self.TS2 = tl.setCalc(self.TS2, self.lowString, self.lowMeth, self.lowLev)
+            try:
+                self.TS2Freqs, zpe, self.imaginaryFreq2 = self.TS2._calc.read_ts_vibs()
+            except:
+                self.TS2 = tl.setCalc(self.TS2, self.lowString, self.lowMeth, self.lowLev)
+                self.TS2Freqs, zpe, self.imaginaryFreq2 = self.characteriseTSFreqInternal(self.TS2)
+            try:
+                self.TS2._calc.close()
             except:
                 pass
-        max_value = max(spline_ene)
-        ind = spline_ene.index(max_value)
-        write(path + '/Data/TS2.xyz', spline[ind])
-        self.TS2 = spline[ind].copy()
-        write(path + '/Data/spline.xyz', spline)
-        with open(path + '/Data/spline_ene.txt', 'w') as f:
-            for sp in spline_ene:
-                f.write(str(sp) + "\n")
-            f.close()
-        self.spline = spline_ene
-
-        self.TS2 = tl.setCalc(self.TS2, self.lowString, self.lowMeth, self.lowLev)
-        self.TS2, rmol, pmol, irc_for, irc_rev = self.TS2._calc.minimise_ts(raw_path, self.TS2)
-        self.TS2 = tl.setCalc(self.TS2, self.highString, self.highMeth, self.highLev)
-        try:
-            self.TS2._calc.minimise_ts_only(self.TS)
-            copyfile(str(self.highString)+'gaussian.log', path + '/G2.xyz')
-        except:
-            self.TS2 = tl.setCalc(self.TS2, self.lowString, self.lowMeth, self.lowLev)
-        try:
-            self.TS2Freqs, zpe, self.imaginaryFreq2 = self.TS2._calc.read_ts_vibs()
-        except:
-            self.TS2 = tl.setCalc(self.TS2, self.lowString, self.lowMeth, self.lowLev)
-            self.TS2Freqs, zpe, self.imaginaryFreq2 = self.characteriseTSFreqInternal(self.TS2)
-        try:
-            self.TS2._calc.close()
-        except:
-            pass
-        self.TS2 = tl.setCalc(self.TS2, self.singleString, self.singleMeth, self.singleLev)
-        try:
-            self.forwardBarrier2 = self.TS2.get_potential_energy() + zpe
-            self.TS2._calc.close()
-        except:
-            pass
-
-        if self.TScorrect == False:
+            self.TS2 = tl.setCalc(self.TS2, self.singleString, self.singleMeth, self.singleLev)
             try:
-                self.TS2correct = self.compareRandP(rmol, pmol)
+                self.forwardBarrier2 = self.TS2.get_potential_energy() + zpe
+                self.TS2._calc.close()
             except:
-                self.TS2correct = False
+                pass
 
-        try:
+            if self.TScorrect == False:
+                try:
+                    self.TS2correct = self.compareRandP(rmol, pmol)
+                except:
+                    self.TS2correct = False
+        except:
+            self.TS2correct = False
+
+
+        if self.TS2correct == True:
             irc_ene = []
             irc_rev.reverse()
             irc = irc_rev + irc_for
@@ -642,8 +647,7 @@ class Reaction:
                 for ir in irc_ene:
                     f.write(str(ir) + "\n")
                 f.close()
-        except:
-            pass
+
 
         write(path + '/TS2.xyz', self.TS2)
 
@@ -653,12 +657,13 @@ class Reaction:
         if (self.forwardBarrier2 <= self.reactantEnergy and self.forwardBarrier2 <= self.productEnergy):
             self.barrierlessReaction = True
 
-        if self.TScorrect == False:
+        if self.TS2correct == True:
             self.TS = self.TS2
             self.forwardBarrier = self.forwardBarrier2
             self.imaginaryFreq = self.imaginaryFreq2
             self.TSFreqs = self.TS2Freqs
-            if not self.TS2correct and self.is_bimol_reac:
+
+        if not self.TS2correct and not self.TS2correct and not self.is_bimol_reac:
                 self.barrierlessReaction = True
 
     def refineTSpoint(self, MolList, TrajStart):
