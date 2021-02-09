@@ -228,19 +228,23 @@ def run(glo):
         symb = "".join(reacs['reac_0'].CombReac.get_chemical_symbols())
         try:
             with open('dict.pkl', 'rb') as handle:
-                reacs['reac_0'].energyDictionary = pickle.loads(handle.read())
+                for i in range(0, glo.cores):
+                    name = 'reac_' + str(i)
+                    reacs[name].energyDictionary = pickle.loads(handle.read())
         except:
             pass
         if symb not in reacs['reac_0'].energyDictionary:
-            rsymb = next(iter(reacs['reac_0'].energyDictionary))
-            if len(symb) != len(rsymb):
-                d = {symb: reacs['reac_0'].reactantEnergy}
-            else:
-                d = {symb: base_ene}
-            reacs['reac_0'].energyDictionary.update(d)
-        if reacs['reac_0'].energyDictionary[symb] == 0.0:
-            d = {symb: reacs['reac_0'].reactantEnergy}
-            reacs['reac_0'].energyDictionary.update(d)
+            for i in range(0,glo.cores):
+                name = 'reac_' + str(i)
+                rsymb = next(iter(reacs[name].energyDictionary))
+                if len(symb) != len(rsymb):
+                    d = {symb: reacs[name].reactantEnergy}
+                else:
+                    d = {symb: base_ene}
+                reacs[name].energyDictionary.update(d)
+                if reacs[name].energyDictionary[symb] == 0.0:
+                    d = {symb: reacs[name].reactantEnergy}
+                reacs[name].energyDictionary.update(d)
         with open('dict.pkl', 'wb') as handle:
             pickle.dump(reacs['reac_0'].energyDictionary, handle)
         # If a MESMER file has not been created for the current minima then create one
@@ -301,10 +305,14 @@ def run(glo):
 
 
             # run a master eqution to estimate the lifetime of the current species
-            try:
-                me.runTillReac(MESpath)
-            except:
-                me.time = np.inf
+            time = 0
+            for i in range(0,10):
+                try:
+                    me.runTillReac(MESpath)
+                except:
+                    me.time = np.inf
+                if me.time > time:
+                    time = me.time
 
             me.newSpeciesFound = False
 
