@@ -216,11 +216,11 @@ class Dftb2(Calculator):
             self.results['forces'] = - gradients_hartree_bohr * Hartree / Bohr
         return
 
-    def calculate_(self, atoms,
+    def calculate(self, atoms,
                   properties=('energy', 'forces'),
                   system_changes=all_changes):
         f=io.StringIO
-        with contextlib.redirect_stdout(f):
+        with contextlib.redirect_stderr(f):
             self.calculate_dftb(atoms,properties,system_changes)
         return
 
