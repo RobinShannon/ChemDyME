@@ -12,7 +12,8 @@ from ase.calculators.calculator import Calculator, all_changes
 import dftbplus
 from ase.io import write
 from ase.units import Hartree, Bohr
-
+import contextlib
+import io
 
 class Dftb2(Calculator):
 
@@ -201,7 +202,7 @@ class Dftb2(Calculator):
 
         outfile.close()
 
-    def calculate(self, atoms,
+    def calculate_dftb(self, atoms,
                   properties=('energy', 'forces'),
                   system_changes=all_changes):
         coords = atoms.get_positions()
@@ -213,6 +214,14 @@ class Dftb2(Calculator):
         if 'forces' in properties:
             gradients_hartree_bohr = self.calc.get_gradients()
             self.results['forces'] = - gradients_hartree_bohr * Hartree / Bohr
+        return
+
+    def calculate_(self, atoms,
+                  properties=('energy', 'forces'),
+                  system_changes=all_changes):
+        f=io.StringIO
+        with contextlib.redirect_stdout(f):
+            self.calculate_dftb(atoms,properties,system_changes)
         return
 
     def close(self):
