@@ -3,6 +3,7 @@ import numpy as np
 from numpy.random import standard_normal
 from ase import units
 import warnings
+import copy
 
 class MDIntegrator:
     """
@@ -234,12 +235,10 @@ class Langevin(MDIntegrator):
         """
         # Revert positions and forces to time prior to BXD inversion
 
-        self.current_positions = self.old_positions
-        self.current_velocities = self.old_velocities
-        self.forces = self.old_forces
-        self.original_positions = self.current_positions
-        self.original_forces = self.forces
-        self.original_velocities = self.current_velocities
+        self.current_positions = copy.deepcopy(self.old_positions)
+        self.current_velocities = copy.deepcopy(self.old_velocities)
+        self.forces = copy.deepcopy(self.old_forces)
+
 
         # Temporarily flatten 3 by n matrices into vectors to get dot products.
         a = ((np.tile(self.masses, (3, 1))).transpose()).flatten()
@@ -253,7 +252,7 @@ class Langevin(MDIntegrator):
 
         # Update velocities
         self.current_velocities = (self.current_velocities + (lagrangian * del_phi * (1/self.masses)[:, None]))
-        self.half_step_velocity = self.current_velocities
+        self.half_step_velocity = copy.deepcopy(self.current_velocities)
         self.constrained = True
 
     def constrain2(self, del_phi1, del_phi2):
@@ -313,10 +312,10 @@ class Langevin(MDIntegrator):
             self.forces = forces
 
         # keep track of position prior to update in case we need to revert
-        self.very_old_positions = self.old_positions
-        self.old_positions = self.current_positions
-        self.very_old_forces = self.old_forces
-        self.old_forces = self.forces
+        self.very_old_positions = copy.deepcopy(self.old_positions)
+        self.old_positions = copy.deepcopy(self.current_positions)
+        self.very_old_forces = copy.deepcopy(self.old_forces)
+        self.old_forces = copy.deepcopy(self.forces)
 
         # Get Acceleration from masses and forces
         accel = self.forces[:] / self.masses[:, None]
@@ -330,6 +329,10 @@ class Langevin(MDIntegrator):
 
         self.half_step_velocity = self.current_velocities + (self.c1 * accel - self.c2 * self.half_step_velocity + self.c3[:, None] * self.xi - self.c4[:, None] * self.eta)
         self.current_positions = self.current_positions + self.timestep * self.half_step_velocity + self.c5[:, None] * self.eta
+
+        self.verlet_velocity = self.current_velocities + accel * self.timestep * 0.5
+        self.verlet_positions = self.current_positions + (self.verlet_velocity * self.timestep)
+        self.accel = accel
 
         # Return positions
         mol.set_positions(self.current_positions)
@@ -384,8 +387,8 @@ class Langevin(MDIntegrator):
         self.forces = forces
 
         # Store old velocities
-        self.very_old_velocities = self.old_velocities
-        self.old_velocities = self.current_velocities
+        self.very_old_velocities = copy.deepcopy(self.old_velocities)
+        self.old_velocities = copy.deepcopy(self.current_velocities)
 
         # Get Acceleration from masses and forces
         accel = self.forces[:] / self.masses[:, None]

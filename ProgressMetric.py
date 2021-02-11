@@ -222,13 +222,7 @@ class Curve(ProgressMetric):
         start = max(start,0)
         end = min(self.path_segment + (self.max_nodes_skipped+1), max_segment)
         # If the one_direction flag is True then only consider nodes in one direction
-        if self.one_direction:
-            # If BXD is going forward then the start node is the current node
-            if not self.bxd_reverse:
-                start = max(self.path_segment, 0)
-            # If BXD is going backwards the end node is the current node + 1
-            else:
-                end = min(self.path_segment + 1, len(self.path.s) - 1)
+
         # Now loop over all segments considered and get the distance from S to that segment and the projected distance
         # of S along that segment
         percentage = 0
