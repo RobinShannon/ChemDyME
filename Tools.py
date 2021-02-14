@@ -1,6 +1,6 @@
 from ase import Atoms
 import numpy as np
-import openbabel
+import openbabel,pybel
 import ChemDyME.Calculators as calc
 import os
 import re
@@ -108,7 +108,7 @@ def getMolFromSmile(smile):
 
     # Create OBabel object from smiles
     smile = smile.replace("____", ".")
-    mol = openbabel.pybel.readstring('smi' , smile)
+    mol = pybel.readstring('smi' , smile)
     mol.addh()
     mol.make3D()
     dim = len(mol.atoms)
