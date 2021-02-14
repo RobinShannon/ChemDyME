@@ -191,6 +191,7 @@ def run(glo):
     mainsumfile = open(('mainSummary.txt'), "a")
 
     # Base energy value
+    energyDictionary = {}
     base_ene = 0.0
 
     while mechanismRunTime < glo.maxSimulationTime:
@@ -219,9 +220,7 @@ def run(glo):
         # Update path for new minima
         minpath  = syspath + '/' + reacs['reac_0'].ReacName
 
-        # Update base energy on the first run round
-        if base_ene == 0.0:
-            base_ene = reacs['reac_0'].reactantEnergy
+
         # Get smiles name for initial geom and create directory for first minimum
         if not os.path.exists(minpath):
             os.makedirs(minpath)
@@ -231,25 +230,15 @@ def run(glo):
         symb = "".join(reacs['reac_0'].CombReac.get_chemical_symbols())
         try:
             with open('dict.pkl', 'rb') as handle:
-                for i in range(0, glo.cores):
-                    name = 'reac_' + str(i)
-                    reacs[name].energyDictionary = pickle.loads(handle.read())
+                energyDictionary = pickle.loads(handle.read())
         except:
             pass
-        if symb not in reacs['reac_0'].energyDictionary:
-            for i in range(0,glo.cores):
-                name = 'reac_' + str(i)
-                rsymb = next(iter(reacs[name].energyDictionary))
-                if len(symb) != len(rsymb):
-                    d = {symb: reacs[name].reactantEnergy}
-                else:
-                    d = {symb: base_ene}
-                reacs[name].energyDictionary.update(d)
-                if reacs[name].energyDictionary[symb] == 0.0:
-                    d = {symb: reacs[name].reactantEnergy}
-                reacs[name].energyDictionary.update(d)
+        if symb not in energyDictionary:
+                d = {symb: reacs['reac_0'].reactantEnergy}
+                energyDictionary.update(d)
         with open('dict.pkl', 'wb') as handle:
-            pickle.dump(reacs['reac_0'].energyDictionary, handle)
+            pickle.dump(energyDictionary, handle)
+
         # If a MESMER file has not been created for the current minima then create one
         if not os.path.exists(MESpath):
             os.makedirs(MESpath)
@@ -306,7 +295,19 @@ def run(glo):
                     p = multiprocessing.Pool(glo.cores)
                     p.map(runNormal, arguments)
 
+                for i in range(0, glo.cores):
+                    r_symb = "".join(reacs['reac_'+str(i)].CombReac.get_chemical_symbols())
+                    p_symb = "".join(reacs['reac_'+str(i)].Prod.get_chemical_symbols())
 
+                    if p_symb not in energyDictionary:
+                            d = {p_symb: energyDictionary[r_symb]}
+                            energyDictionary.update(d)
+
+                for i in range(0, glo.cores):
+                    reacs['reac_' + str(i)].energyDictionary=energyDictionary
+
+                with open('dict.pkl', 'wb') as handle:
+                        pickle.dump(energyDictionary, handle)
             # run a master eqution to estimate the lifetime of the current species
             time = 0
             for i in range(0,10):
@@ -366,6 +367,20 @@ def run(glo):
                                 arguments = list(zip(arguments1, arguments2, [minpath] * glo.cores, [MESpath] * glo.cores, range(glo.cores), [glo] * glo.cores, [glo.BiList[i]] * glo.cores))
                                 p = multiprocessing.Pool(glo.cores)
                                 p.map(runNormal, arguments)
+
+                            energyDictionary=reacs['reac_0'].energyDictionary
+                            for i in range(0, glo.cores):
+                                p_symb = "".join(reacs['reac_' + str(i)].Prod.get_chemical_symbols())
+
+                                if p_symb not in energyDictionary:
+                                    d = {p_symb: reacs['reac_0'].reactantEnergy}
+                                    energyDictionary.update(d)
+
+                            for i in range(0, glo.cores):
+                                reacs['reac_' + str(i)].energyDictionary = energyDictionary
+
+                            with open('dict.pkl', 'wb') as handle:
+                                pickle.dump(energyDictionary, handle)
 
 
 
