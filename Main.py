@@ -98,7 +98,7 @@ def runNormal(p):
                     printXML = True
 
                 # Then check barrier isnt ridiculous
-                if  p[0].barrierlessReaction == False and (((p[0].forwardBarrier - p[0].reactantEnergy) * 96.45) > 800):
+                if  p[0].barrierlessReaction == False and (((p[0].forwardBarrier - p[0].reactantEnergy) * 96.45) > 1600):
                     printXML = False
                     print('channel barrier too large')
 
@@ -134,7 +134,10 @@ def runNormal(p):
                                 pass
                     if not os.path.exists(tmppath + "/" + p[0].ReacName):
                         if p[0].is_bimol_prod == False and p[0].is_bimol_reac == False and p[0].barrierlessReaction == True:
-                            print('Isomerisation reaction does not have defined barrier')
+                            p[0].barrierlessReaction = False
+                            print('Isomerisation reaction does not have defined barrier, print anyway but be cautious')
+                            io.writeReactionXML(p[0], p[3], False)
+                            io.writeReactionXML(p[0], p[3].replace('.xml', 'Full.xml'), False)
                         elif p[0].is_bimol_prod == False:
                             io.writeReactionXML(p[0], p[3], False)
                             io.writeReactionXML(p[0], p[3].replace('.xml', 'Full.xml'), False)

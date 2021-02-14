@@ -276,6 +276,7 @@ class Reaction:
         return freqs, zpe, imaginaryFreq
 
     def optReac(self):
+        print('minimising')
         self.is_bimol_reac = False
         self.CombReac = tl.setCalc(self.CombReac, self.lowString, self.lowMeth, self.lowLev)
         self.ReacName = tl.getSMILES(self.CombReac, True, True)
