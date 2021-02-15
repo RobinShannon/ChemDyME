@@ -238,6 +238,8 @@ def run(glo):
                 energyDictionary.update(d)
         with open('dict.pkl', 'wb') as handle:
             pickle.dump(energyDictionary, handle)
+        for i in range(0, glo.cores):
+            reacs['reac_' + str(i)].energyDictionary = energyDictionary
 
         # If a MESMER file has not been created for the current minima then create one
         if not os.path.exists(MESpath):
@@ -370,11 +372,13 @@ def run(glo):
 
                             energyDictionary=reacs['reac_0'].energyDictionary
                             for i in range(0, glo.cores):
+                                r_symb = "".join(reacs['reac_' + str(i)].CombReac.get_chemical_symbols())
                                 p_symb = "".join(reacs['reac_' + str(i)].Prod.get_chemical_symbols())
 
                                 if p_symb not in energyDictionary:
-                                    d = {p_symb: reacs['reac_0'].reactantEnergy}
+                                    d = {p_symb: energyDictionary[r_symb]}
                                     energyDictionary.update(d)
+
 
                             for i in range(0, glo.cores):
                                 reacs['reac_' + str(i)].energyDictionary = energyDictionary

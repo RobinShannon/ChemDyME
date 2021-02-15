@@ -290,7 +290,8 @@ def writeReactionXML(React,path, printTS2):
         if React.barrierlessReaction:
             act = 0
         else:
-            act = str(((React.forwardBarrier - React.energyDictionary[symb]) * 96.45) - ((React.reactantEnergy - React.energyDictionary[symb]) * 96.45))
+            React.barrierlessReaction = True
+            act = float(((React.forwardBarrier - React.energyDictionary[symb]) * 96.45) - ((React.reactantEnergy - React.energyDictionary[symb]) * 96.45))
         if act < 0:
             act = 0
         React.barrierlessReaction = True
@@ -306,8 +307,11 @@ def writeReactionXML(React,path, printTS2):
         prod2 = ET.SubElement(rxn, "reactant")
         pml1_2 = ET.SubElement(prod2, "molecule", ref = React.biProdName)
         pml1_2.set("{http://www.chem.leeds.ac.uk/mesmer}type","excessReactant")
-        React.barrierlessReaction = True
-        act = str(((React.forwardBarrier - React.energyDictionary[symb]) * 96.45) - ((React.productEnergy - React.energyDictionary[symb]) * 96.45))
+        if React.barrierlessReaction:
+            act = 0
+        else:
+            React.barrierlessReaction = True
+            act = float(((React.forwardBarrier - React.energyDictionary[symb]) * 96.45) - ((React.productEnergy - React.energyDictionary[symb]) * 96.45))
         if act < 0:
             act = 0
     else:
