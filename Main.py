@@ -404,7 +404,7 @@ def run(glo):
                 os.makedirs(syspath + '/' + me.prodName)
                 if os.path.exists(syspath + '/' + reacs['reac_0'].ReacName + '/' + me.prodName):
                     for i in range(glo.cores):
-                        reacs['reac_'+str(i)].newReac(syspath + '/' + reacs['reac_0'].ReacName + '/' + me.prodName, me.prodName, False, False)
+                        reacs['reac_'+str(i)].newReac(syspath + '/' + reacs['reac_'+str(i)].ReacName + '/' + me.prodName, me.prodName, False, False)
                 else:
                     print("cant find path " + str(
                         syspath + '/' + reacs['reac_0'].ReacName + '/' + me.prodName))
@@ -430,7 +430,7 @@ def run(glo):
                 minpath = syspath + '/' + me.prodName
                 if os.path.exists(syspath + '/' + reacs['reac_0'].ReacName + '/' + me.prodName):
                     for i in range(glo.cores):
-                        reacs['reac_'+str(i)].newReac(syspath + '/' + reacs['reac_0'].ReacName + '/' + me.prodName, me.prodName, False, False)
+                        reacs['reac_'+str(i)].newReac(syspath + '/' + reacs['reac_' + str(i)].ReacName + '/' + me.prodName, me.prodName, False, False)
                 else:
                     try:
                         for i in range(glo.cores):
