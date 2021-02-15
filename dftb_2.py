@@ -111,7 +111,7 @@ class Dftb2(Calculator):
         self.outfilename = str(self.root)+'dftb.out'
         self.write_dftb_in(str(self.root)+'dftb_in.hsd')
         self.calc = dftbplus.DftbPlus(libpath=self.lib,
-                                  hsdpath=str(self.root)+'dftb_in.hsd')
+                                  hsdpath=str(self.root)+'dftb_in.hsd',logfile=self.outfilename)
         self.BOHR__AA = 0.529177249
         self.AA__BOHR = 1 / self.BOHR__AA
 
