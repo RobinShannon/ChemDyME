@@ -12,7 +12,7 @@ from ase.calculators.calculator import Calculator, all_changes
 import dftbplus
 from ase.io import write
 from ase.units import Hartree, Bohr
-import contextlib
+import sys
 import io
 
 class Dftb2(Calculator):
@@ -111,7 +111,7 @@ class Dftb2(Calculator):
         self.outfilename = str(self.root)+'dftb.out'
         self.write_dftb_in(str(self.root)+'dftb_in.hsd')
         self.calc = dftbplus.DftbPlus(libpath=self.lib,
-                                  hsdpath=str(self.root)+'dftb_in.hsd',logfile=self.outfilename)
+                                  hsdpath=str(self.root)+'dftb_in.hsd')
         self.BOHR__AA = 0.529177249
         self.AA__BOHR = 1 / self.BOHR__AA
 
@@ -219,9 +219,15 @@ class Dftb2(Calculator):
     def calculate(self, atoms,
                   properties=('energy', 'forces'),
                   system_changes=all_changes):
-        f=io.StringIO
-        with contextlib.redirect_stderr(f):
-            self.calculate_dftb(atoms,properties,system_changes)
+        prevOutFd = os.dup(1)
+        null_fd = os.open(os.devnull,os.O_RDWR)
+        os.dup2(null_fd,1)
+        sys.stdout=open(os.devnull,"w")
+        self.calculate_dftb(atoms,properties,system_changes)
+        os.dup2(prevOutFd,1)
+        os.close(prevOutFd)
+        os.close(null_fd)
+
         return
 
     def close(self):
