@@ -219,15 +219,14 @@ class Dftb2(Calculator):
     def calculate(self, atoms,
                   properties=('energy', 'forces'),
                   system_changes=all_changes):
-        prevOutFd = os.dup(1)
-        null_fd = os.open(os.devnull,os.O_RDWR)
-        os.dup2(null_fd,1)
-        sys.stdout=open(os.devnull,"w")
+        ####prevOutFd = os.dup(1)
+        ###null_fd = os.open(os.devnull,os.O_RDWR)
+        ##os.dup2(null_fd,1)
+        #sys.stdout=open(os.devnull,"w")
         self.calculate_dftb(atoms,properties,system_changes)
-        os.dup2(prevOutFd,1)
-        os.close(prevOutFd)
-        os.close(null_fd)
-
+        ###os.dup2(prevOutFd,1)
+        ##os.close(prevOutFd)
+        #os.close(null_fd)
         return
 
     def close(self):
