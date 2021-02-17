@@ -404,13 +404,13 @@ def run(glo):
                 os.makedirs(syspath + '/' + me.prodName)
                 if os.path.exists(syspath + '/' + reacs['reac_0'].ReacName + '/' + me.prodName):
                     for i in range(glo.cores):
-                        reacs['reac_'+str(i)].newReac(syspath + '/' + reacs['reac_'+str(i)].ReacName + '/' + me.prodName, me.prodName, False, False)
+                        reacs['reac_'+str(i)].newReac(syspath + '/' + reacs['reac_'+str(i)].ReacName + '/' + me.prodName, me.prodName, False, True)
                 else:
                     print("cant find path " + str(
                         syspath + '/' + reacs['reac_0'].ReacName + '/' + me.prodName))
                     try:
                         for i in range(glo.cores):
-                            reacs['reac_'+str(i)].newReac(syspath + '/' + me.prodName, me.prodName, True, False)
+                            reacs['reac_'+str(i)].newReac(syspath + '/' + me.prodName, me.prodName, True, True)
                     except:
                         for i in range(glo.cores):
                             reacs['reac_'+str(i)].newReacFromSMILE(me.prodName)
@@ -434,7 +434,7 @@ def run(glo):
                 else:
                     try:
                         for i in range(glo.cores):
-                            reacs['reac_'+str(i)].newReac(syspath + '/' + me.prodName, me.prodName, True, True)
+                            reacs['reac_'+str(i)].newReac(syspath + '/' + me.prodName, me.prodName, True, False)
                     except:
                         for i in range(glo.cores):
                             reacs['reac_'+str(i)].newReacFromSMILE(me.prodName)

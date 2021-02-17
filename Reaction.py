@@ -887,7 +887,8 @@ class Reaction:
         self.AltProd = self.Reac.copy()
         self.TScorrect = False
         self.reactantEnergy = self.Reac.get_potential_energy()
-        self.optReac()
+        if opt:
+            self.optReac()
 
     def newReacFromSMILE(self, SMILE):
         self.ReacName = SMILE
