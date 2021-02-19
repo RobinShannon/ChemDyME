@@ -27,7 +27,9 @@ def runNormal(p):
         if len(p) > 6:
             print("correcting baseline for bi reaction")
             sym = "".join(p[6].get_chemical_symbols())
-            TotSym = "".join(p[0].Reac.get_chemical_symbols())
+            TotSym2 = "".join(p[0].CombReac.get_chemical_symbols())
+            size = len(TotSym2)
+            TotSym = TotSym2[:size-len(sym)]
             print(str(sym) + " " + str(TotSym))
             base = p[0].energyDictionary[TotSym]
             p[0].energyDictionary[TotSym + sym] = p[0].TempBiEne(p[6]) + base
