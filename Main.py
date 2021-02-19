@@ -332,7 +332,7 @@ def run(glo):
                         print("assessing whether or not to look for bimolecular channel. Rate = " + str(
                             float(glo.BiRates[i])) + " Mesmer reaction time = " + str(me.time))
                         glo.InitialBi = True
-                        xyz = CT.get_bi_xyz(reacs['reac_0'].Reac, glo.BiList[i])
+                        xyz = CT.get_bi_xyz(reacs['reac_0'].CombReac, glo.BiList[i])
                         spec = np.append(baseXYZ, np.array(glo.BiList[i].get_chemical_symbols()))
                         combinedMols = [Atoms(symbols=spec, positions=xyz) for i in range(glo.cores)]
                         # Set reaction instance
@@ -437,7 +437,7 @@ def run(glo):
                             reacs['reac_'+str(i)].newReac(syspath + '/' + me.prodName, me.prodName, True, False)
                     except:
                         for i in range(glo.cores):
-                            reacs['reac_'+str(i)].newReacFromSMILE(me.prodName)
+                            reacs['reac_'+str(i)].newReacFromSMILE(me.prodName, False)
                 io.update_me_start(me.prodName, me.ene, MESpath)
 
         me.newspeciesFound = False

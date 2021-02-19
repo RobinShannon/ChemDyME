@@ -13,8 +13,8 @@ class MasterEq:
         self.visitedList = []
         self.eneList = []
         self.equilCount = 0
-        #self.MESCommand = os.environ['CHEMDYME_ME_PATH']
-        self.MESCommand = '/Users/RobinS/Documents/mesmerStoch/src/mesmer'
+        self.MESCommand = os.environ['CHEMDYME_ME_PATH']
+        #self.MESCommand = '/Users/RobinS/Documents/mesmerStoch/src/mesmer'
 
     def runTillReac(self, args2):
         p = Popen([self.MESCommand,args2], stdout=PIPE, stderr=PIPE)

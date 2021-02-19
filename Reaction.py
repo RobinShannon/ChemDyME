@@ -890,7 +890,7 @@ class Reaction:
         if opt:
             self.optReac()
 
-    def newReacFromSMILE(self, SMILE):
+    def newReacFromSMILE(self, SMILE, opt=False):
         self.ReacName = SMILE
         SMILE.replace('____', '.')
         SMILE.replace('comp', '.')
@@ -919,7 +919,8 @@ class Reaction:
         self.is_IntermediateProd = False
         self.AltProd = self.Reac.copy()
         self.TScorrect = False
-        self.optReac()
+        if opt:
+            self.optReac()
 
     def re_init(self, path):
         self.TS = read(path + '/Reac.xyz')
