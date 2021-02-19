@@ -275,7 +275,7 @@ class Trajectory:
                 awrite('temp.xyz', self.Mol)
                 coords = self.Mol.get_positions()
                 min = BFGS(self.Mol)
-                min.run(fmax=0.1, steps=50)
+                min.run(fmax=0.1, steps=5)
                 con2 = ChemDyME.Connectivity.NunezMartinez(self.Mol)
                 pmol_name = tl.getSMILES(self.Mol,False)
                 self.Mol.set_positions(coords)
