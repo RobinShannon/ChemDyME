@@ -5,6 +5,7 @@ import os
 from concurrent.futures import ProcessPoolExecutor as PE
 import copy
 from ChemDyME.OpenMMCalc import OpenMMCalculator
+import BXD_plotter as bp
 from statistics import mean
 
 class Trajectory:
@@ -246,13 +247,18 @@ class Trajectory:
                         next_v_vel[1]) + '\t' + str(next_v_vel[1]) + '\n')
                 hit_file.write(str(next_accel[0]) + '\t' + str(next_accel[1]) + '\n')
                 if str(previous_hit) == 'lower':
-                    hit_file.write(str(self.bxd.box_list[self.bxd.box].lower.d) + '\t' + str(
-                        self.bxd.box_list[self.bxd.box].lower.n[0]) + '\t' + str(
-                        self.bxd.box_list[self.bxd.box].lower.n[1]) + '\n')
+                    b = self.bxd.box_list[self.bxd.box].lower
+                    bplot = bp.boundary(b.d,b.n[0],b.n[1],prior_pos[0], prior_pos[1])
+                    line =  bplot.getLine(1)
+                    hit_file.write(str(line[0][0]) + '\t' + str(line[0][1]) + '\t' + str(line[1][0]) + '\t' + str(line[1][1]) + '\n')
+                    #hit_file.write(str(self.bxd.box_list[self.bxd.box].lower.d) + '\t' + str(
+                        #self.bxd.box_list[self.bxd.box].lower.n[0]) + '\t' + str(
+                        #self.bxd.box_list[self.bxd.box].lower.n[1]) + '\n')
                 elif str(previous_hit) == 'upper':
-                    hit_file.write(str(self.bxd.box_list[self.bxd.box].upper.d) + '\t' + str(
-                        self.bxd.box_list[self.bxd.box].upper.n[0]) + '\t' + str(
-                        self.bxd.box_list[self.bxd.box].upper.n[1]) + '\n')
+                    b = self.bxd.box_list[self.bxd.box].upper
+                    bplot = bp.boundary(b.d,b.n[0],b.n[1],prior_pos[0], prior_pos[1])
+                    line =  bplot.getLine(1)
+                    hit_file.write(str(line[0][0]) + '\t' + str(line[0][1]) + '\t' + str(line[1][0]) + '\t' + str(line[1][1]) + '\n')
                 hit_file.write(str(hit_post_contraint) + '\n')
                 hit_file.flush()
 
@@ -288,20 +294,20 @@ class Trajectory:
                         str(next_v_pos[0]) + '\t' + str(next_v_pos[1]) + '\t' + str(next_v_vel[0]) + '\t' + str(
                             next_v_vel[1]) + '\t' + str(next_v_vel[1]) + '\n')
                     double_hit_file.write(str(next_accel[0]) + '\t' + str(next_accel[1]) + '\n')
-                    double_hit_file.write(
-                        str(new_pos[0]) + '\t' + str(new_pos[1]) + '\t' + str(new_vel[0]) + '\t' + str(
-                            new_vel[1]) + '\n')
                     if new_bound == 'lower':
-                        double_hit_file.write(str(self.bxd.box_list[self.bxd.box].lower.d) + '\t' + str(
-                            self.bxd.box_list[self.bxd.box].lower.n[0]) + '\t' + str(
-                            self.bxd.box_list[self.bxd.box].lower.n[1]) + '\n')
+                        b = self.bxd.box_list[self.bxd.box].lower
+                        bplot = bp.boundary(b.d, b.n[0], b.n[1], prior_pos[0], prior_pos[1])
+                        line = bplot.getLine(1)
+                        hit_file.write(str(line[0][0]) + '\t' + str(line[0][1]) + '\t' + str(line[1][0]) + '\t' + str(line[1][1]) + '\n')
                     else:
-                        double_hit_file.write(str(self.bxd.box_list[self.bxd.box].upper.d) + '\t' + str(
-                            self.bxd.box_list[self.bxd.box].upper.n[0]) + '\t' + str(
-                            self.bxd.box_list[self.bxd.box].upper.n[1]) + '\n')
+                        b = self.bxd.box_list[self.bxd.box].lower
+                        bplot = bp.boundary(b.d, b.n[0], b.n[1], prior_pos[0], prior_pos[1])
+                        line = bplot.getLine(1)
+                        hit_file.write(str(line[0][0]) + '\t' + str(line[0][1]) + '\t' + str(line[1][0]) + '\t' + str(line[1][1]) + '\n')
                     double_hit_file.flush()
                 else:
                     new_hit = False
+
 
             try:
                 self.forces = self.mol.get_forces()

@@ -289,7 +289,7 @@ class Adaptive(BXD):
                 # Histogram the box data to get the averaged top and bottom values of s based on the assigned epsilon
                 self.box_list[self.box].get_s_extremes(self.histogram_boxes, self.epsilon)
                 bottom = self.box_list[self.box].bot
-                top = self.box_list[self.box].top
+                top = self.s
                 # use the bottom and top s to generate a new upper bound
                 b1 = self.convert_s_to_bound(bottom, top)
                 # copy this bound as it will form the lower bound of the next box
@@ -344,15 +344,22 @@ class Adaptive(BXD):
         """
         if not self.reverse:
             if self.progress_metric.end_type == 'distance':
-                if projected >= self.progress_metric.end_point and self.box_list[self.box].type != 'adap':
+                if projected >= self.progress_metric.end_point:
+                    self.box_list[self.box].get_s_extremes(self.histogram_boxes, self.epsilon)
+                    bottom = self.box_list[self.box].bot
+                    top = self.box_list[self.box].top
+                    # use the bottom and top s to generate a new upper bound
+                    b1 = self.convert_s_to_bound(bottom, top)
+                    self.box_list[self.box].upper = b1
+                    self.box_list[self.box].upper.transparent = False
+                    if self.box_list[self.box].type != 'adap':
+                        del self.box_list[-1]
                     if self.one_direction:
                         self.completed_runs += 1
-                        del self.box_list[-1]
                     else:
                         self.reverse = True
                         self.box_list[self.box].type = 'adap'
                         self.box_list[self.box].data = []
-                        del self.box_list[-1]
                         self.progress_metric.set_bxd_reverse(self.reverse)
             elif self.progress_metric.end_type == 'boxes':
                 if self.box >= self.progress_metric.end_point and self.box_list[self.box].type != 'adap':
