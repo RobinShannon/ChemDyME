@@ -113,9 +113,13 @@ class CartesianPrincipalCoordinates(CollectiveVariable):
         # Function to return n dimesnional vector of PC's
         # util contains Cythonized function for calculating the value of each PC at the geometry given by mol
     def get_s(self, mol):
+        try:
+            pos = mol.get_positions()
+        except:
+            pos = mol
         d = np.zeros(self.number_of_pcs)
         for i,pc in enumerate(self.pc_array):
-            s = np.vdot(pc,mol.get_positions())
+            s = np.vdot(pc,pos)
             d[i] = s
         return d
 

@@ -347,7 +347,7 @@ class Adaptive(BXD):
                 if projected >= self.progress_metric.end_point:
                     self.box_list[self.box].get_s_extremes(self.histogram_boxes, self.epsilon)
                     bottom = self.box_list[self.box].bot
-                    top = self.box_list[self.box].top
+                    top = self.s
                     # use the bottom and top s to generate a new upper bound
                     b1 = self.convert_s_to_bound(bottom, top)
                     self.box_list[self.box].upper = b1

@@ -218,6 +218,7 @@ class Langevin(MDIntegrator):
         self.c4 = self.friction / 2. * self.c5
         self.xi = 0
         self.eta = 0
+        self.BXDforce = 0
 
     def reset(self, timestep):
         self.c1 = timestep / 2. - timestep * timestep * self.friction / 8.
@@ -249,6 +250,10 @@ class Langevin(MDIntegrator):
         lagrangian = (-2.0 * np.vdot(b, c)) / np.vdot(b, (b * (1 / a)))
 
         self.discarded_velocities = self.current_velocities
+
+        self.BXDforce = lagrangian * del_phi * (1/self.masses)[:, None]
+
+        check = self.current_velocities * del_phi - self.old_velocities * del_phi
 
         # Update velocities
         self.current_velocities = (self.current_velocities + (lagrangian * del_phi * (1/self.masses)[:, None]))
@@ -420,7 +425,7 @@ class Langevin(MDIntegrator):
         self.constrained = True
 
 
-    def retry_pos(self, mol):
+    def retry_pos(self, mol, zero_forces = False):
             """
             This method returns the new positions after a single md timestep
             :param forces: array containing the forces at the current geometry
@@ -443,9 +448,11 @@ class Langevin(MDIntegrator):
 
             # Then get the next half step velocity and update the position.
             # NB currentVel is one full MD step behind currentPos
-            self.half_step_velocity = self.current_velocities + (self.c1 * accel - self.c2 * self.half_step_velocity + self.c3[:, None] * self.xi - self.c4[:, None] * self.eta)
-            self.current_positions = self.current_positions + 0.0001 * (self.timestep * self.half_step_velocity + self.c5[:,
-                        None] * self.eta)
+            if zero_forces:
+                self.half_step_velocity = self.current_velocities + (- self.c2 * self.half_step_velocity + self.c3[:, None]* self.xi - self.c4[:, None] * self.eta)
+            else:
+                self.half_step_velocity = self.current_velocities + (self.c1 * accel - self.c2 * self.half_step_velocity + self.c3[:, None] * self.xi - self.c4[:, None] * self.eta)
+            self.current_positions = self.current_positions + 0.0001 * (self.timestep * self.half_step_velocity + self.c5[:,None] * self.eta)
 
             mol.set_positions(self.current_positions)
             return

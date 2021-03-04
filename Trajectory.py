@@ -5,7 +5,7 @@ import os
 from concurrent.futures import ProcessPoolExecutor as PE
 import copy
 from ChemDyME.OpenMMCalc import OpenMMCalculator
-import BXD_plotter as bp
+import ChemDyME.BXD_plotter as bp
 from statistics import mean
 
 class Trajectory:
@@ -196,7 +196,7 @@ class Trajectory:
                 prior_vel =  copy.deepcopy(self.bxd.get_s(self.md_integrator.current_positions+(self.md_integrator.old_velocities * self.md_integrator.timestep)))
                 prior_v_vel = copy.deepcopy(self.bxd.get_s(self.md_integrator.current_positions+(self.md_integrator.old_velocities * self.md_integrator.timestep)))
                 prior_v_pos = copy.deepcopy(self.bxd.get_s(self.md_integrator.verlet_positions))
-                prior_accel = copy.deepcopy(self.bxd.get_s(self.md_integrator.old_positions+(self.md_integrator.timestep * 0.5 * self.md_integrator.accel)))
+                prior_accel = copy.deepcopy(self.bxd.get_s(self.md_integrator.old_positions+(self.md_integrator.BXDforce)))
                 self.bxd.get_s(self.md_integrator.current_velocities)
                 # If we have hit a bound get the md object to modify the velocities / positions appropriately.
                 self.md_integrator.constrain(del_phi)
@@ -270,8 +270,18 @@ class Trajectory:
                 if previous_hit == new_bound:
                     log_file.write("oops problem with inversion at multiple boundaries" +str('\n'))
                     self.mol.set_positions(self.md_integrator.old_positions)
-                    new_hit = self.bxd.box_list[self.bxd.box].lower.hit(self.bxd.get_s(self.mol), 'down') or self.bxd.box_list[self.bxd.box].upper.hit(self.bxd.get_s(self.mol), 'up')
-                    self.md_integrator.retry_pos(self.mol)
+                    old_hit = self.bxd.box_list[self.bxd.box].lower.hit(self.bxd.get_s(self.mol), 'down') or self.bxd.box_list[self.bxd.box].upper.hit(self.bxd.get_s(self.mol), 'up')
+                    if old_hit:
+                        self.mol.set_positions(self.md_integrator.current_positions)
+                        if new_bound == 'lower':
+                            self.bxd.box -= 1
+                        else:
+                            self.bxd.box += 1
+                    else:
+                        self.md_integrator.retry_pos(self.mol)
+                        new_hit = self.bxd.box_list[self.bxd.box].lower.hit(self.bxd.get_s(self.mol), 'down') or self.bxd.box_list[self.bxd.box].upper.hit(self.bxd.get_s(self.mol), 'up')
+                        if new_hit:
+                            self.md_integrator.retry_pos(self.mol, True)
                     new_pos = self.bxd.get_s(self.md_integrator.current_positions)
                     new_vel = self.bxd.get_s(self.md_integrator.half_step_velocity)
                     double_hit_file.write('new hit at step ' + str(iterations) + '\n')
@@ -288,22 +298,22 @@ class Trajectory:
                         str(post_pos[0]) + '\t' + str(post_pos[1]) + '\t' + str(post_vel[0]) + '\t' + str(
                             post_vel[1]) + '\t' + str(post_vel[1]) + '\n')
                     double_hit_file.write(
+                        str(new_pos[0]) + '\t' + str(new_pos[1]) + '\t' + str(new_vel[0]) + '\t' + str(
+                            new_vel[1]) + '\t' + str(new_vel[1]) + '\n')
+                    double_hit_file.write(
                         str(next_pos[0]) + '\t' + str(next_pos[1]) + '\t' + str(next_vel[0]) + '\t' + str(
                             next_vel[1]) + '\t' + str(next_vel[1]) + '\n')
-                    double_hit_file.write(
-                        str(next_v_pos[0]) + '\t' + str(next_v_pos[1]) + '\t' + str(next_v_vel[0]) + '\t' + str(
-                            next_v_vel[1]) + '\t' + str(next_v_vel[1]) + '\n')
                     double_hit_file.write(str(next_accel[0]) + '\t' + str(next_accel[1]) + '\n')
                     if new_bound == 'lower':
                         b = self.bxd.box_list[self.bxd.box].lower
                         bplot = bp.boundary(b.d, b.n[0], b.n[1], prior_pos[0], prior_pos[1])
                         line = bplot.getLine(1)
-                        hit_file.write(str(line[0][0]) + '\t' + str(line[0][1]) + '\t' + str(line[1][0]) + '\t' + str(line[1][1]) + '\n')
+                        double_hit_file.write(str(line[0][0]) + '\t' + str(line[0][1]) + '\t' + str(line[1][0]) + '\t' + str(line[1][1]) + '\n')
                     else:
                         b = self.bxd.box_list[self.bxd.box].lower
                         bplot = bp.boundary(b.d, b.n[0], b.n[1], prior_pos[0], prior_pos[1])
                         line = bplot.getLine(1)
-                        hit_file.write(str(line[0][0]) + '\t' + str(line[0][1]) + '\t' + str(line[1][0]) + '\t' + str(line[1][1]) + '\n')
+                        double_hit_file.write(str(line[0][0]) + '\t' + str(line[0][1]) + '\t' + str(line[1][0]) + '\t' + str(line[1][1]) + '\n')
                     double_hit_file.flush()
                 else:
                     new_hit = False
