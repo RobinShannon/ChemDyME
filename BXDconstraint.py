@@ -991,6 +991,7 @@ class Converging(BXD):
         for i in range(0, len(self.box_list) - 1):
             if i == 0:
                 self.box_list[i].gibbs = 0
+                self.box_list[i].gibbs_err = 0
             try:
                 k_eq = self.box_list[i].upper.average_rate / self.box_list[i + 1].lower.average_rate
                 K_eq_err = k_eq * np.sqrt((self.box_list[i].upper.rate_error/self.box_list[i].upper.average_rate)**2 + (self.box_list[i+1].lower.rate_error/self.box_list[i+1].lower.average_rate)**2)
@@ -1000,7 +1001,7 @@ class Converging(BXD):
                     delta_g = 0
                 delta_g_err = (K_eq_err) / k_eq
                 self.box_list[i + 1].gibbs = delta_g + self.box_list[i].gibbs
-                self.box_list[i + 1].gibbs_err = delta_g_err
+                self.box_list[i + 1].gibbs_err = delta_g_err + self.box_list[i].gibbs_err
             except:
                 self.box_list[i+1].gibbs = 0
                 self.box_list[i+1].gibbs_err = 0
@@ -1082,6 +1083,7 @@ class Converging(BXD):
         for i in range(0, len(self.box_list) - 1):
             if i == 0:
                 self.box_list[i].gibbs = 0
+                self.box_list[i].gibbs_err = 0
             try:
                 k_eq = self.box_list[i].upper.average_rate / self.box_list[i + 1].lower.average_rate
                 K_eq_err = k_eq * np.sqrt((self.box_list[i].upper.rate_error/self.box_list[i].upper.average_rate)**2 + (self.box_list[i+1].lower.rate_error/self.box_list[i+1].lower.average_rate)**2)
