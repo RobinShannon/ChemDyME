@@ -1034,7 +1034,7 @@ class Converging(BXD):
                     for sj in s:
                         sj -= s[0]
                     for j in range(0, len(dens)):
-                        d_err = 1/np.sqrt(float(dens[j]))
+                        d_err = np.sqrt(float(dens[j])) / (float(len(self.box_list[i].data))/data_frequency)
                         d = float(dens[j]) / (float(len(self.box_list[i].data))/data_frequency)
                         p = d * self.box_list[i].eq_population
                         p_err = p * np.sqrt((d_err / d) ** 2 + (self.box_list[i].eq_population_err / self.box_list[i].eq_population) ** 2)
