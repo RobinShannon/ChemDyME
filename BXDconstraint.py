@@ -956,7 +956,7 @@ class Converging(BXD):
         """
         return boundary.hits >= self.number_of_hits
 
-    def get_free_energy(self, T, boxes=1, milestoning = False, directory = 'Converging_Data', decorrelation_limit = 1):
+    def get_free_energy(self, T, boxes=1, milestoning = False, directory = 'Converging_Data', decorrelation_limit = 1, data_frequency=1):
         """
         Reads the data in the output directory to calculate the free_energy profile
         :param T: Temperature MD was run at in K
@@ -1030,18 +1030,18 @@ class Converging(BXD):
                     self.box_list[i].eq_population_err /= total_probability
                 last_s = 0
                 for i in range(0, len(self.box_list)):
-                    s, dens,ene= self.box_list[i].get_full_histogram(boxes)
+                    s, dens,ene= self.box_list[i].get_full_histogram(boxes,data_frequency)
                     for sj in s:
                         sj -= s[0]
                     for j in range(0, len(dens)):
                         d_err = 1/np.sqrt(float(dens[j]))
-                        d = float(dens[j]) / float(len(self.box_list[i].data))
+                        d = float(dens[j]) / (float(len(self.box_list[i].data))/data_frequency)
                         p = d * self.box_list[i].eq_population
                         p_err = p * np.sqrt((d_err / d) ** 2 + (self.box_list[i].eq_population_err / self.box_list[i].eq_population) ** 2)
-                        p = -1.0 * np.log(p)
-                        p_err = (p_err) / p
+                        p_log = -1.0 * np.log(p)
+                        p_log_err = (p_err) / p
                         s_path = s[j] + last_s
-                        profile.append((s_path, p, p_err, ene[j]))
+                        profile.append((s_path, p_log, p_log_err, ene[j]))
                     last_s += s[-1]
                 return profile
             except:
@@ -1114,7 +1114,8 @@ class Converging(BXD):
             return profile
 
     def histogram_full_profile(self, data, T, boxes):
-        data2 = [float(d[0]) for d in data]
+        data1 = data[0::10000]
+        data2 = [float(d[0]) for d in data1]
         top = max(data2)
         edges = []
         energies = []
@@ -1430,12 +1431,13 @@ class BXDBox:
             modified_data.append(ar)
         return modified_data
 
-    def get_full_histogram(self, boxes=10):
-        d = np.asarray([np.fromstring(d[0].replace('[', '').replace(']', ''), dtype=float, sep=' ') for d in self.data])
-        proj = np.asarray([float(d[2]) for d in self.data])
+    def get_full_histogram(self, boxes=10, data_frequency=1):
+        data1 = self.data[0::data_frequency]
+        d = np.asarray([np.fromstring(d[0].replace('[', '').replace(']', ''), dtype=float, sep=' ') for d in data1])
+        proj = np.asarray([float(d[2]) for d in data1])
         edge = (max(proj) - min(proj)) / boxes
         edges = np.arange(min(proj), max(proj),edge).tolist()
-        energy = np.asarray([float(d[3]) for d in self.data])
+        energy = np.asarray([float(d[3]) for d in data1])
         sub_bound_list = self.get_sub_bounds(boxes)
         hist = [0] * boxes
         energies = []
