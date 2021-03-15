@@ -1,0 +1,47 @@
+
+Atoms = 9
+
+C         -8.12373        1.15220       -0.00122
+C         -6.66179        1.14462       -0.04749
+H         -8.48380        0.86520        0.99134
+H         -8.53932        0.44918       -0.72942
+H         -8.51517        2.14812       -0.22953
+C         -5.46117        1.14334       -0.05555
+H         -4.39608        1.14805       -0.02718
+O         -5.49353        2.25029        6.80910
+H         -4.73533        2.06004        7.33074
+
+runType = MechGen
+Trajectory:
+        MDIntegrator = Langevin
+                    LangFriction = 0.1
+                    LangTemperature = 1000
+        mdSteps = 50000
+	full_geom_print
+        timeStep = 0.5
+        printFreq = 5
+        full_geom_print
+	printDynPath 100 200
+        endOnReaction = True
+        reactionWindow = 50
+        TrajectoryInitialTemp = 1000
+        name = Propyne
+        ReactionIterations = 20
+        BiReactant
+        BiTemp = 298
+        cores = 20
+        trajectoryMethod1 = dftb SCC none
+	trajectoryMethod2 = dftb SCC none
+        lowLevel = scine PM6 none
+        highLevel = scine PM6 none
+        singleLevel = molpro ccsd(t)-f12_avdz none
+BXD:
+        eneBXD = True
+        comBXD = False
+                 minCOM = 3.0
+                 fragment_indices = 7 8
+
+Master Equation:
+        maxSimulationTime = 10
+
+
