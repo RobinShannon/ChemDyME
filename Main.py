@@ -327,15 +327,15 @@ def run(glo):
             # check whether there is a possible bimolecular rection for current intermediate
             if len(glo.BiList) > 0 and glo.InitialBi == False:
                 print("looking at list of bimolecular candidates")
-                for i in range(0, len(glo.BiList)):
+                for b in range(0, len(glo.BiList)):
                     print("getting chemical symbols")
                     baseXYZ = reacs['reac_0'].CombReac.get_chemical_symbols()
-                    if me.time > (1.0 / float(glo.BiRates[i])):
+                    if me.time > (1.0 / float(glo.BiRates[b])):
                         print("assessing whether or not to look for bimolecular channel. Rate = " + str(
-                            float(glo.BiRates[i])) + " Mesmer reaction time = " + str(me.time))
+                            float(glo.BiRates[b])) + " Mesmer reaction time = " + str(me.time))
                         glo.InitialBi = True
-                        xyz = CT.get_bi_xyz(reacs['reac_0'].CombReac, glo.BiList[i])
-                        spec = np.append(baseXYZ, np.array(glo.BiList[i].get_chemical_symbols()))
+                        xyz = CT.get_bi_xyz(reacs['reac_0'].CombReac, glo.BiList[b])
+                        spec = np.append(baseXYZ, np.array(glo.BiList[b].get_chemical_symbols()))
                         combinedMols = [Atoms(symbols=spec, positions=xyz) for i in range(glo.cores)]
                         # Set reaction instance
                         for i in range(glo.cores):
@@ -368,7 +368,7 @@ def run(glo):
                                     name2 = 'traj_' + str(i)
                                     arguments1.append(reacs[name])
                                     arguments2.append(biTrajs[name2])
-                                arguments = list(zip(arguments1, arguments2, [minpath] * glo.cores, [MESpath] * glo.cores, range(glo.cores), [glo] * glo.cores, [glo.BiList[i]] * glo.cores))
+                                arguments = list(zip(arguments1, arguments2, [minpath] * glo.cores, [MESpath] * glo.cores, range(glo.cores), [glo] * glo.cores, [glo.BiList[b]] * glo.cores))
                                 p = multiprocessing.Pool(glo.cores)
                                 p.map(runNormal, arguments)
 
