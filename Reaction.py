@@ -506,30 +506,30 @@ class Reaction:
             self.TS._calc.close()
         except:
             pass
-        # try:
-        #     inc = - 10
-        #     while self.TScorrect == False and inc <= 10:
-        #         self.TS = MolList[TrajStart - inc].copy()
-        #         self.TS = tl.setCalc(self.TS, self.lowString, self.lowMeth, self.lowLev)
-        #         c = FixAtoms(trans)
-        #         self.TS.set_constraint(c)
-        #         min = BFGS(self.TS)
-        #         min.run(fmax=0.05, steps=50)
-        #         write(path + '/Data/TSGuess.xyz', self.TS)
-        #         TSGuess = self.TS.copy()
-        #         del self.TS.constraints
-        #         self.TS, rmol, pmol, irc_for, irc_rev = self.TS._calc.minimise_ts(raw_path, self.TS)
-        #         try:
-        #             self.TScorrect = self.compareRandP(rmol, pmol)
-        #         except:
-        #             self.TScorrect = False
-        #         inc += 1
-        #         try:
-        #             self.TS._calc.close()
-        #         except:
-        #             pass
-        # except:
-        #     pass
+        try:
+            inc = - 10
+            while self.TScorrect == False and inc <= 10:
+                self.TS = MolList[TrajStart - inc].copy()
+                self.TS = tl.setCalc(self.TS, self.lowString, self.lowMeth, self.lowLev)
+                c = FixAtoms(trans)
+                self.TS.set_constraint(c)
+                min = BFGS(self.TS)
+                min.run(fmax=0.05, steps=50)
+                write(path + '/Data/TSGuess.xyz', self.TS)
+                TSGuess = self.TS.copy()
+                del self.TS.constraints
+                self.TS, rmol, pmol, irc_for, irc_rev = self.TS._calc.minimise_ts(raw_path, self.TS)
+                try:
+                    self.TScorrect = self.compareRandP(rmol, pmol)
+                except:
+                    self.TScorrect = False
+                inc += 1
+                try:
+                    self.TS._calc.close()
+                except:
+                    pass
+        except:
+            pass
 
         if self.TScorrect:
             irc_ene = []

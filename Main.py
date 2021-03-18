@@ -138,7 +138,6 @@ def runNormal(p):
                         if p[0].is_bimol_prod == False and p[0].is_bimol_reac == False and p[0].barrierlessReaction == True:
                             p[0].barrierlessReaction = False
                             print('Isomerisation reaction does not have defined barrier, print anyway but be cautious')
-                            io.writeReactionXML(p[0], p[3], False)
                             io.writeReactionXML(p[0], p[3].replace('.xml', 'Full.xml'), False)
                         elif p[0].is_bimol_prod == False:
                             io.writeReactionXML(p[0], p[3], False)
