@@ -173,7 +173,7 @@ class Adaptive(BXD):
                                 after the previous hit.
     """
 
-    def __init__(self, progress_metric, stuck_limit=2,  fix_to_path=False, adaptive_steps=1000, epsilon=0.9,
+    def __init__(self, progress_metric, stuck_limit=2,  fix_to_path=True, adaptive_steps=1000, epsilon=0.9,
                  reassign_rate=2, one_direction = False, decorrelation_limit = 0):
         # call the base class init function to set up general parameters
         super(Adaptive, self).__init__(progress_metric, stuck_limit)
@@ -289,7 +289,7 @@ class Adaptive(BXD):
                 # Histogram the box data to get the averaged top and bottom values of s based on the assigned epsilon
                 self.box_list[self.box].get_s_extremes(self.histogram_boxes, self.epsilon)
                 bottom = self.box_list[self.box].bot
-                top = self.s
+                top = self.box_list[self.box].top
                 # use the bottom and top s to generate a new upper bound
                 b1 = self.convert_s_to_bound(bottom, top)
                 # copy this bound as it will form the lower bound of the next box
@@ -1408,7 +1408,7 @@ class BXDBox:
                 limit = h
                 break
         for i,h in enumerate(hist):
-            cumulative_probability += h / len(data)
+            cumulative_probability2 += h / len(data)
             if cumulative_probability2 > (1 - eps):
                 limit2 = i
                 break
@@ -1452,7 +1452,7 @@ class BXDBox:
                     pass
             try:
                 temp_ene = np.asarray(temp_ene)
-                energies.append(min(temp_ene))
+                energies.append(np.mean(temp_ene))
             except:
                 energies.append(0)
         return edges, hist, energies
