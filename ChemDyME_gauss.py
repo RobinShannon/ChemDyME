@@ -9,6 +9,7 @@ from ase.calculators.calculator import FileIOCalculator, EnvironmentError
 from pathlib import Path
 from shutil import copyfile
 import re
+import ChemDyME.Tools as tl
 
 class GaussianDynamics:
     calctype = 'optimizer'
@@ -113,8 +114,9 @@ class Gaussian(FileIOCalculator):
                     self.command = self.command.replace('GAUSSIAN', gau)
                     break
             else:
-                raise EnvironmentError('Missing Gaussian executable {}'
-                                       .format(gaussians))
+                #raise EnvironmentError('Missing Gaussian executable {}'
+                                       #.format(gaussians))
+                pass
         try:
             FileIOCalculator.calculate(self, *args, **kwargs)
         except:
@@ -123,6 +125,7 @@ class Gaussian(FileIOCalculator):
             while Path('gauserror'+str(i)+'.log').exists():
                 i += 1
             copyfile(self.label + '.log', 'gauserror'+str(i)+'.log')
+
     def write_input(self, atoms, properties=None, system_changes=None):
         FileIOCalculator.write_input(self, atoms, properties, system_changes)
         write(self.label + '.com', atoms, properties=properties,
@@ -155,13 +158,14 @@ class Gaussian(FileIOCalculator):
 
     def minimise_stable(self, path = os.getcwd(), atoms: Optional[Atoms] = None):
         opt = GaussianOptimizer(atoms, self)
-        opt.run(steps=100, opt='calcall cartesian')
+        opt.run(steps=100, opt='calcall cartesian',)
 
 
 
-    def minimise_ts_only(self, atoms):
-        opt = GaussianOptimizer(atoms, self)
-        opt.run(steps=100, opt='calcall, ts, noeigentest, cartesian')
+    def minimise_ts_only(self, atoms, ratoms, patoms):
+        opt = GaussianOptimizer(ratoms, self)
+        string = self.get_additional_lines(atoms,patoms)
+        opt.run(steps=100, opt='calcall, gts3, noeigentest', addsec=string)
 
     def read_vibs(self):
         vibs = []
@@ -190,6 +194,7 @@ class Gaussian(FileIOCalculator):
         vibs = []
         zpe = 0
         inp = open(str(self.label) + '.log', "r")
+        correct = True
         for line in inp:
             if re.search("Frequencies", line):
                 try:
@@ -206,14 +211,21 @@ class Gaussian(FileIOCalculator):
                 return 0
         if vibs[0] > -250:
             print("GaussianTS has no imaginary Frequency")
-            return
+            correct = False
         if vibs[1] < 0:
             print("GaussianTS has more than 1 imaginary Frequency")
-            return
+            correct = False
 
         zpe -= vibs[0]
         imaginaryFreq = abs((vibs[0]))
         vibs.pop(0)
         zpe *= 0.00012
         zpe /= 2
-        return vibs, zpe, imaginaryFreq
+        return vibs, zpe, imaginaryFreq, correct
+
+    def get_additional_lines(self,ts,p):
+        string1 = "Prod\n\n0 "+str(self.parameters['mult'])+"\n"
+        xyz1 = tl.convertMolToGauss(p)
+        string2 = "TS\n\n0 "+str(self.parameters['mult'])+"\n"
+        xyz2 = tl.convertMolToGauss(ts)
+        return string1+xyz1+string2+xyz2

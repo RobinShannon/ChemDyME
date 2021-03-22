@@ -549,12 +549,12 @@ class Reaction:
 
         self.TS = tl.setCalc(self.TS, self.highString, self.highMeth, self.highLev)
         try:
-            self.TS._calc.minimise_ts_only(self.TS)
-            copyfile(str(self.highString)+'gaussian.log',path + '/G1.xyz')
+            self.TScorrect = self.TS._calc.minimise_ts_only(self.TS,self.CombReac,self.CombProd)
+            copyfile(str(self.highString)+'gaussian.log',path + '/G1.log')
         except:
             self.TS = tl.setCalc(self.TS, self.lowString, self.lowMeth, self.lowLev)
         try:
-            self.TSFreqs, zpe, self.imaginaryFreq = self.TS._calc.read_ts_vibs()
+            self.TSFreqs, zpe, self.imaginaryFreq, self.TScorrect = self.TS._calc.read_ts_vibs()
         except:
             self.TS = tl.setCalc(self.TS, self.lowString, self.lowMeth, self.lowLev)
             self.TSFreqs, zpe, self.imaginaryFreq = self.characteriseTSFreqInternal(self.TS)
@@ -603,12 +603,12 @@ class Reaction:
             self.TS2, rmol, pmol, irc_for, irc_rev = self.TS2._calc.minimise_ts(raw_path, self.TS2)
             self.TS2 = tl.setCalc(self.TS2, self.highString, self.highMeth, self.highLev)
             try:
-                self.TS2._calc.minimise_ts_only(self.TS)
+                self.TS2correct = self.TS2._calc.minimise_ts_only(self.TS,self.CombReac,self.CombProd)
                 copyfile(str(self.highString) + 'gaussian.log', path + '/G2.xyz')
             except:
                 self.TS2 = tl.setCalc(self.TS2, self.lowString, self.lowMeth, self.lowLev)
             try:
-                self.TS2Freqs, zpe, self.imaginaryFreq2 = self.TS2._calc.read_ts_vibs()
+                self.TS2Freqs, zpe, self.imaginaryFreq2, self.TS2correct = self.TS2._calc.read_ts_vibs()
             except:
                 self.TS2 = tl.setCalc(self.TS2, self.lowString, self.lowMeth, self.lowLev)
                 self.TS2Freqs, zpe, self.imaginaryFreq2 = self.characteriseTSFreqInternal(self.TS2)
