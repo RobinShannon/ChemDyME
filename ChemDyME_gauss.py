@@ -158,14 +158,14 @@ class Gaussian(FileIOCalculator):
 
     def minimise_stable(self, path = os.getcwd(), atoms: Optional[Atoms] = None):
         opt = GaussianOptimizer(atoms, self)
-        opt.run(steps=100, opt='calcall cartesian',)
+        opt.run(steps=100, opt='calcall cartesian')
 
 
 
     def minimise_ts_only(self, atoms, ratoms, patoms):
         opt = GaussianOptimizer(ratoms, self)
         string = self.get_additional_lines(atoms,patoms)
-        opt.run(steps=100, opt='calcall, gts3, noeigentest', addsec=string)
+        opt.run(steps=100, opt='calcall, qst3, noeigentest', addsec=string)
 
     def read_vibs(self):
         vibs = []
