@@ -165,7 +165,8 @@ class Gaussian(FileIOCalculator):
     def minimise_ts_only(self, atoms, ratoms, patoms):
         opt = GaussianOptimizer(ratoms, self)
         string = self.get_additional_lines(atoms,patoms)
-        opt.run(steps=100, opt='calcall, qst3, noeigentest', addsec=string)
+        converged = opt.run(steps=100, opt='calcall, qst3, noeigentest', addsec=string)
+        return converged
 
     def read_vibs(self):
         vibs = []

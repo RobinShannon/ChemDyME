@@ -604,7 +604,7 @@ class Reaction:
             self.TS2 = tl.setCalc(self.TS2, self.highString, self.highMeth, self.highLev)
             try:
                 self.TS2correct = self.TS2._calc.minimise_ts_only(self.TS,self.CombReac,self.CombProd)
-                copyfile(str(self.highString) + 'gaussian.log', path + '/G2.xyz')
+                copyfile(str(self.highString) + 'gaussian.log', path + '/G2.log')
             except:
                 self.TS2 = tl.setCalc(self.TS2, self.lowString, self.lowMeth, self.lowLev)
             try:
