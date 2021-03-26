@@ -623,31 +623,9 @@ class Reaction:
             except:
                 pass
 
-            if self.TScorrect == False:
-                try:
-                    self.TS2correct = self.compareRandP(rmol, pmol)
-                except:
-                    self.TS2correct = False
         except:
             self.TS2correct = False
 
-
-        if self.TS2correct == True:
-            irc_ene = []
-            irc_rev.reverse()
-            irc = irc_rev + irc_for
-            for i in irc:
-                i = tl.setCalc(i, self.lowString, self.lowMeth, self.lowLev)
-                irc_ene.append(i.get_potential_energy())
-                try:
-                    i._calc.close()
-                except:
-                    pass
-            write(path + '/Data/IRC.xyz', irc)
-            with open(path + '/Data/irc_ene.txt', 'w') as f:
-                for ir in irc_ene:
-                    f.write(str(ir) + "\n")
-                f.close()
 
 
         write(path + '/TS2.xyz', self.TS2)
@@ -655,17 +633,16 @@ class Reaction:
 
 
 
-        if (self.forwardBarrier2 <= self.reactantEnergy and self.forwardBarrier2 <= self.productEnergy):
+        if (self.forwardBarrier <= self.reactantEnergy or self.forwardBarrier <= self.productEnergy):
             self.barrierlessReaction = True
 
-        if self.TS2correct == True:
+        if self.TScorrect == False and self.TS2correct == True:
             self.TS = self.TS2
             self.forwardBarrier = self.forwardBarrier2
             self.imaginaryFreq = self.imaginaryFreq2
             self.TSFreqs = self.TS2Freqs
 
-        if not self.TS2correct and not self.TS2correct and not self.is_bimol_reac:
-                self.barrierlessReaction = True
+
 
     def refineTSpoint(self, MolList, TrajStart):
 
