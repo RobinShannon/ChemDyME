@@ -5,6 +5,7 @@ import os
 from concurrent.futures import ProcessPoolExecutor as PE
 import copy
 from ChemDyME.OpenMMCalc import OpenMMCalculator
+from ChemDyME.ScineCalculator import SparrowCalculator
 import ChemDyME.BXD_plotter as bp
 from statistics import mean
 
@@ -92,8 +93,9 @@ class Trajectory:
             if parallel:
                 self.mol.set_calculator(OpenMMCalculator(self.calcMethod, self.mol, parallel=True))
             else:
-                self.mol.set_calculator(OpenMMCalculator(self.calcMethod, self.mol))
-
+                self.mol.set_calculator(SparrowCalculator())
+        else:
+            self.mol.set_calculator(SparrowCalculator())
         print(str(self.mol.get_potential_energy))
         # If print_to_file = True then setup an output directory. If the print_directory already exists then append
         # consecutive numbers to the "print_directory" prefix until a the name does not correspond to an existing
