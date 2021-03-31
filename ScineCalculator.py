@@ -20,7 +20,7 @@ class SparrowCalculator(Calculator):
     """
     implemented_properties = ['energy', 'forces']
 
-    def __init__(self, atoms: Optional[Atoms] = None, method='PM6', **kwargs):
+    def __init__(self, atoms: Optional[Atoms] = None, method='AM1', **kwargs):
         super().__init__(**kwargs)
         self.atoms = atoms
         self.method = method
