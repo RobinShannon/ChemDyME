@@ -1,0 +1,72 @@
+
+Atoms = 22
+
+C          0.43154        1.46216        0.31009
+C          1.40243        0.46212       -0.30693
+C          1.05596       -0.97250        0.10081
+C         -0.42273       -1.27372        0.04598
+C         -1.34400       -0.29980       -0.06609
+C         -1.00767        1.16266       -0.11024
+H          0.51195        1.41912        1.40387
+H          0.69890        2.48207        0.01160
+H          1.36930        0.55090       -1.40042
+H          2.42858        0.69446       -0.00041
+H          1.60181       -1.66007       -0.55625
+H          1.40874       -1.15525        1.12346
+C         -0.80031       -2.72455        0.12683
+H         -2.40043       -0.55211       -0.12305
+H         -1.69206        1.71309        0.54530
+H         -1.17915        1.52543       -1.13072
+H         -1.88510       -2.87027        0.09314
+H         -0.43398       -3.15949        1.06235
+H         -0.36296       -3.27852       -0.71001
+O          3.92228       -8.02383        0.95697
+O          5.27569       -7.68428        1.09354
+O          5.43991       -6.29365        1.02342
+
+runType = MechGen
+Trajectory:
+        MDIntegrator = Langevin
+                    LangFriction = 0.1
+                    LangTemperature = 1000
+        mdSteps = 50000
+	full_geom_print
+        timeStep = 0.5
+        printFreq = 5
+        full_geom_print
+	printDynPath 100 200
+        endOnReaction = True
+        reactionWindow = 5
+        TrajectoryInitialTemp = 1000
+        name = O2+But
+        ReactionIterations = 1
+        BiReactant
+        BiTemp = 298
+        cores = 10
+        trajectoryMethod1 = dftb SCC none
+	trajectoryMethod2 = dftb SCC none
+        lowLevel = scine PM6 none
+        highLevel = gaussian upm6_n_mix none
+        singleLevel = gaussian ub3lyp_6-31+G**_mix none
+	BiList = [O][O]
+	BiRate = 1000000
+BXD:
+        eneBXD = True
+                 eneUpper = 0.1
+                 eneLower = 0.0
+                 eneAdaptive = True
+		 adaptiveSteps = 1000
+                 eneMax = 15.0
+                 eneEvents = 1
+        comBXD = False
+                 minCOM = 2.5
+                 fragment_indices = 19 21
+
+Geometry Opt:
+
+Single Point:
+
+Master Equation:
+        maxSimulationTime = 1000
+        equilThreshold = 10
+
