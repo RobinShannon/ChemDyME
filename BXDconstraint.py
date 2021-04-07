@@ -810,7 +810,9 @@ class Converging(BXD):
             if decorrelated:
                 # Consult box_data_print_freqency to determine whether or not print the data to a file
                 if self.box_list[self.box].points_in_box != 0 and self.box_list[self.box].points_in_box % self.box_data_print_freqency == 0:
-                    self.data_file.write(str(self.s) + '\t' + str(projected_data) + '\t' + str(distance_from_bound) + '\t' + str(mol.get_potential_energy()) + '\t' + str(distance_from_upper) +'\n')
+                    line = str(self.s) + '\t' + str(projected_data) + '\t' + str(distance_from_bound) + '\t' + str(mol.get_potential_energy()) + '\t' + str(distance_from_upper)
+                    line = line.strip('\n')
+                    self.data_file.write( str(line) +'\n')
                 if self.box_list[self.box].points_in_box != 0 and self.box_list[self.box].points_in_box % self.box_geom_print_freqency == 0:
                     write(str(self.box_list[self.box].geom_path),mol,append=True)
                 self.box_list[self.box].points_in_box += 1

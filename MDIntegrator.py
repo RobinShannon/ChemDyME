@@ -463,5 +463,8 @@ class Langevin(MDIntegrator):
         :param mol: ASE atoms object
         :return: output string
         """
-        out = " Temperature = " + str(mol.get_temperature()) + ' Total_energy = ' +str(mol.get_potential_energy() + mol.get_kinetic_energy())
+        try:
+            out = " Temperature = " + str(mol.get_temperature()) + ' Total_energy = ' +str(mol.get_potential_energy() + mol.get_kinetic_energy())
+        except:
+            out = " Potential Energy  = " + str(mol.get_potential_energy())
         return out
