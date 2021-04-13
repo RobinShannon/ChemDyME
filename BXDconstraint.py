@@ -1548,7 +1548,11 @@ class BXDBound:
                 path += '/lower_rates.txt'
         file = open(path, 'r')
         rates = np.loadtxt(file)
-        rates = rates[rates > decorrelation_limit]
+        maxi = np.max(rates)
+        if maxi > 2.0 * decorrelation_limit:
+            rates = rates[rates > decorrelation_limit]
+        else:
+            rates = rates[rates > 2]
         self.rates = 1.0 / rates
         self.average_rate = np.mean(self.rates)
         self.rate_error = np.std(self.rates) / np.sqrt(len(self.rates))
