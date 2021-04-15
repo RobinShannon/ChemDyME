@@ -5,9 +5,10 @@ import os
 from concurrent.futures import ProcessPoolExecutor as PE
 import copy
 from ChemDyME.OpenMMCalc import OpenMMCalculator
-from ChemDyME.ScineCalculator import SparrowCalculator
-import ChemDyME.BXD_plotter as bp
-from statistics import mean
+try:
+    from ChemDyME.ScineCalculator import SparrowCalculator
+except:
+    pass
 
 class Trajectory:
     """
@@ -93,7 +94,7 @@ class Trajectory:
             if parallel:
                 self.mol.set_calculator(OpenMMCalculator(self.calcMethod, self.mol, parallel=True))
             else:
-                self.mol.set_calculator(SparrowCalculator())
+                self.mol.set_calculator(OpenMMCalculator(self.calcMethod, self.mol, parallel=False))
         else:
             self.mol.set_calculator(SparrowCalculator())
         print(str(self.mol.get_potential_energy))
