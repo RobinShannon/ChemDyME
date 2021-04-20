@@ -946,6 +946,9 @@ class Converging(BXD):
                 self.reverse = False
                 self.progress_metric.set_bxd_reverse(self.reverse)
                 self.completed_runs += 1
+                for bx in self.box_list:
+                    bx.upper.hits=0
+                    bx.lower.hits=0
 
     def stuck_fix(self):
         pass
