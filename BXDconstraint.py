@@ -1533,7 +1533,7 @@ class BXDBound:
         else:
             return False
 
-    def average_rates(self, milestoning, bound, path, decorrelation_limit):
+    def average_rates(self, milestoning, bound, path, decorrelation_limit, prune=False):
         if milestoning:
             if bound == 'upper':
                 path += '/upper_milestoning.txt'
@@ -1546,6 +1546,11 @@ class BXDBound:
                 path += '/lower_rates.txt'
         file = open(path, 'r')
         rates = np.loadtxt(file)
+        if prune:
+            length=int(len(rates)/10)
+            rates = np.sort(rates)
+            rates = rates[:-length]
+            rates=rates[length:]
         maxi = np.max(rates)
         if maxi > 2.0 * decorrelation_limit:
             rates = rates[rates > decorrelation_limit]
