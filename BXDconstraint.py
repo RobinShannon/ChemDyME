@@ -941,14 +941,12 @@ class Converging(BXD):
                 print('reversing')
         # If we are reversing then check whether we are back in box 0 and the run is complete
         elif self.box == self.start_box and self.reverse is True:
-            # If converge_ends then make sure the first bound meets the bound_hits criteria
-            if not self.converge_ends or self.criteria_met(self.box_list[self.box].lower):
-                self.reverse = False
-                self.progress_metric.set_bxd_reverse(self.reverse)
-                self.completed_runs += 1
-                for bx in self.box_list:
-                    bx.upper.hits=0
-                    bx.lower.hits=0
+            self.reverse = False
+            self.progress_metric.set_bxd_reverse(self.reverse)
+            self.completed_runs += 1
+            for bx in self.box_list:
+                bx.upper.hits=0
+                bx.lower.hits=0
 
     def stuck_fix(self):
         pass
@@ -1313,9 +1311,6 @@ class Converging(BXD):
                 self.box_list[self.box].lower_non_milestoning_count = 0
                 self.box_list[self.box].upper_non_milestoning_count = 0
                 self.box_list[self.box].last_hit = 'upper'
-                if self.box == 0:
-                    self.reverse = False
-                    self.completed_runs += 1
                 return False
             else:
                 self.bound_hit = 'lower'
