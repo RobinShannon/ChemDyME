@@ -1533,7 +1533,7 @@ class BXDBound:
         else:
             return False
 
-    def average_rates(self, milestoning, bound, path, decorrelation_limit, prune=False):
+    def average_rates(self, milestoning, bound, path, decorrelation_limit, prune=True):
         if milestoning:
             if bound == 'upper':
                 path += '/upper_milestoning.txt'
