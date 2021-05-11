@@ -125,8 +125,9 @@ class Curve(ProgressMetric):
                              BXDConstraint class
     """
 
-    def __init__(self, path, collective_variable, max_nodes_skiped=1, one_direction=False, end_point=0,  end_type='distance'):
+    def __init__(self, path, collective_variable, max_nodes_skiped=1, one_direction=False, end_point=0,  end_type='distance', include_distance_from_path =False):
         self.collective_variable = collective_variable
+        self.include_distance_from_path = include_distance_from_path
         self.start_s = path.s[0]
         self.path = path
         self.max_nodes_skipped = max_nodes_skiped
@@ -240,6 +241,8 @@ class Curve(ProgressMetric):
         self.path_segment = closest_segment
         # To get the total distance along the path add the total distance along all segments seg < minPoint
         p += self.path.total_distance[closest_segment]
+        if self.include_distance_from_path:
+            p -= minim
         return p
 
     def get_node(self, s):

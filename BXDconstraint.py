@@ -1342,8 +1342,12 @@ class Converging(BXD):
 
 
     def output(self):
-        out = " box = " + str(self.box) + ' Lower Bound Hits = ' + str(self.box_list[self.box].lower.hits) + \
-              ' Upper Bound Hits = ' + str(self.box_list[self.box].upper.hits) + ' Sampled points = ' + str(len(self.box_list[self.box].data))
+        out = (" box = " + str(self.box) + ' Lower Bound Hits = ' + str(self.box_list[self.box].lower.hits)
+               + ' Upper Bound Hits = ' + str(self.box_list[self.box].upper.hits) + ' path segment = '
+               + str(self.progress_metric.path_segment) + ' % progress = ' +
+               str(self.progress_metric.project_point_on_path(self.s) / self.progress_metric.end_point) +
+               " distance from path  = " + str(self.progress_metric.distance_from_path) +
+               ' Sampled points = ' + str(len(self.box_list[self.box].data)))
         return out
 
 class BXDBox:
