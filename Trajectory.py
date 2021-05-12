@@ -221,7 +221,7 @@ class Trajectory:
                 hit_file.write('new hit at step ' + str(iterations) + '\n')
                 hit_file.write('bound ' + str(previous_hit) + '\n')
                 hit_file.flush()
-                print("single hit KE " + str(self.mol.get_kinetic_energy()))
+
             while bounded and new_hit:
                 print("double hit KE " + str(self.mol.get_kinetic_energy()))
                 if self.bxd.box_list[self.bxd.box].lower.hit(self.bxd.get_s(self.mol), 'down'):

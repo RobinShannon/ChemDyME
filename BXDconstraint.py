@@ -174,9 +174,10 @@ class Adaptive(BXD):
     """
 
     def __init__(self, progress_metric, stuck_limit=2,  fix_to_path=True, adaptive_steps=1000, epsilon=0.9,
-                 reassign_rate=2, one_direction = False, decorrelation_limit = 0):
+                 reassign_rate=2, one_direction = False, decorrelation_limit = 0, adaptive_reverse = False):
         # call the base class init function to set up general parameters
         super(Adaptive, self).__init__(progress_metric, stuck_limit)
+        self.adaptive_reverse = adaptive_reverse
         self.fix_to_path = fix_to_path
         self.one_direction = one_direction
         self.adaptive_steps = adaptive_steps
@@ -324,6 +325,11 @@ class Adaptive(BXD):
                 self.box_list[self.box].upper.transparent = False
                 self.box += 1
                 self.box_list[self.box].lower.transparent = True
+            if self.adaptive_reverse:
+                self.reverse = True
+                self.box_list[self.box].lower.pause = True
+                self.box_list[self.box].upper.pause = True
+                self.box_list[self.box].data = []
 
     def get_default_box(self, lower, upper):
         """
@@ -487,7 +493,12 @@ class Adaptive(BXD):
 
         #Check for hit against upper boundary
         if self.box_list[self.box].upper.hit(self.s, 'up'):
+            if self.reverse and self.box_list[self.box].upper.pause:
+                self.bound_hit = 'upper'
+                self.box_list[self.box].upper.hits += 1
+                return True
             if not self.reverse and self.steps_since_any_boundary_hit > self.decorrelation_limit:
+                self.box_list[self.box].upper.pause = False
                 self.box_list[self.box].upper.transparent = False
                 self.box_list[self.box].lower.transparent = True
                 self.box_list[self.box].data = []
@@ -501,6 +512,9 @@ class Adaptive(BXD):
                 self.box_list[self.box].upper.hits += 1
                 return True
         elif self.box_list[self.box].lower.hit(self.s, 'down'):
+            if self.box_list[self.box].lower.pause and self.reverse:
+                self.reverse = False
+                self.box_list[self.box].lower.pause = False
             if self.reverse and not self.box_list[self.box].type == 'adap' and self.steps_since_any_boundary_hit > self.decorrelation_limit:
                 self.box_list[self.box].data = []
                 self.box -= 1
@@ -1511,6 +1525,7 @@ class BXDBound:
         self.rate_error = 0
         self.invisible = False
         self.s_point = 0
+        self.pause = False
 
     def reset(self):
         self.hits = 0
