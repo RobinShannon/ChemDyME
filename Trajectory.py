@@ -232,17 +232,16 @@ class Trajectory:
                     log_file.write("oops problem with inversion at multiple boundaries" +str('\n'))
                     self.mol.set_positions(self.md_integrator.old_positions)
                     old_hit = self.bxd.box_list[self.bxd.box].lower.hit(self.bxd.get_s(self.mol), 'down') or self.bxd.box_list[self.bxd.box].upper.hit(self.bxd.get_s(self.mol), 'up')
-                    if old_hit:
-                        self.mol.set_positions(self.md_integrator.current_positions)
-                        if new_bound == 'lower':
-                            self.bxd.box -= 1
-                        else:
-                            self.bxd.box += 1
-                    else:
-                        self.md_integrator.retry_pos(self.mol)
-                        new_hit = self.bxd.box_list[self.bxd.box].lower.hit(self.bxd.get_s(self.mol), 'down') or self.bxd.box_list[self.bxd.box].upper.hit(self.bxd.get_s(self.mol), 'up')
-                        if new_hit:
-                            self.md_integrator.retry_pos(self.mol, True)
+                    #if old_hit:
+                        #self.mol.set_positions(self.md_integrator.current_positions)
+                        #if new_bound == 'lower':
+                           # self.bxd.box -= 1
+                        #else:
+                           # self.bxd.box += 1
+                    self.md_integrator.retry_pos(self.mol)
+                    new_hit = self.bxd.box_list[self.bxd.box].lower.hit(self.bxd.get_s(self.mol), 'down') or self.bxd.box_list[self.bxd.box].upper.hit(self.bxd.get_s(self.mol), 'up')
+                    if new_hit:
+                        self.md_integrator.retry_pos(self.mol, True)
 
                     double_hit_file.write('new hit at step ' + str(iterations) + '\n')
                     double_hit_file.write('previous bound ' + str(previous_hit) + '\n')
