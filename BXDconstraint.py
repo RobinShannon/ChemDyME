@@ -174,7 +174,7 @@ class Adaptive(BXD):
     """
 
     def __init__(self, progress_metric, stuck_limit=2,  fix_to_path=True, adaptive_steps=1000, epsilon=0.9,
-                 reassign_rate=2, one_direction = False, decorrelation_limit = 0, adaptive_reverse = False):
+                 reassign_rate=6, one_direction = False, decorrelation_limit = 0, adaptive_reverse = False):
         # call the base class init function to set up general parameters
         super(Adaptive, self).__init__(progress_metric, stuck_limit)
         self.adaptive_reverse = adaptive_reverse
@@ -230,7 +230,13 @@ class Adaptive(BXD):
 
         # Check whether we are in an adaptive sampling regime.
         # If so update_adaptive_bounds checks current number of samples and controls new boundary placement
-        if self.box_list[self.box].type == "adap":
+
+        if self.adaptive_reverse:
+            wait = self.test_new_bound(self.s)
+        else:
+            wait = False
+
+        if self.box_list[self.box].type == "adap" and not wait:
             self.update_adaptive_bounds()
 
         self.reached_end(projected_data)
@@ -271,6 +277,19 @@ class Adaptive(BXD):
                     self.furthest_progress = projected_data
                     self.geometry_of_furthest_point = mol.copy()
 
+    def test_new_bound(self,s):
+        if len(self.box_list[self.box].data) > self.adaptive_steps:
+            self.box_list[self.box].get_s_extremes(self.histogram_boxes, self.epsilon)
+            # Test to see if new bound is already hit
+            bottom = self.box_list[self.box].bot
+            top = self.box_list[self.box].top
+            b1 = self.convert_s_to_bound(bottom, top)
+            if b1.hit(s,'upper'):
+                return True
+            else:
+                return False
+        else:
+            return False
 
 
 
@@ -379,7 +398,7 @@ class Adaptive(BXD):
                         del self.box_list[-1]
                         self.progress_metric.set_bxd_reverse(self.reverse)
         else:
-            if self.box == 0:
+            if self.box == 0 and not self.adaptive_reverse:
                 self.completed_runs += 1
                 self.reverse = False
                 self.progress_metric.set_bxd_reverse(self.reverse)
@@ -973,7 +992,7 @@ class Converging(BXD):
         """
         return boundary.hits >= self.number_of_hits
 
-    def get_free_energy(self, T, boxes=1, milestoning = False, directory = 'Converging_Data', decorrelation_limit = 1, data_frequency=1):
+    def get_free_energy(self, T, boxes=1, milestoning = False, directory = 'Converging_Data', decorrelation_limit = 1, data_frequency=1, prune=False):
         """
         Reads the data in the output directory to calculate the free_energy profile
         :param T: Temperature MD was run at in K
@@ -993,11 +1012,11 @@ class Converging(BXD):
         for i,box in enumerate(self.box_list):
             temp_dir = directory + ("/box_" + str(i) + '/')
             try:
-                box.upper.average_rates(milestoning, 'upper', temp_dir, decorrelation_limit)
+                box.upper.average_rates(milestoning, 'upper', temp_dir, decorrelation_limit, prune)
             except:
                 box.lower.average_rate = 0
             try:
-                box.lower.average_rates(milestoning, 'lower', temp_dir, decorrelation_limit)
+                box.lower.average_rates(milestoning, 'lower', temp_dir, decorrelation_limit, prune)
             except:
                 box.lower.average_rate = 0
             try:
