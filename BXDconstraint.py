@@ -231,7 +231,7 @@ class Adaptive(BXD):
         # Check whether we are in an adaptive sampling regime.
         # If so update_adaptive_bounds checks current number of samples and controls new boundary placement
 
-        if self.adaptive_reverse:
+        if self.adaptive_reverse and not self.reverse:
             wait = self.test_new_bound(self.s)
         else:
             wait = False
@@ -285,8 +285,10 @@ class Adaptive(BXD):
             top = self.box_list[self.box].top
             b1 = self.convert_s_to_bound(bottom, top)
             if b1.hit(s,'upper'):
+                print('adaptive bound placement already passed. Wait!')
                 return True
             else:
+                print('proceed with bound placement')
                 return False
         else:
             return False
@@ -343,12 +345,15 @@ class Adaptive(BXD):
                 self.box_list[self.box].active = True
                 self.box_list[self.box].upper.transparent = False
                 self.box += 1
+                self.box_list[self.box].lower.pause = False
                 self.box_list[self.box].lower.transparent = True
-            if self.adaptive_reverse:
+            if self.adaptive_reverse and not self.reverse:
                 self.reverse = True
                 self.box_list[self.box].lower.pause = True
                 self.box_list[self.box].upper.pause = True
                 self.box_list[self.box].data = []
+                print('placed adaptive bound now reverse')
+                self.box_list[self.box].type = "adap"
 
     def get_default_box(self, lower, upper):
         """
@@ -541,9 +546,9 @@ class Adaptive(BXD):
                 self.box_list[self.box].min_segment = self.progress_metric.path_segment
                 self.new_box = True
                 self.box_list[self.box].max_segment = self.progress_metric.path_segment
-                if self.box == 0:
+                if self.box == 0 and not self.adaptive_reverse:
+                    self.completed_runs +=1
                     self.reverse = False
-                    self.completed_runs += 1
                 self.box_list[self.box].type = 'adap'
                 return False
             else:
