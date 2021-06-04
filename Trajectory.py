@@ -239,9 +239,7 @@ class Trajectory:
                         #else:
                            # self.bxd.box += 1
                     self.md_integrator.retry_pos(self.mol)
-                    new_hit = self.bxd.box_list[self.bxd.box].lower.hit(self.bxd.get_s(self.mol), 'down') or self.bxd.box_list[self.bxd.box].upper.hit(self.bxd.get_s(self.mol), 'up')
-                    if new_hit:
-                        self.md_integrator.retry_pos(self.mol, True)
+                    new_hit = False
 
                     double_hit_file.write('new hit at step ' + str(iterations) + '\n')
                     double_hit_file.write('previous bound ' + str(previous_hit) + '\n')

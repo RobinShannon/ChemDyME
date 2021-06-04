@@ -3,7 +3,7 @@ import numpy as np
 from ase.io import read, write
 import os
 from copy import deepcopy
-
+import re
 
 class BXD:
     """
@@ -231,7 +231,7 @@ class Adaptive(BXD):
         # Check whether we are in an adaptive sampling regime.
         # If so update_adaptive_bounds checks current number of samples and controls new boundary placement
 
-        if self.adaptive_reverse and not self.reverse:
+        if self.adaptive_reverse and not self.reverse and self.box_list[self.box].type == "adap":
             wait = self.test_new_bound(self.s)
         else:
             wait = False
@@ -850,7 +850,7 @@ class Converging(BXD):
                 if self.box_list[self.box].points_in_box != 0 and self.box_list[self.box].points_in_box % self.box_data_print_freqency == 0:
                     s_mod = str(self.s).strip('\t')
                     s_mod = s_mod.strip('\n')
-                    line = str(self.s) + '\t' + str(projected_data) + '\t' + str(distance_from_bound) + '\t' + str(mol.get_potential_energy()) + '\t' + str(distance_from_upper)
+                    line = str(s_mod) + '\t' + str(projected_data) + '\t' + str(distance_from_bound) + '\t' + str(mol.get_potential_energy()) + '\t' + str(distance_from_upper)
                     line = line.strip('\n')
                     self.data_file.write(line +'\n')
                 if self.box_list[self.box].points_in_box != 0 and self.box_list[self.box].points_in_box % self.box_geom_print_freqency == 0:
@@ -1477,7 +1477,7 @@ class BXDBox:
 
     def get_full_histogram(self, boxes=10, data_frequency=1):
         data1 = self.data[0::data_frequency]
-        d = np.asarray([np.fromstring(d[0].replace('[', '').replace(']', ''), dtype=float, sep='\s+') for d in data1])
+        d = np.asarray([np.fromstring(d[0].replace('[', '').replace(']', ''), dtype=float, sep='\s') for d in data1])
         proj = np.asarray([float(d[2]) for d in data1])
         edge = (max(proj) - min(proj)) / boxes
         edges = np.arange(min(proj), max(proj),edge).tolist()
@@ -1530,9 +1530,10 @@ class BXDBox:
         file = open(path, 'r')
         for line in file.readlines():
             line = line.rstrip('\n')
-            line = line.split('\t')
-            if float(line[2]) >= 0 and len(line) == 5:
-                self.data.append(line)
+            workstr = re.sub('\s+', '\t', line)
+            workstr = workstr.split('\t')
+            if float(workstr[2]) >= 0 and len(workstr) == 5:
+                self.data.append(workstr)
 
 
 
