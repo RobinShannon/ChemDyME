@@ -1477,7 +1477,7 @@ class BXDBox:
 
     def get_full_histogram(self, boxes=10, data_frequency=1):
         data1 = self.data[0::data_frequency]
-        d = np.asarray([np.fromstring(d[0].replace('[', '').replace(']', ''), dtype=float, sep='\s') for d in data1])
+        d = np.asarray([np.fromstring(d[0].replace('[', '').replace(']', ''), dtype=float, sep='\t') for d in data1])
         proj = np.asarray([float(d[2]) for d in data1])
         edge = (max(proj) - min(proj)) / boxes
         edges = np.arange(min(proj), max(proj),edge).tolist()
