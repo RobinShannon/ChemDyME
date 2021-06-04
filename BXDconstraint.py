@@ -1530,7 +1530,7 @@ class BXDBox:
         file = open(path, 'r')
         for line in file.readlines():
             line = line.rstrip('\n')
-            workstr = re.sub('\s+', '\t', line)
+            workstr = re.sub('\s{2+}', '\t', line)
             workstr = workstr.split('\t')
             if float(workstr[2]) >= 0 and len(workstr) == 5:
                 self.data.append(workstr)
