@@ -1475,30 +1475,46 @@ class BXDBox:
             modified_data.append(ar)
         return modified_data
 
-    def get_full_histogram(self, boxes=10, data_frequency=1):
+    def get_full_histogram(self, boxes=10, data_frequency=1, sub_bounds = False):
         data1 = self.data[0::data_frequency]
         d = np.asarray([np.fromstring(d[0].replace('[', '').replace(']', ''), dtype=float, sep='\t') for d in data1])
-        proj = np.asarray([float(d[2]) for d in data1])
+        proj = np.asarray([float(d[1]) for d in data1])
         edge = (max(proj) - min(proj)) / boxes
         edges = np.arange(min(proj), max(proj),edge).tolist()
         energy = np.asarray([float(d[3]) for d in data1])
         sub_bound_list = self.get_sub_bounds(boxes)
         hist = [0] * boxes
         energies = []
-        for j in range(0, boxes):
-            temp_ene = []
-            for ene,da in zip(energy,d):
+        if sub_bounds:
+            for j in range(0, boxes):
+                temp_ene = []
+                for ene,da in zip(energy,d):
+                    try:
+                        if not (sub_bound_list[j+1].hit(da,"up")) and not (sub_bound_list[j].hit(da,"down")):
+                            hist[j] += 1
+                            temp_ene.append(float(ene))
+                    except:
+                        pass
                 try:
-                    if not (sub_bound_list[j+1].hit(da,"up")) and not (sub_bound_list[j].hit(da,"down")):
-                        hist[j] += 1
-                        temp_ene.append(float(ene))
+                    temp_ene = np.asarray(temp_ene)
+                    energies.append(np.mean(temp_ene))
                 except:
-                    pass
-            try:
-                temp_ene = np.asarray(temp_ene)
-                energies.append(np.mean(temp_ene))
-            except:
-                energies.append(0)
+                    energies.append(0)
+        else:
+            for j in range(0, boxes):
+                temp_ene = []
+                for ene,da in zip(energy,proj):
+                    try:
+                        if da > edges[j] and da <= edges[j+1]:
+                            hist[j] += 1
+                            temp_ene.append(float(ene))
+                    except:
+                        pass
+                try:
+                    temp_ene = np.asarray(temp_ene)
+                    energies.append(np.mean(temp_ene))
+                except:
+                    energies.append(0)
         return edges, hist, energies
 
     def get_sub_bounds(self, boxes):
