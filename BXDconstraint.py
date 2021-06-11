@@ -1482,6 +1482,7 @@ class BXDBox:
         mini = min(proj)
         edge = (max(proj) - min(proj)) / boxes
         edges = np.arange(min(proj), max(proj),edge).tolist()
+        edges.append(max(proj))
         energy = np.asarray([float(d[3]) for d in data1])
         sub_bound_list = self.get_sub_bounds(boxes)
         hist = [0] * boxes
@@ -1506,7 +1507,7 @@ class BXDBox:
                 temp_ene = []
                 for ene,da in zip(energy,proj):
                     try:
-                        if (da-mini) > edges[j] and (da-mini) <= edges[j+1]:
+                        if (da) > edges[j] and (da) <= edges[j+1]:
                             hist[j] += 1
                             temp_ene.append(float(ene))
                     except:
