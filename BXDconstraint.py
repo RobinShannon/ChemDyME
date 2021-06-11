@@ -173,7 +173,7 @@ class Adaptive(BXD):
                                 after the previous hit.
     """
 
-    def __init__(self, progress_metric, stuck_limit=2,  fix_to_path=True, adaptive_steps=1000, epsilon=0.9,
+    def __init__(self, progress_metric, stuck_limit=25,  fix_to_path=True, adaptive_steps=1000, epsilon=0.9,
                  reassign_rate=6, one_direction = False, decorrelation_limit = 0, adaptive_reverse = False):
         # call the base class init function to set up general parameters
         super(Adaptive, self).__init__(progress_metric, stuck_limit)
@@ -539,6 +539,7 @@ class Adaptive(BXD):
             if self.box_list[self.box].lower.pause and self.reverse:
                 self.reverse = False
                 self.box_list[self.box].lower.pause = False
+                self.box_list[self.box].type = 'normal'
             if self.reverse and not self.box_list[self.box].type == 'adap' and self.steps_since_any_boundary_hit > self.decorrelation_limit:
                 self.box_list[self.box].data = []
                 self.box -= 1
