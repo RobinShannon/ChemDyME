@@ -1486,9 +1486,9 @@ class BXDBox:
         edges.append(max(proj))
         energy = np.asarray([float(d[3]) for d in data1])
         sub_bound_list = self.get_sub_bounds(boxes)
-        hist = [0] * boxes
+        hist = [1] * boxes
         energies = []
-        if sub_bounds:
+        if not sub_bounds:
             for j in range(0, boxes):
                 temp_ene = []
                 for ene,da in zip(energy,d):
