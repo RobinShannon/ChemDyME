@@ -851,7 +851,7 @@ class Converging(BXD):
                 if self.box_list[self.box].points_in_box != 0 and self.box_list[self.box].points_in_box % self.box_data_print_freqency == 0:
                     line = 'S\t=\t'
                     for s in self.s:
-                        s_mod = s.replace('\r', '').replace('\n', '')
+                        s_mod = str(s).replace('\r', '').replace('\n', '')
                         line = line + str(s_mod) + '\t'
                     line = line + 'Projected\t=\t' + str(projected_data) + '\tpotential_energy\t' + str(mol.get_potential_energy())
                     self.data_file.write(line +'\n')
