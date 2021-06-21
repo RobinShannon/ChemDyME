@@ -1475,7 +1475,7 @@ class BXDBox:
     def convert_s_to_bound(self, lower, upper):
         pass
 
-    def read_box_data(self, path):
+    def read_box_data_old(self, path):
         path += '/box_data.txt'
         file = open(path, 'r')
         for line in file.readlines():
@@ -1485,13 +1485,13 @@ class BXDBox:
             if float(workstr[2]) >= 0 and len(workstr) == 5:
                 self.data.append(workstr)
 
-    def read_box_data_new(self, path):
+    def read_box_data(self, path):
         path += '/box_data.txt'
         file = open(path, 'r')
         for line in file.readlines():
-            s = line.split('projected')[0].strip('S\t=')
-            p = line.split('projected')[1].split('potential_energy')[0].strip('=')
-            e = line.split('projected')[1].split('potential_energy')[1].strip('=')
+            s = line.split('Projected')[0].strip('S\t=')
+            p = line.split('Projected')[1].split('potential_energy')[0].strip('\t=\t')
+            e = line.split('Projected')[1].split('potential_energy')[1].strip('=\t')
             list = [s,p,e]
             self.data.append(list)
 
