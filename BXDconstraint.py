@@ -859,9 +859,6 @@ class Converging(BXD):
                     write(str(self.box_list[self.box].geom_path),mol,append=True)
                 self.box_list[self.box].points_in_box += 1
 
-
-
-
     def create_fixed_boxes(self, width, number_of_boxes, start_s, decorrelation_limit):
         box_list = []
         s = deepcopy(start_s)
@@ -1418,7 +1415,7 @@ class BXDBox:
         edge = (max(proj) - min(proj)) / boxes
         edges = np.arange(min(proj), max(proj),edge).tolist()
         edges.append(max(proj))
-        energy = np.asarray([float(d[3]) for d in data1])
+        energy = np.asarray([float(d[2]) for d in data1])
         sub_bound_list = self.get_sub_bounds(boxes)
         hist = [1] * boxes
         energies = []
@@ -1487,6 +1484,16 @@ class BXDBox:
             workstr = workstr.split('\t')
             if float(workstr[2]) >= 0 and len(workstr) == 5:
                 self.data.append(workstr)
+
+    def read_box_data_new(self, path):
+        path += '/box_data.txt'
+        file = open(path, 'r')
+        for line in file.readlines():
+            s = line.split('projected')[0].strip('S\t=')
+            p = line.split('projected')[1].split('potential_energy')[0].strip('=')
+            e = line.split('projected')[1].split('potential_energy')[1].strip('=')
+            list = [s,p,e]
+            self.data.append(list)
 
 
 
