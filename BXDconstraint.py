@@ -1412,6 +1412,8 @@ class BXDBox:
         d = np.asarray([np.fromstring(d[0].replace('[', '').replace(']', ''), dtype=float, sep='\t') for d in data1])
         proj = np.asarray([float(d[1]) for d in data1])
         mini = min(proj)
+        for p in proj:
+            p -= mini
         edge = (max(proj) - min(proj)) / boxes
         edges = np.arange(min(proj), max(proj),edge).tolist()
         edges.append(max(proj))
