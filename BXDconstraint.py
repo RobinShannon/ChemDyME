@@ -984,11 +984,13 @@ class Converging(BXD):
             profile = []
             for i in range(0, len(self.box_list)):
                 try:
-                    enedata = [float(d[3]) for d in self.box_list[i].data]
+                    enedata = [float(d[2]) for d in self.box_list[i].data]
                     ave_ene = min(np.asarray(enedata))
                 except:
                     ave_ene = "nan"
-                profile.append((str(i), self.box_list[i].gibbs, self.box_list[i].gibbs_err, ave_ene))
+                s_arr = [float(d[1]) for d in self.box_list[i].data]
+                s = min(s_arr)
+                profile.append((str(s), self.box_list[i].gibbs, self.box_list[i].gibbs_err, ave_ene))
             return profile
         else:
             try:
@@ -1006,8 +1008,6 @@ class Converging(BXD):
                 last_s = 0
                 for i in range(0, len(self.box_list)):
                     s, dens,ene= self.box_list[i].get_full_histogram(boxes,data_frequency)
-                    for sj in s:
-                        sj -= s[0]
                     for j in range(0, len(dens)):
                         d_err = np.sqrt(float(dens[j])) / (float(len(self.box_list[i].data))/data_frequency)
                         d = float(dens[j]) / (float(len(self.box_list[i].data))/data_frequency)
@@ -1412,8 +1412,7 @@ class BXDBox:
         d = np.asarray([np.fromstring(d[0].replace('[', '').replace(']', ''), dtype=float, sep='\t') for d in data1])
         proj = np.asarray([float(d[1]) for d in data1])
         mini = min(proj)
-        for p in proj:
-            p -= mini
+        proj[:] = [p - mini for p in proj]
         edge = (max(proj) - min(proj)) / boxes
         edges = np.arange(min(proj), max(proj),edge).tolist()
         edges.append(max(proj))
